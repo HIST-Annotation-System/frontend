@@ -1,14 +1,11 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
+import './NotFound.css';
 
-const NotFound: React.FC = () => {
+export default function NotFound() {
   return (
-    <div style={{ padding: '2rem', textAlign: 'center' }}>
+    <div className="not-found">
       <h1>404 - Nie znaleziono</h1>
-      <p>Strona, której szukasz nie istnieje.</p>
-      <Link to="/" style={{ color: 'blue', textDecoration: 'underline' }}>Wróć do strony głównej</Link>
+      <Link to="/">Wróć do biblioteki slajdów</Link>
     </div>
   );
-};
-
-export default NotFound;
+}

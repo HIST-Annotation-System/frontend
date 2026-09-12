@@ -1,6 +1,6 @@
 export interface StartUploadResponse {
+  slide_id: string;
   upload_id: string;
-  key: string;
 }
 
 export interface PresignedUrlsResponse {
@@ -8,15 +8,10 @@ export interface PresignedUrlsResponse {
 }
 
 export interface RefreshUrlsResponse {
-  urls: Record<number, string>;
+  urls: Record<string, string>;
 }
 
 export interface UploadPart {
   PartNumber: number;
   ETag: string;
-}
-
-export interface CompleteUploadResponse {
-  success: boolean;
-  message: string;
 }

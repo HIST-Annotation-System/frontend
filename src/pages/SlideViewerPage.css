@@ -1,0 +1,54 @@
+.viewer-page {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.viewer-page__sidebar {
+  display: flex;
+  flex-direction: column;
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  overflow-y: auto;
+  background: var(--color-surface-lowest);
+  border-right: var(--border);
+}
+
+.viewer-page__main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-md);
+  background: var(--color-surface-low);
+}
+
+/* Over the top of the canvas frame, just below the action bar. */
+.viewer-page__error {
+  position: absolute;
+  top: 88px;
+  left: 50%;
+  z-index: 90;
+  width: min(520px, 90%);
+  transform: translateX(-50%);
+}
+
+.viewer-page__notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--color-on-surface-variant);
+}
+
+.viewer-page__notice h2 {
+  font-size: 24px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}

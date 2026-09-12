@@ -1,0 +1,28 @@
+.error-message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-error);
+  background: var(--color-error-container);
+  color: var(--color-on-error-container);
+  font-size: 13px;
+}
+
+.error-message__text {
+  flex: 1;
+}
+
+.error-message__dismiss {
+  display: flex;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.error-message__dismiss:hover {
+  background: var(--color-error);
+  color: var(--color-on-primary);
+}

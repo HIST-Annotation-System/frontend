@@ -1,0 +1,22 @@
+.spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  color: var(--color-secondary);
+}
+
+.spinner__circle {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-surface-highest);
+  border-top-color: var(--color-primary);
+  animation: spinner-rotate 0.8s linear infinite;
+}
+
+@keyframes spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}

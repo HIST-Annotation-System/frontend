@@ -1,0 +1,25 @@
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  border-bottom: var(--border);
+}
+
+/* Takes the spare height, but never shrinks below its content (the sidebar itself scrolls). */
+.sidebar-section--grow {
+  flex: 1 0 auto;
+}
+
+.sidebar-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-height: 36px;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: var(--border);
+  background: var(--color-surface-low);
+}
+
+.sidebar-section__body {
+  padding: var(--space-md);
+}
