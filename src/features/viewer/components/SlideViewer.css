@@ -1,0 +1,67 @@
+.slide-viewer {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-height: 0;
+}
+
+.slide-viewer__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border: var(--border);
+  background: var(--color-surface-lowest);
+}
+
+.slide-viewer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.slide-viewer__frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: var(--border);
+  background: var(--color-surface-high);
+}
+
+.slide-viewer__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.viewer-status {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  color: var(--color-secondary);
+}
+
+.viewer-status > span {
+  padding: 0 var(--space-sm);
+  white-space: nowrap;
+}
+
+.viewer-status > span + span {
+  border-left: var(--border);
+}
+
+.viewer-status__file {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* User data keeps its case. */
+.viewer-status__value {
+  color: var(--color-primary);
+  text-transform: none;
+}

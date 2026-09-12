@@ -1,17 +1,34 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import AppLayout from './components/layout/AppLayout';
+import Spinner from './components/ui/Spinner';
+import QueryProvider from './context/QueryProvider';
 import NotFound from './pages/NotFound';
-import './App.css';
+import SlidesPage from './pages/SlidesPage';
+
+// The viewer pulls in OpenSeadragon and Annotorious (WebGL); load it only when a slide is opened.
+const SlideViewerPage = lazy(() => import('./pages/SlideViewerPage'));
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <QueryProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<SlidesPage />} />
+            <Route
+              path="/slides/:slideId"
+              element={
+                <Suspense fallback={<Spinner label="Wczytywanie przeglądarki…" />}>
+                  <SlideViewerPage />
+                </Suspense>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </QueryProvider>
   );
 }
 
