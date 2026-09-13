@@ -22,9 +22,11 @@ interface UploadState {
   status: UploadStatus;
   progress: number;
   message: string;
+  /** The slide created by this upload, once known - lets the caller watch it past "completed". */
+  slideId: string | null;
 }
 
-const IDLE_STATE: UploadState = { status: 'idle', progress: 0, message: '' };
+const IDLE_STATE: UploadState = { status: 'idle', progress: 0, message: '', slideId: null };
 
 const partNumbersFrom = (first: number, last: number): number[] =>
   Array.from({ length: last - first + 1 }, (_, index) => first + index);
@@ -40,16 +42,17 @@ export function useMultipartUpload() {
     async (file: File) => {
       const rejection = validateSlideFile(file);
       if (rejection) {
-        setState({ status: 'error', progress: 0, message: rejection });
+        setState({ status: 'error', progress: 0, message: rejection, slideId: null });
         return;
       }
 
       const update = (changes: Partial<UploadState>) => setState((current) => ({ ...current, ...changes }));
       const totalParts = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
-      setState({ status: 'uploading', progress: 0, message: 'Rozpoczynanie przesyłania…' });
+      setState({ status: 'uploading', progress: 0, message: 'Rozpoczynanie przesyłania…', slideId: null });
 
       try {
         const { slide_id: slideId, upload_id: uploadId } = await startMultipartUpload(file.name);
+        update({ slideId });
         void queryClient.invalidateQueries({ queryKey: slideQueryKeys.all });
 
         update({ message: 'Generowanie adresów przesyłania…' });
@@ -89,7 +92,7 @@ export function useMultipartUpload() {
 
         update({ message: 'Finalizowanie przesyłania…' });
         await completeMultipartUpload(slideId, uploadId, parts);
-        setState({ status: 'completed', progress: 100, message: 'Plik wgrany. Trwa przetwarzanie slajdu…' });
+        setState({ status: 'completed', progress: 100, message: 'Plik wgrany. Trwa przetwarzanie slajdu…', slideId });
         void queryClient.invalidateQueries({ queryKey: slideQueryKeys.all });
       } catch (error) {
         update({ status: 'error', message: getErrorMessage(error, 'Wystąpił błąd podczas przesyłania.') });

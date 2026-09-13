@@ -1,9 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useRef, useState, type DragEvent } from 'react';
+import { useEffect, useRef, useState, type DragEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Modal from '../../../components/ui/Modal';
 import StorageFilePicker from '../../storage/components/StorageFilePicker';
+import { useSlide } from '../../slides/hooks/useSlide';
 import { slideQueryKeys } from '../../../services/slidesApi';
 import { importFromStorage } from '../../../services/uploadApi';
 import type { StorageObject } from '../../../types/storage';
@@ -21,8 +22,20 @@ export default function WsiUploader() {
   const [importError, setImportError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  const { status, progress, message, upload, reset } = useMultipartUpload();
+  const { status, progress, message, slideId, upload, reset } = useMultipartUpload();
   const isUploading = status === 'uploading';
+
+  // The upload itself finishes at "completed", but ingestion keeps running server-side; watch the
+  // created slide so this panel doesn't keep saying "processing" forever once it's actually done.
+  const ingestedSlide = useSlide(slideId ?? '', { enabled: status === 'completed' && slideId !== null });
+  useEffect(() => {
+    if (status !== 'completed' || !ingestedSlide.data) return;
+    // Ready or failed - either way ingestion is done and the slide card below shows the outcome.
+    if (ingestedSlide.data.status === 'ready' || ingestedSlide.data.status === 'failed') {
+      reset();
+      setFile(null);
+    }
+  }, [status, ingestedSlide.data, reset]);
 
   const selectFile = (selected: File | null) => {
     setFile(selected);
