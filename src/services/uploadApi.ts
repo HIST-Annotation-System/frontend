@@ -1,4 +1,10 @@
-import type { PresignedUrlsResponse, RefreshUrlsResponse, StartUploadResponse, UploadPart } from '../types/upload';
+import type {
+  ImportFromStorageResponse,
+  PresignedUrlsResponse,
+  RefreshUrlsResponse,
+  StartUploadResponse,
+  UploadPart,
+} from '../types/upload';
 import { ApiError, httpClient } from './httpClient';
 
 export const startMultipartUpload = async (filename: string): Promise<StartUploadResponse> =>
@@ -37,6 +43,10 @@ export const completeMultipartUpload = async (
 ): Promise<void> => {
   await httpClient.post('/upload/complete', { slide_id: slideId, upload_id: uploadId, parts });
 };
+
+/** Registers a file already sitting in object storage as a new slide, skipping the upload step. */
+export const importFromStorage = async (key: string): Promise<ImportFromStorageResponse> =>
+  (await httpClient.post<ImportFromStorageResponse>('/upload/import-from-storage', { key })).data;
 
 /** PUTs one part straight to object storage and resolves with its ETag. */
 export const uploadChunkToStorage = (

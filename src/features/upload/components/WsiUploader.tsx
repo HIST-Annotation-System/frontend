@@ -1,5 +1,13 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type DragEvent } from 'react';
 import Button from '../../../components/ui/Button';
+import ErrorMessage from '../../../components/ui/ErrorMessage';
+import Modal from '../../../components/ui/Modal';
+import StorageFilePicker from '../../storage/components/StorageFilePicker';
+import { slideQueryKeys } from '../../../services/slidesApi';
+import { importFromStorage } from '../../../services/uploadApi';
+import type { StorageObject } from '../../../types/storage';
+import { getErrorMessage } from '../../../utils/errors';
 import { formatBytes } from '../../../utils/format';
 import { useMultipartUpload } from '../hooks/useMultipartUpload';
 import { ACCEPTED_SLIDE_EXTENSIONS, MRXS_ZIP_HINT } from '../slideFileRules';
@@ -8,13 +16,31 @@ import './WsiUploader.css';
 export default function WsiUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
   const { status, progress, message, upload, reset } = useMultipartUpload();
   const isUploading = status === 'uploading';
 
   const selectFile = (selected: File | null) => {
     setFile(selected);
     reset();
+  };
+
+  const selectFromStorage = async (object: StorageObject) => {
+    setIsPickerOpen(false);
+    setIsImporting(true);
+    setImportError(null);
+    try {
+      await importFromStorage(object.key);
+      void queryClient.invalidateQueries({ queryKey: slideQueryKeys.all });
+    } catch (error) {
+      setImportError(getErrorMessage(error, 'Nie udało się zaimportować pliku z magazynu.'));
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const handleDragOver = (event: DragEvent) => {
@@ -41,10 +67,15 @@ export default function WsiUploader() {
           <Button disabled={isUploading} onClick={() => inputRef.current?.click()}>
             Wybierz plik
           </Button>
+          lub
+          <Button disabled={isImporting} onClick={() => setIsPickerOpen(true)}>
+            {isImporting ? 'Importowanie…' : 'Wybierz z magazynu'}
+          </Button>
         </p>
         <p className="wsi-uploader__hint">
           Obsługiwane formaty: SVS, TIFF, NDPI, SCN, BIF, SVSLIDE oraz obrazy JPG/PNG/BMP. {MRXS_ZIP_HINT}
         </p>
+        {importError && <ErrorMessage message={importError} onDismiss={() => setImportError(null)} />}
       </div>
 
       {file && (
@@ -76,6 +107,10 @@ export default function WsiUploader() {
         hidden
         onChange={(event) => selectFile(event.target.files?.[0] ?? null)}
       />
+
+      <Modal title="Wybierz plik z magazynu" open={isPickerOpen} onClose={() => setIsPickerOpen(false)}>
+        <StorageFilePicker onSelect={(object) => void selectFromStorage(object)} />
+      </Modal>
     </div>
   );
 }

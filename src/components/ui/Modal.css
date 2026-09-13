@@ -1,0 +1,42 @@
+/* A <dialog> is display:none until [open] (via showModal()); only set display on the open state,
+   since an unconditional `display` here would override that native default. */
+.modal[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal {
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(80vh, 720px);
+  padding: 0;
+  border: var(--border);
+  background: var(--color-surface-lowest);
+  color: var(--color-on-surface);
+}
+
+.modal::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.modal__header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
+  border-bottom: var(--border);
+}
+
+.modal__title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.modal__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+}

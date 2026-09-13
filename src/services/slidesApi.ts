@@ -14,6 +14,13 @@ export const listSlides = async (signal?: AbortSignal): Promise<Slide[]> =>
 export const getSlide = async (slideId: string, signal?: AbortSignal): Promise<SlideDetail> =>
   (await httpClient.get<SlideDetail>(`/slides/${slideId}`, { signal })).data;
 
+export const renameSlide = async (slideId: string, name: string): Promise<Slide> =>
+  (await httpClient.patch<Slide>(`/slides/${slideId}`, { name })).data;
+
+export const deleteSlide = async (slideId: string): Promise<void> => {
+  await httpClient.delete(`/slides/${slideId}`);
+};
+
 /** Deep Zoom descriptor; OpenSeadragon derives the tile URLs from it. */
 export const getDziUrl = (slideId: string): string => apiUrl(`/slides/${slideId}/image.dzi`);
 

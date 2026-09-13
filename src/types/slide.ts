@@ -8,6 +8,8 @@ export interface Slide {
   original_filename: string;
   status: SlideStatus;
   error_message: string | null;
+  /** 0-100 while downloading during ingestion; null before/after (upload has its own progress). */
+  ingest_progress: number | null;
   vendor: string | null;
   width: number | null;
   height: number | null;

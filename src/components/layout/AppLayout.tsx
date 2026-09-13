@@ -1,5 +1,7 @@
-import { Microscope } from 'lucide-react';
+import { Microscope, Moon, Sun } from 'lucide-react';
 import { Link, NavLink, Outlet, useMatch } from 'react-router-dom';
+import Button from '../ui/Button';
+import { useTheme } from '../../context/ThemeProvider';
 import './AppLayout.css';
 
 /** A tab for a page that does not exist yet. */
@@ -13,6 +15,7 @@ function PlaceholderTab({ label }: { label: string }) {
 
 export default function AppLayout() {
   const inWorkspace = useMatch('/slides/:slideId') !== null;
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="app-layout">
@@ -23,20 +26,31 @@ export default function AppLayout() {
           </span>
           <span className="app-header__title">Cancer Cell Annotator (WSI)</span>
         </Link>
-        <nav className="app-header__nav label-caps">
-          <PlaceholderTab label="Pulpit" />
-          <NavLink to="/" end className="app-header__tab">
-            Biblioteka slajdów
-          </NavLink>
-          {inWorkspace ? (
-            <span className="app-header__tab active" aria-current="page">
-              Obszar roboczy
-            </span>
-          ) : (
-            <PlaceholderTab label="Obszar roboczy" />
-          )}
-          <PlaceholderTab label="Administracja" />
-        </nav>
+        <div className="app-header__actions">
+          <nav className="app-header__nav label-caps">
+            <PlaceholderTab label="Pulpit" />
+            <NavLink to="/" end className="app-header__tab">
+              Biblioteka slajdów
+            </NavLink>
+            {inWorkspace ? (
+              <span className="app-header__tab active" aria-current="page">
+                Obszar roboczy
+              </span>
+            ) : (
+              <PlaceholderTab label="Obszar roboczy" />
+            )}
+            <NavLink to="/administracja" className="app-header__tab">
+              Administracja
+            </NavLink>
+          </nav>
+          <Button
+            variant="ghost"
+            icon={theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            title={theme === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'}
+            aria-label={theme === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'}
+            onClick={toggleTheme}
+          />
+        </div>
       </header>
       <main className="app-layout__content">
         <Outlet />
