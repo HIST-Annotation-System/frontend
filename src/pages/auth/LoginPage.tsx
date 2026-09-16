@@ -16,12 +16,8 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await login({ username, password });
-      if (res.is_first_login) {
-        navigate('/setup');
-      } else {
-        navigate('/');
-      }
+      await login({ username, password });
+      // React state update in AuthContext will automatically trigger RequireGuest to redirect
     } catch (err) {
       // Error is handled by context
     } finally {

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { dictionariesApi } from '../../services/dictionariesApi';
 import { Microscope } from 'lucide-react';
 import './AuthPages.css';
 
@@ -9,11 +11,23 @@ export default function FirstLoginPage() {
   const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   
   const { setupProfile, error } = useAuth();
   const navigate = useNavigate();
+
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => dictionariesApi.getCategories(),
+  });
+
+  const toggleCategory = (id: number) => {
+    setSelectedCategories(prev => 
+      prev.includes(id) ? prev.filter(cId => cId !== id) : [...prev, id]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,9 +49,9 @@ export default function FirstLoginPage() {
         new_password: password,
         first_name: firstName,
         last_name: lastName,
-        category_ids: [] // categories and groups can be assigned by admin later
+        category_ids: selectedCategories
       });
-      navigate('/');
+      // React state update in AuthContext will automatically trigger RequireFirstLogin to redirect
     } catch (err) {
       // Error handled by context mostly
     } finally {
@@ -47,7 +61,7 @@ export default function FirstLoginPage() {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
+      <div className="auth-card" style={{ maxWidth: '600px' }}>
         <div className="auth-header">
           <div className="auth-logo">
             <Microscope size={48} />
@@ -114,7 +128,25 @@ export default function FirstLoginPage() {
             />
           </div>
 
-          <button type="submit" disabled={loading} className="auth-button">
+          {categories && categories.length > 0 && (
+            <div className="form-group">
+              <label>Kategorie, którymi się zajmujesz</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.5rem' }}>
+                {categories.map(cat => (
+                  <label key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.includes(cat.id)}
+                      onChange={() => toggleCategory(cat.id)}
+                    />
+                    {cat.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button type="submit" disabled={loading} className="auth-button" style={{ marginTop: '1rem' }}>
             {loading ? 'Zapisywanie...' : 'Zapisz i kontynuuj'}
           </button>
         </form>

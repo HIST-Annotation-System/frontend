@@ -10,6 +10,8 @@ import LoginPage from './pages/auth/LoginPage';
 import FirstLoginPage from './pages/auth/FirstLoginPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import UsersPage from './pages/admin/UsersPage';
+import SettingsPage from './pages/admin/SettingsPage';
+import ProfilePage from './pages/auth/ProfilePage';
 
 const SlideViewerPage = lazy(() => import('./pages/SlideViewerPage'));
 
@@ -73,9 +75,10 @@ function App() {
                   </Suspense>
                 }
               />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/admin" element={<RequireAuth role="ADMIN"><AdminLayout /></RequireAuth>}>
                 <Route path="users" element={<UsersPage />} />
-                <Route path="settings" element={<div>Ustawienia - Wkrótce</div>} />
+                <Route path="settings" element={<SettingsPage />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Route>
