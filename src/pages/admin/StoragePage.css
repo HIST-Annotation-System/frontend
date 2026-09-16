@@ -1,10 +1,10 @@
-.administracja-page {
+.storage-page {
   flex: 1;
   overflow-y: auto;
   padding: var(--space-lg) var(--space-lg) var(--space-xl);
 }
 
-.administracja-page__inner {
+.storage-page__inner {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
@@ -12,7 +12,7 @@
   margin: 0 auto;
 }
 
-.administracja-page__title {
+.storage-page__title {
   font-size: 24px;
   font-weight: 700;
   line-height: 1.2;

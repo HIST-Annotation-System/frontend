@@ -5,7 +5,6 @@ import Spinner from './components/ui/Spinner';
 import QueryProvider from './context/QueryProvider';
 import ThemeProvider from './context/ThemeProvider';
 import UploadProvider from './context/UploadProvider';
-import AdministracjaPage from './pages/AdministracjaPage';
 import NotFound from './pages/NotFound';
 import SlidesPage from './pages/SlidesPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -13,6 +12,7 @@ import LoginPage from './pages/auth/LoginPage';
 import FirstLoginPage from './pages/auth/FirstLoginPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import UsersPage from './pages/admin/UsersPage';
+import StoragePage from './pages/admin/StoragePage';
 
 const SlideViewerPage = lazy(() => import('./pages/SlideViewerPage'));
 
@@ -71,7 +71,7 @@ function App() {
 
                 <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
                   <Route path="/" element={<SlidesPage />} />
-                  <Route path="/administracja" element={<AdministracjaPage />} />
+                  <Route path="/administracja" element={<StoragePage />} />
                   <Route
                     path="/slides/:slideId"
                     element={
