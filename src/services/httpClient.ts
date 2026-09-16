@@ -42,11 +42,69 @@ const toApiError = async (error: unknown): Promise<ApiError> => {
   return new ApiError(error instanceof Error ? error.message : 'Unexpected error');
 };
 
-export const httpClient = axios.create({ baseURL: API_URL });
+export const httpClient = axios.create({ baseURL: API_URL, withCredentials: true });
+
+// Prevent infinite loops if /refresh itself fails
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: any) => void }> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
 
 httpClient.interceptors.response.use(
   (response) => response,
-  async (error: unknown) => Promise.reject(await toApiError(error)),
+  async (error: unknown) => {
+    const originalRequest = isAxiosError(error) ? error.config : null;
+    
+    // Check if it's a 401, we have an original request, and we haven't already retried this request
+    if (
+      isAxiosError(error) && 
+      error.response?.status === 401 && 
+      originalRequest && 
+      !originalRequest.url?.includes('/auth/login') && 
+      !originalRequest.url?.includes('/auth/refresh') && 
+      !(originalRequest as any)._retry
+    ) {
+      if (isRefreshing) {
+        try {
+          // Wait for the refresh token call to finish before retrying
+          await new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          });
+          return await httpClient(originalRequest);
+        } catch (err) {
+          return Promise.reject(err);
+        }
+      }
+
+      (originalRequest as any)._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Assume we have a refresh_token cookie, ask backend to rotate it
+        await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+        isRefreshing = false;
+        processQueue(null);
+        return await httpClient(originalRequest);
+      } catch (err) {
+        isRefreshing = false;
+        processQueue(err, null);
+        // If refresh fails, we should probably redirect to login or clear state.
+        // For now, just reject. The AuthContext will handle it.
+        return Promise.reject(await toApiError(err));
+      }
+    }
+    
+    return Promise.reject(await toApiError(error));
+  },
 );
 
 /** Absolute URL of an API resource that the browser loads directly (tiles, images). */

@@ -1,5 +1,6 @@
 import { Microscope } from 'lucide-react';
 import { Link, NavLink, Outlet, useMatch } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './AppLayout.css';
 
 /** A tab for a page that does not exist yet. */
@@ -13,6 +14,7 @@ function PlaceholderTab({ label }: { label: string }) {
 
 export default function AppLayout() {
   const inWorkspace = useMatch('/slides/:slideId') !== null;
+  const { user, logout } = useAuth();
 
   return (
     <div className="app-layout">
@@ -35,8 +37,23 @@ export default function AppLayout() {
           ) : (
             <PlaceholderTab label="Obszar roboczy" />
           )}
-          <PlaceholderTab label="Administracja" />
+          
+          {user?.role === 'ADMIN' ? (
+            <NavLink to="/admin/users" className="app-header__tab">
+              Administracja
+            </NavLink>
+          ) : (
+            <PlaceholderTab label="Administracja" />
+          )}
+          
         </nav>
+        
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem', paddingRight: '1rem' }}>
+          {user && <span style={{ fontSize: '0.875rem' }}>Zalogowany: <strong>{user.username}</strong></span>}
+          <button onClick={() => logout()} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-color)' }}>
+            Wyloguj
+          </button>
+        </div>
       </header>
       <main className="app-layout__content">
         <Outlet />
