@@ -3,6 +3,9 @@ import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import Spinner from './components/ui/Spinner';
 import QueryProvider from './context/QueryProvider';
+import ThemeProvider from './context/ThemeProvider';
+import UploadProvider from './context/UploadProvider';
+import AdministracjaPage from './pages/AdministracjaPage';
 import NotFound from './pages/NotFound';
 import SlidesPage from './pages/SlidesPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -56,33 +59,39 @@ function RequireFirstLogin({ children }: { children: JSX.Element }) {
 
 function App() {
   return (
-    <QueryProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<RequireGuest><LoginPage /></RequireGuest>} />
-            <Route path="/setup" element={<RequireFirstLogin><FirstLoginPage /></RequireFirstLogin>} />
-            
-            <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
-              <Route path="/" element={<SlidesPage />} />
-              <Route
-                path="/slides/:slideId"
-                element={
-                  <Suspense fallback={<Spinner label="Wczytywanie przeglądarki…" />}>
-                    <SlideViewerPage />
-                  </Suspense>
-                }
-              />
-              <Route path="/admin" element={<RequireAuth role="ADMIN"><AdminLayout /></RequireAuth>}>
-                <Route path="users" element={<UsersPage />} />
-                <Route path="settings" element={<div>Ustawienia - Wkrótce</div>} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </QueryProvider>
+    <ThemeProvider>
+      <QueryProvider>
+        <AuthProvider>
+          {/* Above the router: an upload keeps running (and stays visible) across page navigations. */}
+          <UploadProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<RequireGuest><LoginPage /></RequireGuest>} />
+                <Route path="/setup" element={<RequireFirstLogin><FirstLoginPage /></RequireFirstLogin>} />
+
+                <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
+                  <Route path="/" element={<SlidesPage />} />
+                  <Route path="/administracja" element={<AdministracjaPage />} />
+                  <Route
+                    path="/slides/:slideId"
+                    element={
+                      <Suspense fallback={<Spinner label="Wczytywanie przeglądarki…" />}>
+                        <SlideViewerPage />
+                      </Suspense>
+                    }
+                  />
+                  <Route path="/admin" element={<RequireAuth role="ADMIN"><AdminLayout /></RequireAuth>}>
+                    <Route path="users" element={<UsersPage />} />
+                    <Route path="settings" element={<div>Ustawienia - Wkrótce</div>} />
+                  </Route>
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </UploadProvider>
+        </AuthProvider>
+      </QueryProvider>
+    </ThemeProvider>
   );
 }
 

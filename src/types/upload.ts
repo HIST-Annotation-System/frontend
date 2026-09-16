@@ -15,3 +15,7 @@ export interface UploadPart {
   PartNumber: number;
   ETag: string;
 }
+
+export interface ImportFromStorageResponse {
+  slide_id: string;
+}
