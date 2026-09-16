@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type ReactElement } from 'react';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import Spinner from './components/ui/Spinner';
@@ -16,7 +16,7 @@ import UsersPage from './pages/admin/UsersPage';
 
 const SlideViewerPage = lazy(() => import('./pages/SlideViewerPage'));
 
-function RequireAuth({ children, role }: { children: JSX.Element, role?: 'ADMIN' | 'ANNOTATOR' }) {
+function RequireAuth({ children, role }: { children: ReactElement, role?: 'ADMIN' | 'ANNOTATOR' }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -38,7 +38,7 @@ function RequireAuth({ children, role }: { children: JSX.Element, role?: 'ADMIN'
   return children;
 }
 
-function RequireGuest({ children }: { children: JSX.Element }) {
+function RequireGuest({ children }: { children: ReactElement }) {
   const { user, isLoading } = useAuth();
   
   if (isLoading) return <Spinner label="Ładowanie sesji..." />;
@@ -47,7 +47,7 @@ function RequireGuest({ children }: { children: JSX.Element }) {
   return children;
 }
 
-function RequireFirstLogin({ children }: { children: JSX.Element }) {
+function RequireFirstLogin({ children }: { children: ReactElement }) {
   const { user, isLoading } = useAuth();
   
   if (isLoading) return <Spinner label="Ładowanie sesji..." />;

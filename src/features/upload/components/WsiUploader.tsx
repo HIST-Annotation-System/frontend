@@ -11,7 +11,7 @@ import { importFromStorage } from '../../../services/uploadApi';
 import type { StorageObject } from '../../../types/storage';
 import { getErrorMessage } from '../../../utils/errors';
 import { formatBytes } from '../../../utils/format';
-import { ACCEPTED_SLIDE_EXTENSIONS, MRXS_ZIP_HINT } from '../slideFileRules';
+import { MRXS_ZIP_HINT } from '../slideFileRules';
 import './WsiUploader.css';
 
 export default function WsiUploader() {
