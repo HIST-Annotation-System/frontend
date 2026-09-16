@@ -74,6 +74,11 @@
   background: var(--color-primary);
 }
 
+.wsi-uploader__file-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
 .wsi-uploader__message {
   font-size: 12px;
   color: var(--color-on-surface-variant);

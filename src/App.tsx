@@ -4,6 +4,7 @@ import AppLayout from './components/layout/AppLayout';
 import Spinner from './components/ui/Spinner';
 import QueryProvider from './context/QueryProvider';
 import ThemeProvider from './context/ThemeProvider';
+import UploadProvider from './context/UploadProvider';
 import AdministracjaPage from './pages/AdministracjaPage';
 import NotFound from './pages/NotFound';
 import SlidesPage from './pages/SlidesPage';
@@ -15,23 +16,26 @@ function App() {
   return (
     <ThemeProvider>
       <QueryProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<SlidesPage />} />
-            <Route path="/administracja" element={<AdministracjaPage />} />
-              <Route
-                path="/slides/:slideId"
-                element={
-                  <Suspense fallback={<Spinner label="Wczytywanie przeglądarki…" />}>
-                    <SlideViewerPage />
-                  </Suspense>
-                }
-              />
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+        {/* Above the router: an upload keeps running (and stays visible) across page navigations. */}
+        <UploadProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<SlidesPage />} />
+                <Route path="/administracja" element={<AdministracjaPage />} />
+                <Route
+                  path="/slides/:slideId"
+                  element={
+                    <Suspense fallback={<Spinner label="Wczytywanie przeglądarki…" />}>
+                      <SlideViewerPage />
+                    </Suspense>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </UploadProvider>
       </QueryProvider>
     </ThemeProvider>
   );

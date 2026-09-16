@@ -5,6 +5,7 @@ import type {
   StartUploadResponse,
   UploadPart,
 } from '../types/upload';
+import { UploadCancelledError } from '../utils/errors';
 import { ApiError, httpClient } from './httpClient';
 
 export const startMultipartUpload = async (filename: string): Promise<StartUploadResponse> =>
@@ -48,13 +49,28 @@ export const completeMultipartUpload = async (
 export const importFromStorage = async (key: string): Promise<ImportFromStorageResponse> =>
   (await httpClient.post<ImportFromStorageResponse>('/upload/import-from-storage', { key })).data;
 
-/** PUTs one part straight to object storage and resolves with its ETag. */
+/** Aborts the multipart upload in storage and deletes the slide record created for it. */
+export const cancelUpload = async (slideId: string): Promise<void> => {
+  await httpClient.post(`/upload/${slideId}/cancel`);
+};
+
+/** PUTs one part straight to object storage and resolves with its ETag.
+ *
+ * Aborting `signal` rejects with `UploadCancelledError` instead of a real `ApiError`, so callers
+ * can tell a user-requested cancellation apart from a network/server failure.
+ */
 export const uploadChunkToStorage = (
   url: string,
   chunk: Blob,
   onProgress?: (loadedBytes: number) => void,
+  signal?: AbortSignal,
 ): Promise<string> =>
   new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new UploadCancelledError());
+      return;
+    }
+
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', url, true);
 
@@ -76,6 +92,9 @@ export const uploadChunkToStorage = (
     };
 
     xhr.onerror = () => reject(new ApiError('Network Error', 0));
+    xhr.onabort = () => reject(new UploadCancelledError());
+
+    signal?.addEventListener('abort', () => xhr.abort());
 
     xhr.send(chunk);
   });

@@ -18,11 +18,12 @@ interface SlideCardProps {
 
 export default function SlideCard({ slide }: SlideCardProps) {
   const magnification = getNativeMagnification(slide);
-  const { renameSlide, isRenaming, deleteSlide, isDeleting } = useSlideMutations();
+  const { renameSlide, isRenaming, deleteSlide, isDeleting, cancelUpload, isCancelling } = useSlideMutations();
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(slide.name);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isUploading = slide.status === 'uploading';
 
   const startEditing = () => {
     setNameDraft(slide.name);
@@ -51,10 +52,14 @@ export default function SlideCard({ slide }: SlideCardProps) {
 
   const confirmDelete = async () => {
     try {
-      await deleteSlide(slide.id);
+      if (isUploading) {
+        await cancelUpload(slide.id);
+      } else {
+        await deleteSlide(slide.id);
+      }
     } catch (requestError) {
       setIsConfirmingDelete(false);
-      setError(getErrorMessage(requestError, 'Nie udało się usunąć slajdu.'));
+      setError(getErrorMessage(requestError, isUploading ? 'Nie udało się anulować przesyłania.' : 'Nie udało się usunąć slajdu.'));
     }
   };
 
@@ -124,9 +129,9 @@ export default function SlideCard({ slide }: SlideCardProps) {
                 />
                 <Button
                   variant="ghost"
-                  icon={<Trash2 size={14} />}
-                  title="Usuń slajd"
-                  aria-label={`Usuń slajd ${slide.name}`}
+                  icon={isUploading ? <X size={14} /> : <Trash2 size={14} />}
+                  title={isUploading ? 'Anuluj przesyłanie' : 'Usuń slajd'}
+                  aria-label={isUploading ? `Anuluj przesyłanie slajdu ${slide.name}` : `Usuń slajd ${slide.name}`}
                   onClick={() => setIsConfirmingDelete(true)}
                 />
               </>
@@ -167,17 +172,27 @@ export default function SlideCard({ slide }: SlideCardProps) {
         {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
       </div>
 
-      <Modal title="Usuń slajd" open={isConfirmingDelete} onClose={() => setIsConfirmingDelete(false)}>
+      <Modal
+        title={isUploading ? 'Anuluj przesyłanie' : 'Usuń slajd'}
+        open={isConfirmingDelete}
+        onClose={() => setIsConfirmingDelete(false)}
+      >
         <p>
-          Czy na pewno chcesz usunąć slajd „{slide.name}”? Plik oraz wszystkie jego anotacje zostaną trwale usunięte.
-          Tej operacji nie można cofnąć.
+          {isUploading ? (
+            <>Czy na pewno chcesz anulować przesyłanie pliku „{slide.name}”? Przesłane dotąd dane zostaną odrzucone.</>
+          ) : (
+            <>
+              Czy na pewno chcesz usunąć slajd „{slide.name}”? Plik oraz wszystkie jego anotacje zostaną trwale usunięte.
+              Tej operacji nie można cofnąć.
+            </>
+          )}
         </p>
         <div className="slide-card__confirm-actions">
-          <Button onClick={() => setIsConfirmingDelete(false)} disabled={isDeleting}>
-            Anuluj
+          <Button onClick={() => setIsConfirmingDelete(false)} disabled={isDeleting || isCancelling}>
+            Wróć
           </Button>
-          <Button variant="primary" onClick={() => void confirmDelete()} disabled={isDeleting}>
-            {isDeleting ? 'Usuwanie…' : 'Usuń'}
+          <Button variant="primary" onClick={() => void confirmDelete()} disabled={isDeleting || isCancelling}>
+            {isUploading ? (isCancelling ? 'Anulowanie…' : 'Anuluj przesyłanie') : isDeleting ? 'Usuwanie…' : 'Usuń'}
           </Button>
         </div>
       </Modal>

@@ -2,6 +2,7 @@ import { Microscope, Moon, Sun } from 'lucide-react';
 import { Link, NavLink, Outlet, useMatch } from 'react-router-dom';
 import Button from '../ui/Button';
 import { useTheme } from '../../context/ThemeProvider';
+import UploadStatusBar from './UploadStatusBar';
 import './AppLayout.css';
 
 /** A tab for a page that does not exist yet. */
@@ -55,6 +56,7 @@ export default function AppLayout() {
       <main className="app-layout__content">
         <Outlet />
       </main>
+      <UploadStatusBar />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type DragEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Modal from '../../../components/ui/Modal';
+import { useUpload } from '../../../context/UploadProvider';
 import StorageFilePicker from '../../storage/components/StorageFilePicker';
 import { useSlide } from '../../slides/hooks/useSlide';
 import { slideQueryKeys } from '../../../services/slidesApi';
@@ -10,20 +11,21 @@ import { importFromStorage } from '../../../services/uploadApi';
 import type { StorageObject } from '../../../types/storage';
 import { getErrorMessage } from '../../../utils/errors';
 import { formatBytes } from '../../../utils/format';
-import { useMultipartUpload } from '../hooks/useMultipartUpload';
 import { ACCEPTED_SLIDE_EXTENSIONS, MRXS_ZIP_HINT } from '../slideFileRules';
 import './WsiUploader.css';
 
 export default function WsiUploader() {
-  const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  const { status, progress, message, slideId, upload, reset } = useMultipartUpload();
+  const { status, progress, message, slideId, file, selectFile, upload, cancel } = useUpload();
   const isUploading = status === 'uploading';
+  // "Wgraj" must stay disabled through server-side ingestion too, not just the browser upload -
+  // clicking it while "completed" would kick off a second upload of the same file mid-ingest.
+  const isBusy = isUploading || status === 'completed';
 
   // The upload itself finishes at "completed", but ingestion keeps running server-side; watch the
   // created slide so this panel doesn't keep saying "processing" forever once it's actually done.
@@ -32,15 +34,9 @@ export default function WsiUploader() {
     if (status !== 'completed' || !ingestedSlide.data) return;
     // Ready or failed - either way ingestion is done and the slide card below shows the outcome.
     if (ingestedSlide.data.status === 'ready' || ingestedSlide.data.status === 'failed') {
-      reset();
-      setFile(null);
+      selectFile(null);
     }
-  }, [status, ingestedSlide.data, reset]);
-
-  const selectFile = (selected: File | null) => {
-    setFile(selected);
-    reset();
-  };
+  }, [status, ingestedSlide.data, selectFile]);
 
   const selectFromStorage = async (object: StorageObject) => {
     setIsPickerOpen(false);
@@ -108,9 +104,12 @@ export default function WsiUploader() {
             )}
             {message && <p className="wsi-uploader__message">{message}</p>}
           </div>
-          <Button variant="primary" onClick={() => void upload(file)} disabled={isUploading}>
-            {isUploading ? 'Wgrywanie…' : 'Wgraj'}
-          </Button>
+          <div className="wsi-uploader__file-actions">
+            <Button variant="primary" onClick={() => void upload(file)} disabled={isBusy}>
+              {isUploading ? 'Wgrywanie…' : status === 'completed' ? 'Przetwarzanie…' : 'Wgraj'}
+            </Button>
+            {isUploading && <Button onClick={() => void cancel()}>Anuluj</Button>}
+          </div>
         </>
       )}
 

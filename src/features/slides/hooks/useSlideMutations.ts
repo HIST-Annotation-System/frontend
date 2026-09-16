@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteSlide, renameSlide, slideQueryKeys } from '../../../services/slidesApi';
+import { cancelUpload } from '../../../services/uploadApi';
 import type { Slide } from '../../../types/slide';
 
 interface RenameVariables {
@@ -29,5 +30,21 @@ export function useSlideMutations() {
     },
   });
 
-  return { renameSlide: rename, isRenaming, deleteSlide: remove, isDeleting };
+  const { mutateAsync: cancel, isPending: isCancelling } = useMutation({
+    mutationFn: (slideId: string) => cancelUpload(slideId),
+    onSuccess: (_result, slideId) => {
+      queryClient.setQueryData<Slide[]>(slideQueryKeys.list(), (current) =>
+        current?.filter((slide) => slide.id !== slideId),
+      );
+    },
+  });
+
+  return {
+    renameSlide: rename,
+    isRenaming,
+    deleteSlide: remove,
+    isDeleting,
+    cancelUpload: cancel,
+    isCancelling,
+  };
 }
