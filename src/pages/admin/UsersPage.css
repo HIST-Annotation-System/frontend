@@ -1,0 +1,171 @@
+.users-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 var(--space-xs);
+  color: var(--color-on-surface);
+}
+
+.page-subtitle {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.table-container {
+  background-color: var(--color-surface-lowest);
+  border: var(--border);
+  overflow: auto;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.users-table th {
+  background-color: var(--color-surface-container);
+  padding: var(--space-md) var(--space-lg);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  border-bottom: var(--border);
+}
+
+.users-table td {
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-outline);
+  font-size: 0.875rem;
+  color: var(--color-on-surface);
+  vertical-align: middle;
+}
+
+.users-table tr:last-child td {
+  border-bottom: none;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: var(--border);
+}
+.role-admin { background-color: var(--color-surface-high); color: var(--color-on-surface); }
+.role-annotator { background-color: var(--color-surface-lowest); color: var(--color-on-surface); }
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: var(--border);
+}
+.status-badge.success { background-color: var(--color-surface-lowest); color: var(--color-on-surface); }
+.status-badge.warning { background-color: var(--color-surface-container); color: var(--color-on-surface); }
+
+.status-yes { color: var(--color-on-surface); font-weight: 500; }
+.status-no { color: var(--color-error); font-weight: 500; }
+.text-muted { color: var(--color-on-surface-variant); font-style: italic; }
+
+.actions-cell {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.icon-button {
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: var(--space-xs);
+  color: var(--color-on-surface-variant);
+  transition: all 0.15s ease-in-out;
+}
+
+.icon-button:hover { background-color: var(--color-surface-container); color: var(--color-on-surface); border: var(--border); }
+.icon-button.danger:hover { background-color: var(--color-error-container); color: var(--color-on-error-container); border-color: var(--color-error); }
+
+.empty-state { text-align: center; color: var(--color-on-surface-variant); padding: var(--space-xl) !important; }
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  border: var(--border);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  text-transform: uppercase;
+}
+.btn-primary:hover { opacity: 0.8; }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background-color: var(--color-surface-lowest);
+  color: var(--color-on-surface);
+  border: var(--border);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  text-transform: uppercase;
+}
+.btn-secondary:hover { background-color: var(--color-surface-container); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: var(--color-surface-lowest);
+  padding: var(--space-xl);
+  border: var(--border);
+  width: 100%;
+  max-width: 400px;
+}
+
+.modal-content h2 { margin: 0 0 var(--space-lg); font-size: 1.25rem; }
+
+.modal-content form { display: flex; flex-direction: column; gap: var(--space-md); }
+
+.modal-input {
+  padding: 0.5rem 0.75rem;
+  border: var(--border);
+  font-size: 0.875rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
