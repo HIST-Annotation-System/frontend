@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { MRXS_ZIP_HINT, validateSlideFile } from './slideFileRules';
+import { validateSlideFile } from './slideFileRules';
 
 describe('validateSlideFile', () => {
-  it('accepts single-file slides, plain images and zip archives', () => {
+  it('accepts single-file slides and zip archives', () => {
     expect(validateSlideFile({ name: 'CMU-2.svs', size: 10 })).toBeNull();
     expect(validateSlideFile({ name: 'scan.TIFF', size: 10 })).toBeNull();
     expect(validateSlideFile({ name: 'CMU-1.zip', size: 10 })).toBeNull();
   });
 
   it('asks for a zip archive when a bare MRXS file is chosen', () => {
-    expect(validateSlideFile({ name: 'CMU-1.mrxs', size: 10 })).toBe(MRXS_ZIP_HINT);
+    expect(validateSlideFile({ name: 'CMU-1.mrxs', size: 10 })).toContain('format wieloplikowy');
   });
 
   it('rejects unsupported and empty files', () => {

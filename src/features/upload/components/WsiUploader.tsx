@@ -2,7 +2,7 @@ import { useRef, useState, type DragEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import { formatBytes } from '../../../utils/format';
 import { useMultipartUpload } from '../hooks/useMultipartUpload';
-import { ACCEPTED_SLIDE_EXTENSIONS, MRXS_ZIP_HINT } from '../slideFileRules';
+import { ACCEPTED_UPLOAD_EXTENSIONS } from '../slideFileRules';
 import './WsiUploader.css';
 
 export default function WsiUploader() {
@@ -43,7 +43,8 @@ export default function WsiUploader() {
           </Button>
         </p>
         <p className="wsi-uploader__hint">
-          Obsługiwane formaty: SVS, TIFF, NDPI, SCN, BIF, SVSLIDE oraz obrazy JPG/PNG/BMP. {MRXS_ZIP_HINT}
+          Obsługiwane formaty: SVS, TIFF, NDPI, SCN, BIF, SVSLIDE, CZI. MRXS, VMS, VMU i DICOM prześlij jako jedno
+          archiwum .zip. Slajd musi zawierać rozdzielczość (MPP).
         </p>
       </div>
 
@@ -73,6 +74,7 @@ export default function WsiUploader() {
       <input
         ref={inputRef}
         type="file"
+        accept={ACCEPTED_UPLOAD_EXTENSIONS.join(',')}
         hidden
         onChange={(event) => selectFile(event.target.files?.[0] ?? null)}
       />
