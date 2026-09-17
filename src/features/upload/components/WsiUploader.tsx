@@ -3,6 +3,7 @@ import Button from '../../../components/ui/Button';
 import { formatBytes } from '../../../utils/format';
 import { useMultipartUpload } from '../hooks/useMultipartUpload';
 import { ACCEPTED_UPLOAD_EXTENSIONS } from '../slideFileRules';
+import SlideFormatGuide from './SlideFormatGuide';
 import './WsiUploader.css';
 
 export default function WsiUploader() {
@@ -43,8 +44,7 @@ export default function WsiUploader() {
           </Button>
         </p>
         <p className="wsi-uploader__hint">
-          Obsługiwane formaty: SVS, TIFF, NDPI, SCN, BIF, SVSLIDE, CZI. MRXS, VMS, VMU i DICOM prześlij jako jedno
-          archiwum .zip. Slajd musi zawierać rozdzielczość (MPP).
+          Pojedynczy plik lub archiwum .zip dla formatów wieloplikowych – szczegóły poniżej.
         </p>
       </div>
 
@@ -70,6 +70,8 @@ export default function WsiUploader() {
           </Button>
         </>
       )}
+
+      <SlideFormatGuide />
 
       <input
         ref={inputRef}

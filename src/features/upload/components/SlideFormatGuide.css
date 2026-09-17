@@ -1,0 +1,47 @@
+/* Full-width row under the upload bar's picker. */
+.format-guide {
+  flex-basis: 100%;
+}
+
+.format-guide summary {
+  padding: var(--space-xs) 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.format-guide__table-wrap {
+  margin-top: var(--space-sm);
+  overflow-x: auto;
+}
+
+.format-guide__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.format-guide__table th,
+.format-guide__table td {
+  padding: var(--space-xs) var(--space-sm);
+  border: var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.format-guide__table th {
+  background: var(--color-surface-highest);
+  font-weight: 700;
+}
+
+.format-guide__row--archive td:last-child {
+  font-weight: 600;
+}
+
+.format-guide__note {
+  margin: var(--space-sm) 0 0;
+  font-size: 12px;
+  color: var(--color-secondary);
+}
