@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Microscope } from 'lucide-react';
 import './AuthPages.css';
@@ -10,7 +9,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   
   const { login, error } = useAuth();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +16,7 @@ export default function LoginPage() {
     try {
       await login({ username, password });
       // React state update in AuthContext will automatically trigger RequireGuest to redirect
-    } catch (err) {
+    } catch {
       // Error is handled by context
     } finally {
       setLoading(false);

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { dictionariesApi } from '../../services/dictionariesApi';
@@ -16,7 +15,6 @@ export default function FirstLoginPage() {
   const [loading, setLoading] = useState(false);
   
   const { setupProfile, error } = useAuth();
-  const navigate = useNavigate();
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -52,7 +50,7 @@ export default function FirstLoginPage() {
         category_ids: selectedCategories
       });
       // React state update in AuthContext will automatically trigger RequireFirstLogin to redirect
-    } catch (err) {
+    } catch {
       // Error handled by context mostly
     } finally {
       setLoading(false);

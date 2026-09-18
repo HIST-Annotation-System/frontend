@@ -53,7 +53,7 @@ export default function AnnotationList({ slideId, classes, onError }: Annotation
   if (annotations.length === 0) {
     return (
       <p className="annotation-list__empty">
-        Brak anotacji. Wybierz klasę tkanki i narysuj poligon na slajdzie.
+        Brak anotacji. Oznacz obszary nowotworu lub zrębu – reszta tkanki jest traktowana jako negatywna.
       </p>
     );
   }

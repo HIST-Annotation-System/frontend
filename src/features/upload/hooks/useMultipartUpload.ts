@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { ApiError } from '../../../services/httpClient';
 import { slideQueryKeys } from '../../../services/slidesApi';
 import {
+  cancelMultipartUpload,
   completeMultipartUpload,
   getPresignedUrls,
   refreshPresignedUrls,
@@ -47,9 +48,11 @@ export function useMultipartUpload() {
       const update = (changes: Partial<UploadState>) => setState((current) => ({ ...current, ...changes }));
       const totalParts = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
       setState({ status: 'uploading', progress: 0, message: 'Rozpoczynanie przesyłania…' });
+      let startedSlideId: string | null = null;
 
       try {
         const { slide_id: slideId, upload_id: uploadId } = await startMultipartUpload(file.name);
+        startedSlideId = slideId;
         void queryClient.invalidateQueries({ queryKey: slideQueryKeys.all });
 
         update({ message: 'Generowanie adresów przesyłania…' });
@@ -92,6 +95,11 @@ export function useMultipartUpload() {
         setState({ status: 'completed', progress: 100, message: 'Plik wgrany. Trwa przetwarzanie slajdu…' });
         void queryClient.invalidateQueries({ queryKey: slideQueryKeys.all });
       } catch (error) {
+        // Drop the half-uploaded slide, so neither the bucket nor the library keeps it.
+        if (startedSlideId) {
+          await cancelMultipartUpload(startedSlideId).catch(() => undefined);
+          void queryClient.invalidateQueries({ queryKey: slideQueryKeys.all });
+        }
         update({ status: 'error', message: getErrorMessage(error, 'Wystąpił błąd podczas przesyłania.') });
       }
     },

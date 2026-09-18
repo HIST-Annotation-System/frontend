@@ -31,6 +31,8 @@ export interface AccountCreate {
   username: string;
   password: string;
   role?: Role;
+  can_upload?: boolean;
+  group_id?: number | null;
 }
 
 export interface ProfileUpdate {
