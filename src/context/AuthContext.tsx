@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '../services/usersApi';
 import { authApi } from '../services/authApi';
@@ -9,8 +9,10 @@ import { ApiError } from '../services/httpClient';
 interface AuthContextType {
   user: AccountResponse | null;
   isLoading: boolean;
-  login: (data: LoginRequest) => Promise<TokenResponse>;
+  login: (data: LoginRequest) => Promise<void>;
   setupProfile: (data: ProfileSetup) => Promise<void>;
+  /** Reloads the current user, e.g. after their profile changed. */
+  refetch: () => Promise<unknown>;
   logout: () => Promise<void>;
   error: string | null;
 }
@@ -37,12 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     staleTime: Infinity, // Keep user data fresh until explicitly invalidated
   });
 
-  const login = async (data: LoginRequest): Promise<TokenResponse> => {
+  const login = async (data: LoginRequest) => {
     try {
       setError(null);
-      const res = await authApi.login(data);
+      await authApi.login(data);
       await refetch();
-      return res;
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -75,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user: user ?? null, isLoading, login, setupProfile, logout, error }}>
+    <AuthContext.Provider value={{ user: user ?? null, isLoading, login, setupProfile, refetch, logout, error }}>
       {children}
     </AuthContext.Provider>
   );

@@ -30,6 +30,11 @@ export const refreshPresignedUrls = async (
     })
   ).data;
 
+/** Aborts an upload that failed halfway, so no multipart upload or `uploading` slide is left behind. */
+export const cancelMultipartUpload = async (slideId: string): Promise<void> => {
+  await httpClient.post(`/upload/${slideId}/cancel`);
+};
+
 export const completeMultipartUpload = async (
   slideId: string,
   uploadId: string,
