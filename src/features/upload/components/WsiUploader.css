@@ -23,6 +23,7 @@
 
 .wsi-uploader__prompt {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-sm);
 }
@@ -71,6 +72,11 @@
 
 .wsi-uploader__progress::-moz-progress-bar {
   background: var(--color-primary);
+}
+
+.wsi-uploader__file-actions {
+  display: flex;
+  gap: var(--space-sm);
 }
 
 .wsi-uploader__message {
