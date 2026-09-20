@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Users, Settings } from 'lucide-react';
+import { Users, Settings, HardDrive } from 'lucide-react';
 import './AdminLayout.css';
 
 export default function AdminLayout() {
@@ -15,9 +15,13 @@ export default function AdminLayout() {
             <Users size={18} />
             <span>Użytkownicy</span>
           </NavLink>
+          <NavLink to="/admin/storage" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+            <HardDrive size={18} />
+            <span>Zarządzanie plikami</span>
+          </NavLink>
           <NavLink to="/admin/settings" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
             <Settings size={18} />
-            <span>Ustawienia</span>
+            <span>Kategorie i grupy</span>
           </NavLink>
         </nav>
       </aside>

@@ -44,15 +44,12 @@ export default function AppLayout() {
             ) : (
               <PlaceholderTab label="Obszar roboczy" />
             )}
-            <NavLink to="/administracja" className="app-header__tab">
-              Administracja
-            </NavLink>
             {user?.role === 'ADMIN' ? (
-              <NavLink to="/admin/users" className="app-header__tab">
-                Użytkownicy
+              <NavLink to="/admin" className="app-header__tab">
+                Administracja
               </NavLink>
             ) : (
-              <PlaceholderTab label="Użytkownicy" />
+              <PlaceholderTab label="Administracja" />
             )}
           </nav>
           <Button
@@ -88,7 +85,7 @@ export default function AppLayout() {
                     Mój Profil
                   </Link>
                   {user.role === 'ADMIN' && (
-                    <Link to="/admin/users" className="user-menu-item" onClick={() => setIsUserMenuOpen(false)}>
+                    <Link to="/admin" className="user-menu-item" onClick={() => setIsUserMenuOpen(false)}>
                       Panel Administratora
                     </Link>
                   )}
