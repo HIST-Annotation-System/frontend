@@ -5,7 +5,7 @@ export default function StoragePage() {
   return (
     <div className="storage-page">
       <div className="storage-page__inner">
-        <h1 className="storage-page__title">Administracja</h1>
+        <h1 className="storage-page__title">Zarządzanie plikami</h1>
         <StorageBrowser />
       </div>
     </div>

@@ -73,7 +73,6 @@ function App() {
 
                 <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
                   <Route path="/" element={<SlidesPage />} />
-                  <Route path="/administracja" element={<StoragePage />} />
                   <Route
                     path="/slides/:slideId"
                     element={
@@ -84,8 +83,10 @@ function App() {
                   />
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/admin" element={<RequireAuth role="ADMIN"><AdminLayout /></RequireAuth>}>
+                    <Route index element={<Navigate to="users" replace />} />
                     <Route path="users" element={<UsersPage />} />
                     <Route path="settings" element={<SettingsPage />} />
+                    <Route path="storage" element={<StoragePage />} />
                   </Route>
                   <Route path="*" element={<NotFound />} />
                 </Route>

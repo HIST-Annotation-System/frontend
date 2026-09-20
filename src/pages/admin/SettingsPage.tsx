@@ -79,7 +79,7 @@ export default function SettingsPage() {
     <div className="settings-page">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Słowniki i Ustawienia</h1>
+          <h1 className="page-title">Kategorie i grupy</h1>
           <p className="page-subtitle">Zarządzaj słownikami kategorii oraz grupami annotatorskimi.</p>
         </div>
       </div>
