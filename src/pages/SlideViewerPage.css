@@ -20,7 +20,7 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
-  padding: var(--space-md);
+  padding: 0;
   background: var(--color-surface-low);
 }
 

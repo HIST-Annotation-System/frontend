@@ -45,10 +45,7 @@
 }
 
 .slide-info__properties dl {
-  max-height: 220px;
   margin: var(--space-sm) 0 0;
-  overflow-y: auto;
-  border: var(--border);
 }
 
 .slide-info__property {

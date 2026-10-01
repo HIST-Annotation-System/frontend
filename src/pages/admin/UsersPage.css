@@ -25,8 +25,12 @@
 
 .table-container {
   background-color: var(--color-surface-lowest);
-  border: var(--border);
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  border-top: var(--border);
   overflow: auto;
+  margin: 0 calc(-1 * var(--space-xl)) calc(-1 * var(--space-xl));
 }
 
 .users-table {

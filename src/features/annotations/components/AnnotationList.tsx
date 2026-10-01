@@ -53,7 +53,7 @@ export default function AnnotationList({ slideId, classes, onError }: Annotation
   if (annotations.length === 0) {
     return (
       <p className="annotation-list__empty">
-        Brak anotacji. Oznacz obszary nowotworu lub zrębu – reszta tkanki jest traktowana jako negatywna.
+        Brak anotacji
       </p>
     );
   }

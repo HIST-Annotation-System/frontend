@@ -14,7 +14,7 @@ export default function ExportAnnotationsButton({ slide, onError }: ExportAnnota
   return (
     <Button
       variant="primary"
-      title="Eksportuj anotacje do GeoJSON (zgodny z QuPath)"
+      title="Eksportuj anotacje (zgodny z QuPath)"
       disabled={isDownloading}
       onClick={() =>
         void download(
@@ -24,7 +24,7 @@ export default function ExportAnnotationsButton({ slide, onError }: ExportAnnota
         )
       }
     >
-      GeoJSON
+      {isDownloading ? 'Eksport…' : 'Eksport anotacji'}
     </Button>
   );
 }

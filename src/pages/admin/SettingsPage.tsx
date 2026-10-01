@@ -9,7 +9,7 @@ export default function SettingsPage() {
 
   // Categories state
   const [newCategoryName, setNewCategoryName] = useState('');
-  
+
   // Groups state
   const [newGroupName, setNewGroupName] = useState('');
 
@@ -78,10 +78,7 @@ export default function SettingsPage() {
   return (
     <div className="settings-page">
       <div className="page-header">
-        <div>
-          <h1 className="page-title">Kategorie i grupy</h1>
-          <p className="page-subtitle">Zarządzaj słownikami kategorii oraz grupami annotatorskimi.</p>
-        </div>
+        <h1 className="page-title">Kategorie i grupy</h1>
       </div>
 
       <div className="settings-grid">
@@ -89,13 +86,12 @@ export default function SettingsPage() {
         <section className="settings-card">
           <div className="settings-card-header">
             <h2>Kategorie obrazów</h2>
-            <p className="text-muted text-sm">Rodzaje nowotworów lub tkanki</p>
           </div>
-          
+
           <form onSubmit={handleAddCategory} className="settings-add-form">
-            <input 
-              type="text" 
-              placeholder="Nowa kategoria..." 
+            <input
+              type="text"
+              placeholder="Nowa kategoria..."
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
               className="settings-input"
@@ -113,8 +109,8 @@ export default function SettingsPage() {
                 {categories?.map(category => (
                   <li key={category.id} className="dict-item">
                     <span>{category.name}</span>
-                    <button 
-                      onClick={() => handleDeleteCategory(category.id)} 
+                    <button
+                      onClick={() => handleDeleteCategory(category.id)}
                       className="icon-button danger"
                       title="Usuń"
                     >
@@ -131,14 +127,13 @@ export default function SettingsPage() {
         {/* Groups Section */}
         <section className="settings-card">
           <div className="settings-card-header">
-            <h2>Grupy Annotatorskie</h2>
-            <p className="text-muted text-sm">Organizacyjne grupowanie annotatorów</p>
+            <h2>Grupy annotatorskie</h2>
           </div>
-          
+
           <form onSubmit={handleAddGroup} className="settings-add-form">
-            <input 
-              type="text" 
-              placeholder="Nowa grupa..." 
+            <input
+              type="text"
+              placeholder="Nowa grupa..."
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
               className="settings-input"
@@ -156,8 +151,8 @@ export default function SettingsPage() {
                 {groups?.map(group => (
                   <li key={group.id} className="dict-item">
                     <span>{group.name}</span>
-                    <button 
-                      onClick={() => handleDeleteGroup(group.id)} 
+                    <button
+                      onClick={() => handleDeleteGroup(group.id)}
                       className="icon-button danger"
                       title="Usuń"
                     >

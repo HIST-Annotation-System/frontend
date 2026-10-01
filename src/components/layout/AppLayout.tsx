@@ -1,23 +1,15 @@
 import { useState } from 'react';
 import { Microscope, Moon, Sun } from 'lucide-react';
-import { Link, NavLink, Outlet, useMatch } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 import { useTheme } from '../../context/ThemeProvider';
 import UploadStatusBar from './UploadStatusBar';
 import './AppLayout.css';
 
-/** A tab for a page that does not exist yet. */
-function PlaceholderTab({ label }: { label: string }) {
-  return (
-    <span className="app-header__tab app-header__tab--disabled" aria-disabled="true" title="Wkrótce">
-      {label}
-    </span>
-  );
-}
+
 
 export default function AppLayout() {
-  const inWorkspace = useMatch('/slides/:slideId') !== null;
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -29,27 +21,17 @@ export default function AppLayout() {
           <span className="app-header__logo" aria-hidden="true">
             <Microscope size={18} />
           </span>
-          <span className="app-header__title">Cancer Cell Annotator (WSI)</span>
+          <span className="app-header__title"> PLATFORMA ANOTACJI HISTOPATOLOGICZNEJ</span>
         </Link>
         <div className="app-header__actions">
           <nav className="app-header__nav label-caps">
-            <PlaceholderTab label="Pulpit" />
             <NavLink to="/" end className="app-header__tab">
               Biblioteka slajdów
             </NavLink>
-            {inWorkspace ? (
-              <span className="app-header__tab active" aria-current="page">
-                Obszar roboczy
-              </span>
-            ) : (
-              <PlaceholderTab label="Obszar roboczy" />
-            )}
-            {user?.role === 'ADMIN' ? (
+            {user?.role === 'ADMIN' && (
               <NavLink to="/admin" className="app-header__tab">
                 Administracja
               </NavLink>
-            ) : (
-              <PlaceholderTab label="Administracja" />
             )}
           </nav>
           <Button

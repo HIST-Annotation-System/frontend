@@ -23,3 +23,7 @@
 .sidebar-section__body {
   padding: var(--space-md);
 }
+
+.sidebar-section__body--compact {
+  padding: var(--space-sm);
+}

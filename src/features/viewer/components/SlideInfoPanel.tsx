@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { SlideDetail } from '../../../types/slide';
 import { formatBytes, formatDateTime, formatDimensions } from '../../../utils/format';
 import { getNativeMagnification } from '../../../utils/magnification';
@@ -9,6 +10,7 @@ interface SlideInfoPanelProps {
 
 export default function SlideInfoPanel({ slide }: SlideInfoPanelProps) {
   const magnification = getNativeMagnification(slide);
+  const [open, setOpen] = useState(false);
   const rows: [label: string, value: string][] = [
     ['Plik', slide.original_filename],
     ['Format', slide.vendor ?? '—'],
@@ -19,31 +21,20 @@ export default function SlideInfoPanel({ slide }: SlideInfoPanelProps) {
     ['Rozmiar pliku', slide.file_size_bytes ? formatBytes(slide.file_size_bytes) : '—'],
     ['Dodano', formatDateTime(slide.created_at)],
   ];
-  const properties = Object.entries(slide.properties).sort(([a], [b]) => a.localeCompare(b));
 
   return (
     <div className="slide-info">
-      <dl className="slide-info__list">
-        {rows.map(([label, value]) => (
-          <div key={label} className="slide-info__row">
-            <dt>{label}</dt>
-            <dd title={value}>{value}</dd>
-          </div>
-        ))}
-      </dl>
-      {properties.length > 0 && (
-        <details className="slide-info__properties">
-          <summary>Właściwości OpenSlide ({properties.length})</summary>
-          <dl>
-            {properties.map(([key, value]) => (
-              <div key={key} className="slide-info__property">
-                <dt>{key}</dt>
-                <dd>{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </details>
-      )}
+      <details className="slide-info__properties" open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
+        <summary>Parametry slajdu ({rows.length})</summary>
+        <dl className="slide-info__list">
+          {rows.map(([label, value]) => (
+            <div key={label} className="slide-info__row">
+              <dt>{label}</dt>
+              <dd title={value}>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
     </div>
   );
 }

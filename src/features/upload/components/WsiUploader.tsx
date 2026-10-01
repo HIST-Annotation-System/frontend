@@ -83,7 +83,7 @@ export default function WsiUploader() {
           </Button>
         </p>
         <p className="wsi-uploader__hint">
-          Pojedynczy plik lub archiwum .zip dla formatów wieloplikowych – szczegóły poniżej.
+          Pojedynczy plik lub archiwum .zip dla formatów wieloplikowych - szczegóły poniżej.
         </p>
         {importError && <ErrorMessage message={importError} onDismiss={() => setImportError(null)} />}
       </div>

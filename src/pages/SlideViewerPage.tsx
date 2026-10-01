@@ -70,13 +70,13 @@ function SlideWorkspace({ slide, classes }: SlideWorkspaceProps) {
     <Annotorious>
       <div className="viewer-page">
         <aside className="viewer-page__sidebar">
-          <SidebarSection title="Klasyfikacja tkanki">
+          <SidebarSection compact>
             <ClassPalette classes={classes} activeClassId={tool.activeClassId} onSelect={tool.selectClass} />
           </SidebarSection>
-          <SidebarSection title="Anotacje" actions={<ExportAnnotationsButton slide={slide} onError={setError} />} grow>
+          <SidebarSection title="Anotacje" actions={<ExportAnnotationsButton slide={slide} onError={setError} />} grow compact>
             <AnnotationList slideId={slide.id} classes={classes} onError={setError} />
           </SidebarSection>
-          <SidebarSection title="Informacje o slajdzie">
+          <SidebarSection>
             <SlideInfoPanel slide={slide} />
           </SidebarSection>
         </aside>

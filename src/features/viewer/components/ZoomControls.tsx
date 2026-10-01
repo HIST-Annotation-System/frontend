@@ -29,7 +29,7 @@ export default function ZoomControls({ onFocusTissue, showActualSize }: ZoomCont
         title={onFocusTissue ? 'Dopasuj widok do tkanki' : 'Dopasuj cały slajd do ekranu'}
         onClick={() => (onFocusTissue ? onFocusTissue() : viewer?.viewport.goHome())}
       >
-        Dopasuj
+        Wycentruj
       </Button>
       {showActualSize && (
         <Button
