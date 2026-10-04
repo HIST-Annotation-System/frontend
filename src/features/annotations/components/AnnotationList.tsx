@@ -1,7 +1,7 @@
 import { useSelection } from '@annotorious/react';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Spinner from '../../../components/ui/Spinner';
-import type { AnnotationClass } from '../../../types/annotation';
+import type { AnnotationClass, AnnotationOwner } from '../../../types/annotation';
 import { getErrorMessage } from '../../../utils/errors';
 import { useAnnotationMutations, useAnnotations } from '../hooks/useAnnotations';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
@@ -12,14 +12,14 @@ import './AnnotationTools.css';
 const FIT_PADDING_PX = 80;
 
 interface AnnotationListProps {
-  slideId: string;
+  owner: AnnotationOwner;
   classes: AnnotationClass[];
   onError: (message: string) => void;
 }
 
-export default function AnnotationList({ slideId, classes, onError }: AnnotationListProps) {
-  const { data: annotations, isPending, isError, error } = useAnnotations(slideId);
-  const { updateAnnotation, deleteAnnotation } = useAnnotationMutations(slideId);
+export default function AnnotationList({ owner, classes, onError }: AnnotationListProps) {
+  const { data: annotations, isPending, isError, error } = useAnnotations(owner);
+  const { updateAnnotation, deleteAnnotation } = useAnnotationMutations(owner);
   const anno = useSlideAnnotator();
   const selection = useSelection();
   const selectedIds = new Set(selection.selected.map(({ annotation }) => annotation.id));

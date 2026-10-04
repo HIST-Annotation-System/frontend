@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLatest } from '../../../hooks/useLatest';
 import { ApiError } from '../../../services/httpClient';
-import type { Annotation, AnnotationDraft } from '../../../types/annotation';
+import type { Annotation, AnnotationDraft, AnnotationOwner } from '../../../types/annotation';
 import { getErrorMessage } from '../../../utils/errors';
 import { sameGeometry } from '../../../utils/geometry';
 import { toAnnotationDraft } from '../utils/annotationAdapter';
@@ -9,7 +9,7 @@ import { useAnnotationMutations } from './useAnnotations';
 import { useSlideAnnotator, type SlideAnnotator } from './useSlideAnnotator';
 
 interface AnnotoriousSyncOptions {
-  slideId: string;
+  owner: AnnotationOwner;
   annotations: Annotation[] | undefined;
   activeClassId: string | null;
   onError: (message: string) => void;
@@ -24,9 +24,9 @@ interface AnnotoriousSyncOptions {
  * emit lifecycle events like user edits. Updates are therefore compared with the server's copy (no
  * redundant PATCH), and repeated deletes of an already-deleted annotation (404) are ignored.
  */
-export function useAnnotoriousSync({ slideId, annotations, activeClassId, onError }: AnnotoriousSyncOptions): void {
+export function useAnnotoriousSync({ owner, annotations, activeClassId, onError }: AnnotoriousSyncOptions): void {
   const anno = useSlideAnnotator();
-  const mutations = useAnnotationMutations(slideId);
+  const mutations = useAnnotationMutations(owner);
   const latest = useLatest({ mutations, activeClassId, onError });
   const loadedInto = useRef<SlideAnnotator | null>(null);
 

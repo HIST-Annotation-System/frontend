@@ -14,6 +14,8 @@ import './SlideViewer.css';
 interface SlideViewerProps {
   slide: SlideDetail;
   onError: (message: string) => void;
+  /** Extra buttons at the end of the action bar. */
+  actions?: ReactNode;
   /** Extra overlays rendered on top of the viewer canvas (e.g. annotation tools). */
   children?: ReactNode;
 }
@@ -22,7 +24,7 @@ interface SlideViewerProps {
  * Deep Zoom viewer for one slide: an action bar above the canvas. Must be rendered inside
  * `<OpenSeadragonAnnotator>`, which owns the OpenSeadragon viewer instance shared with the annotation layer.
  */
-export default function SlideViewer({ slide, onError, children }: SlideViewerProps) {
+export default function SlideViewer({ slide, onError, actions, children }: SlideViewerProps) {
   const options = useMemo(() => createViewerOptions(getDziUrl(slide.id)), [slide.id]);
   const { focusTissue, hasTissue } = useTissueFocus(slide);
   const nativeMagnification = getNativeMagnification(slide);
@@ -42,6 +44,7 @@ export default function SlideViewer({ slide, onError, children }: SlideViewerPro
             />
           </div>
           <RegionExportButton slide={slide} onError={onError} />
+          {actions}
         </div>
       </div>
       <div className="slide-viewer__frame">

@@ -6,6 +6,9 @@
 }
 
 .modal {
+  /* A modal dialog makes the rest of the page inert, so it must stay clickable even when rendered
+     inside a click-through overlay (pointer-events is inherited). */
+  pointer-events: auto;
   width: min(640px, calc(100vw - 32px));
   max-height: min(80vh, 720px);
   padding: 0;

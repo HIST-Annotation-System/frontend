@@ -1,29 +1,29 @@
-import type { Annotation, AnnotationCreate, AnnotationUpdate } from '../types/annotation';
+import type { Annotation, AnnotationCreate, AnnotationOwner, AnnotationUpdate } from '../types/annotation';
 import { fetchBlob, httpClient } from './httpClient';
 
 export const annotationQueryKeys = {
-  forSlide: (slideId: string) => ['annotations', slideId] as const,
+  forOwner: ({ type, id }: AnnotationOwner) => ['annotations', type, id] as const,
 };
 
-const annotationsPath = (slideId: string) => `/slides/${slideId}/annotations`;
+const annotationsPath = ({ type, id }: AnnotationOwner) => `/${type}/${id}/annotations`;
 
-export const listAnnotations = async (slideId: string, signal?: AbortSignal): Promise<Annotation[]> =>
-  (await httpClient.get<Annotation[]>(annotationsPath(slideId), { signal })).data;
+export const listAnnotations = async (owner: AnnotationOwner, signal?: AbortSignal): Promise<Annotation[]> =>
+  (await httpClient.get<Annotation[]>(annotationsPath(owner), { signal })).data;
 
-export const createAnnotation = async (slideId: string, payload: AnnotationCreate): Promise<Annotation> =>
-  (await httpClient.post<Annotation>(annotationsPath(slideId), payload)).data;
+export const createAnnotation = async (owner: AnnotationOwner, payload: AnnotationCreate): Promise<Annotation> =>
+  (await httpClient.post<Annotation>(annotationsPath(owner), payload)).data;
 
 export const updateAnnotation = async (
-  slideId: string,
+  owner: AnnotationOwner,
   annotationId: string,
   changes: AnnotationUpdate,
 ): Promise<Annotation> =>
-  (await httpClient.patch<Annotation>(`${annotationsPath(slideId)}/${annotationId}`, changes)).data;
+  (await httpClient.patch<Annotation>(`${annotationsPath(owner)}/${annotationId}`, changes)).data;
 
-export const deleteAnnotation = async (slideId: string, annotationId: string): Promise<void> => {
-  await httpClient.delete(`${annotationsPath(slideId)}/${annotationId}`);
+export const deleteAnnotation = async (owner: AnnotationOwner, annotationId: string): Promise<void> => {
+  await httpClient.delete(`${annotationsPath(owner)}/${annotationId}`);
 };
 
 /** GeoJSON FeatureCollection with QuPath-style properties. */
-export const fetchAnnotationsGeoJson = (slideId: string): Promise<Blob> =>
-  fetchBlob(`${annotationsPath(slideId)}/export`);
+export const fetchAnnotationsGeoJson = (owner: AnnotationOwner): Promise<Blob> =>
+  fetchBlob(`${annotationsPath(owner)}/export`);

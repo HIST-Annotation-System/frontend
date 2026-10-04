@@ -6,6 +6,15 @@ export interface PolygonGeometry {
   coordinates: Position[][];
 }
 
+/**
+ * What a set of annotations belongs to: a whole slide (level-0 slide pixels) or a hotspot (hotspot image
+ * pixels). Both expose the same annotation API under their own path.
+ */
+export interface AnnotationOwner {
+  type: 'slides' | 'hotspots';
+  id: string;
+}
+
 export interface AnnotationClass {
   id: string;
   name: string;

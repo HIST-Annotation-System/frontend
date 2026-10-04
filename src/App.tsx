@@ -7,6 +7,7 @@ import ThemeProvider from './context/ThemeProvider';
 import UploadProvider from './context/UploadProvider';
 import NotFound from './pages/NotFound';
 import SlidesPage from './pages/SlidesPage';
+import HotspotsPage from './pages/HotspotsPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './pages/auth/LoginPage';
 import FirstLoginPage from './pages/auth/FirstLoginPage';
@@ -17,6 +18,7 @@ import ProfilePage from './pages/auth/ProfilePage';
 import StoragePage from './pages/admin/StoragePage';
 
 const SlideViewerPage = lazy(() => import('./pages/SlideViewerPage'));
+const HotspotViewerPage = lazy(() => import('./pages/HotspotViewerPage'));
 
 function RequireAuth({ children, role }: { children: ReactElement, role?: 'ADMIN' | 'ANNOTATOR' }) {
   const { user, isLoading } = useAuth();
@@ -78,6 +80,15 @@ function App() {
                     element={
                       <Suspense fallback={<Spinner label="Wczytywanie przeglądarki…" />}>
                         <SlideViewerPage />
+                      </Suspense>
+                    }
+                  />
+                  <Route path="/hotspots" element={<HotspotsPage />} />
+                  <Route
+                    path="/hotspots/:hotspotId"
+                    element={
+                      <Suspense fallback={<Spinner label="Wczytywanie przeglądarki…" />}>
+                        <HotspotViewerPage />
                       </Suspense>
                     }
                   />

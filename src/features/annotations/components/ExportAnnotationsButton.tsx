@@ -1,14 +1,16 @@
 import Button from '../../../components/ui/Button';
 import { useDownload } from '../../../hooks/useDownload';
 import { fetchAnnotationsGeoJson } from '../../../services/annotationsApi';
-import type { Slide } from '../../../types/slide';
+import type { AnnotationOwner } from '../../../types/annotation';
 
 interface ExportAnnotationsButtonProps {
-  slide: Pick<Slide, 'id' | 'name'>;
+  owner: AnnotationOwner;
+  /** Name of the slide or hotspot, used in the downloaded file's name. */
+  name: string;
   onError: (message: string) => void;
 }
 
-export default function ExportAnnotationsButton({ slide, onError }: ExportAnnotationsButtonProps) {
+export default function ExportAnnotationsButton({ owner, name, onError }: ExportAnnotationsButtonProps) {
   const { isDownloading, download } = useDownload(onError);
 
   return (
@@ -18,8 +20,8 @@ export default function ExportAnnotationsButton({ slide, onError }: ExportAnnota
       disabled={isDownloading}
       onClick={() =>
         void download(
-          () => fetchAnnotationsGeoJson(slide.id),
-          `annotations_${slide.name}.geojson`,
+          () => fetchAnnotationsGeoJson(owner),
+          `annotations_${name}.geojson`,
           'Nie udało się wyeksportować anotacji.',
         )
       }

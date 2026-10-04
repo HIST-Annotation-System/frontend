@@ -6,12 +6,12 @@ import {
   listAnnotations,
   updateAnnotation,
 } from '../../../services/annotationsApi';
-import type { Annotation, AnnotationCreate, AnnotationUpdate } from '../../../types/annotation';
+import type { Annotation, AnnotationCreate, AnnotationOwner, AnnotationUpdate } from '../../../types/annotation';
 
-export function useAnnotations(slideId: string) {
+export function useAnnotations(owner: AnnotationOwner) {
   return useQuery({
-    queryKey: annotationQueryKeys.forSlide(slideId),
-    queryFn: ({ signal }) => listAnnotations(slideId, signal),
+    queryKey: annotationQueryKeys.forOwner(owner),
+    queryFn: ({ signal }) => listAnnotations(owner, signal),
   });
 }
 
@@ -21,29 +21,29 @@ interface UpdateVariables {
 }
 
 /**
- * Create/update/delete requests for one slide. Results are written straight into the query cache
+ * Create/update/delete requests for one slide or hotspot. Results are written straight into the query cache
  * instead of refetching, so edits still in progress in the annotator are never overwritten.
  */
-export function useAnnotationMutations(slideId: string) {
+export function useAnnotationMutations(owner: AnnotationOwner) {
   const queryClient = useQueryClient();
   const updateCache = (update: (annotations: Annotation[]) => Annotation[]) =>
-    queryClient.setQueryData<Annotation[]>(annotationQueryKeys.forSlide(slideId), (current) => update(current ?? []));
+    queryClient.setQueryData<Annotation[]>(annotationQueryKeys.forOwner(owner), (current) => update(current ?? []));
   /** The server's latest copy of an annotation, as held in the query cache. */
   const getSavedAnnotation = (annotationId: string): Annotation | undefined =>
     queryClient
-      .getQueryData<Annotation[]>(annotationQueryKeys.forSlide(slideId))
+      .getQueryData<Annotation[]>(annotationQueryKeys.forOwner(owner))
       ?.find((item) => item.id === annotationId);
 
   const { mutateAsync: create } = useMutation({
-    mutationFn: (payload: AnnotationCreate) => createAnnotation(slideId, payload),
+    mutationFn: (payload: AnnotationCreate) => createAnnotation(owner, payload),
     onSuccess: (saved) => updateCache((current) => [...current.filter((item) => item.id !== saved.id), saved]),
   });
   const { mutateAsync: update } = useMutation({
-    mutationFn: ({ id, changes }: UpdateVariables) => updateAnnotation(slideId, id, changes),
+    mutationFn: ({ id, changes }: UpdateVariables) => updateAnnotation(owner, id, changes),
     onSuccess: (saved) => updateCache((current) => current.map((item) => (item.id === saved.id ? saved : item))),
   });
   const { mutateAsync: remove } = useMutation({
-    mutationFn: (id: string) => deleteAnnotation(slideId, id),
+    mutationFn: (id: string) => deleteAnnotation(owner, id),
     onSuccess: (_result, id) => updateCache((current) => current.filter((item) => item.id !== id)),
   });
 

@@ -28,6 +28,9 @@ export default function AppLayout() {
             <NavLink to="/" end className="app-header__tab">
               Biblioteka slajdów
             </NavLink>
+            <NavLink to="/hotspots" className="app-header__tab">
+              Hotspoty
+            </NavLink>
             {user?.role === 'ADMIN' && (
               <NavLink to="/admin" className="app-header__tab">
                 Administracja

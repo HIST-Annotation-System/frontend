@@ -29,7 +29,7 @@ export default function AnnotationListItem({
       <button
         type="button"
         className="annotation-item__main"
-        title="Pokaż anotację na slajdzie"
+        title="Pokaż anotację na obrazie"
         onClick={() => onSelect(annotation.id)}
       >
         <span className="annotation-item__swatch" style={{ background: color }} aria-hidden="true" />

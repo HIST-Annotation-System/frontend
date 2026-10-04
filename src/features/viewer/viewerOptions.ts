@@ -1,7 +1,8 @@
 import type OpenSeadragon from 'openseadragon';
 
-export const createViewerOptions = (dziUrl: string): OpenSeadragon.Options => ({
-  tileSources: dziUrl,
+/** Viewer options for a Deep Zoom descriptor URL, or another tile source (e.g. a single image). */
+export const createViewerOptions = (tileSources: OpenSeadragon.Options['tileSources']): OpenSeadragon.Options => ({
+  tileSources,
   // Tiles come from the API origin; OpenSeadragon 6 picks the WebGL drawer, which needs CORS-enabled images.
   crossOriginPolicy: 'Anonymous',
   // Navigation buttons are custom React controls, so OpenSeadragon's image buttons (prefixUrl) are not needed.
