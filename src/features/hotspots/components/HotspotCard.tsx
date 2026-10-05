@@ -5,11 +5,12 @@ import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Modal from '../../../components/ui/Modal';
 import { getHotspotThumbnailUrl } from '../../../services/hotspotsApi';
-import type { Hotspot, HotspotFolder } from '../../../types/hotspot';
+import type { Hotspot, HotspotFolder, HotspotSort } from '../../../types/hotspot';
 import { getErrorMessage } from '../../../utils/errors';
 import { useHotspotMutations } from '../hooks/useHotspots';
 import { formatDimensions } from '../../../utils/format';
 import { formatLength } from '../utils/hotspotFormat';
+import { formatSortValue, HOTSPOT_SORT_OPTIONS } from '../utils/hotspotSort';
 import HotspotSource from './HotspotSource';
 import '../../slides/components/SlideList.css';
 import './Hotspots.css';
@@ -17,14 +18,18 @@ import './Hotspots.css';
 interface HotspotCardProps {
   hotspot: Hotspot;
   folders: HotspotFolder[];
+  /** The catalog's order; a feature's value is shown on the card. */
+  sort: HotspotSort;
 }
 
-export default function HotspotCard({ hotspot, folders }: HotspotCardProps) {
+export default function HotspotCard({ hotspot, folders, sort }: HotspotCardProps) {
   const { updateHotspot, isUpdating, deleteHotspot, isDeleting } = useHotspotMutations();
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const physicalSize = hotspot.mpp ? ` · ${formatLength(hotspot.image_width, hotspot.mpp)}` : '';
+  const sortValue = formatSortValue(hotspot, sort);
+  const sortLabel = HOTSPOT_SORT_OPTIONS.find((option) => option.value === sort)?.label;
 
   const saveName = async () => {
     const name = nameDraft?.trim();
@@ -129,6 +134,11 @@ export default function HotspotCard({ hotspot, folders }: HotspotCardProps) {
           {formatDimensions(hotspot.image_width, hotspot.image_height)}
           {physicalSize}
         </span>
+        {sortValue !== null && (
+          <span className="slide-card__meta">
+            {sortLabel}: <span className="mono-data">{sortValue}</span>
+          </span>
+        )}
         <select
           className="hotspot-card__move"
           aria-label="Przenieś do folderu"

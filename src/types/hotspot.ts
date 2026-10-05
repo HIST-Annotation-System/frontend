@@ -7,6 +7,13 @@ export interface HotspotFolder {
 
 export type HotspotImageType = 'png' | 'jpeg';
 
+/** Image descriptors computed on a hotspot's thumbnail; the catalog can be sorted by any of them. */
+export type HotspotFeature = 'entropy' | 'glcm_contrast' | 'edge_density' | 'colorfulness';
+
+export type HotspotSort = 'created_at' | HotspotFeature;
+
+export type SortOrder = 'asc' | 'desc';
+
 /**
  * An image to annotate: a square captured from a slide (it outlives the slide), or an uploaded PNG/JPEG
  * (all slide fields null).
@@ -29,6 +36,8 @@ export interface Hotspot {
   image_type: HotspotImageType;
   /** Microns per pixel of the stored image, when the slide reports it. */
   mpp: number | null;
+  /** Feature values; null (or a key missing) when they could not be computed. */
+  features: Partial<Record<HotspotFeature, number>> | null;
   created_at: string;
 }
 

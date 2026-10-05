@@ -4,15 +4,24 @@ import SidebarSection from '../components/ui/SidebarSection';
 import Spinner from '../components/ui/Spinner';
 import HotspotCard from '../features/hotspots/components/HotspotCard';
 import HotspotFolderList from '../features/hotspots/components/HotspotFolderList';
+import HotspotSortControl from '../features/hotspots/components/HotspotSortControl';
 import HotspotUploadButtons from '../features/hotspots/components/HotspotUploadButtons';
 import { useHotspotFolders, useHotspots } from '../features/hotspots/hooks/useHotspots';
-import type { HotspotFolder } from '../types/hotspot';
+import {
+  DEFAULT_HOTSPOT_SORT,
+  DEFAULT_SORT_ORDER,
+  parseHotspotSort,
+  parseSortOrder,
+} from '../features/hotspots/utils/hotspotSort';
+import type { HotspotFolder, HotspotSort, SortOrder } from '../types/hotspot';
 import { getErrorMessage } from '../utils/errors';
 import '../features/slides/components/SlideList.css';
 import './HotspotsPage.css';
 import './SlideViewerPage.css';
 
 const FOLDER_PARAM = 'folder';
+const SORT_PARAM = 'sort';
+const ORDER_PARAM = 'order';
 
 /** The hotspot catalog: folders on the left, the selected folder's hotspots on the right. */
 export default function HotspotsPage() {
@@ -23,7 +32,18 @@ export default function HotspotsPage() {
   // An unknown or missing folder (e.g. just deleted) falls back to the first one.
   const selected = folders.find((folder) => folder.id === requestedId) ?? folders[0] ?? null;
 
-  const select = (folderId: string) => setSearchParams({ [FOLDER_PARAM]: folderId }, { replace: true });
+  const sort = parseHotspotSort(searchParams.get(SORT_PARAM));
+  const order = parseSortOrder(searchParams.get(ORDER_PARAM));
+
+  // The chosen order stays when switching folders; defaults are left out of the URL.
+  const updateParams = (folderId: string | null, nextSort: HotspotSort, nextOrder: SortOrder) => {
+    const params: Record<string, string> = {};
+    if (folderId) params[FOLDER_PARAM] = folderId;
+    if (nextSort !== DEFAULT_HOTSPOT_SORT) params[SORT_PARAM] = nextSort;
+    if (nextOrder !== DEFAULT_SORT_ORDER) params[ORDER_PARAM] = nextOrder;
+    setSearchParams(params, { replace: true });
+  };
+  const select = (folderId: string) => updateParams(folderId, sort, order);
 
   return (
     <div className="viewer-page">
@@ -40,7 +60,13 @@ export default function HotspotsPage() {
       </aside>
       <div className="hotspots-page">
         {selected ? (
-          <FolderContents folder={selected} folders={folders} />
+          <FolderContents
+            folder={selected}
+            folders={folders}
+            sort={sort}
+            order={order}
+            onSortChange={(nextSort, nextOrder) => updateParams(selected.id, nextSort, nextOrder)}
+          />
         ) : (
           !foldersQuery.isPending && (
             <p className="slide-list__empty">
@@ -57,10 +83,13 @@ export default function HotspotsPage() {
 interface FolderContentsProps {
   folder: HotspotFolder;
   folders: HotspotFolder[];
+  sort: HotspotSort;
+  order: SortOrder;
+  onSortChange: (sort: HotspotSort, order: SortOrder) => void;
 }
 
-function FolderContents({ folder, folders }: FolderContentsProps) {
-  const { data, isPending, isError, error } = useHotspots(folder.id);
+function FolderContents({ folder, folders, sort, order, onSortChange }: FolderContentsProps) {
+  const { data, isPending, isError, error, isPlaceholderData } = useHotspots(folder.id, sort, order);
 
   return (
     <div className="hotspots-page__inner">
@@ -68,6 +97,7 @@ function FolderContents({ folder, folders }: FolderContentsProps) {
         <h1 className="hotspots-page__title">{folder.name}</h1>
         <HotspotUploadButtons folderId={folder.id} folderName={folder.name} />
       </div>
+      {folder.hotspot_count > 0 && <HotspotSortControl sort={sort} order={order} onChange={onSortChange} />}
       {isPending ? (
         <Spinner label="Wczytywanie hotspotów…" />
       ) : isError ? (
@@ -78,10 +108,10 @@ function FolderContents({ folder, folders }: FolderContentsProps) {
           „Hotspot” w przeglądarce slajdów.
         </p>
       ) : (
-        <ul className="slide-list">
+        <ul className={`slide-list${isPlaceholderData ? ' hotspots-page__list--stale' : ''}`} aria-busy={isPlaceholderData}>
           {data.map((hotspot) => (
             <li key={hotspot.id}>
-              <HotspotCard hotspot={hotspot} folders={folders} />
+              <HotspotCard hotspot={hotspot} folders={folders} sort={sort} />
             </li>
           ))}
         </ul>

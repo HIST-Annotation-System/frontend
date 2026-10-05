@@ -11,7 +11,7 @@ import {
   renameHotspotFolder,
   updateHotspot,
 } from '../../../services/hotspotsApi';
-import type { HotspotCreate, HotspotUpdate } from '../../../types/hotspot';
+import type { HotspotCreate, HotspotSort, HotspotUpdate, SortOrder } from '../../../types/hotspot';
 
 export function useHotspotFolders() {
   return useQuery({
@@ -20,11 +20,14 @@ export function useHotspotFolders() {
   });
 }
 
-export function useHotspots(folderId: string | null) {
+export function useHotspots(folderId: string | null, sort: HotspotSort, order: SortOrder) {
   return useQuery({
-    queryKey: hotspotQueryKeys.list(folderId ?? ''),
-    queryFn: ({ signal }) => listHotspots(folderId ?? '', signal),
+    queryKey: hotspotQueryKeys.list(folderId ?? '', sort, order),
+    queryFn: ({ signal }) => listHotspots(folderId ?? '', sort, order, signal),
     enabled: folderId !== null,
+    // Keeps the current cards on screen while the same folder loads in another order (not another folder).
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[2] === (folderId ?? '') ? previous : undefined,
   });
 }
 

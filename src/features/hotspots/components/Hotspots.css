@@ -101,7 +101,8 @@
 .hotspot-form__field select,
 .hotspot-folders__new input,
 .hotspot-folders__name-input,
-.hotspot-card__move {
+.hotspot-card__move,
+.hotspot-sort__select {
   height: 32px;
   padding: 0 var(--space-sm);
   border: var(--border);
@@ -287,4 +288,12 @@
   padding: 0 0 0 var(--space-md);
   overflow-y: auto;
   color: var(--color-error);
+}
+
+/* Catalog order. */
+.hotspot-sort {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
 }

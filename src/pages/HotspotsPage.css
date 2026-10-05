@@ -32,3 +32,8 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
+
+.hotspots-page__list--stale {
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
