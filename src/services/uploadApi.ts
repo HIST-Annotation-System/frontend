@@ -1,30 +1,27 @@
 import type {
   ImportFromStorageResponse,
-  PresignedUrlsResponse,
   RefreshUrlsResponse,
+  StartUploadRequest,
   StartUploadResponse,
+  UploadedPartsResponse,
   UploadPart,
 } from '../types/upload';
 import { UploadCancelledError } from '../utils/errors';
 import { ApiError, httpClient } from './httpClient';
 
-export const startMultipartUpload = async (filename: string): Promise<StartUploadResponse> =>
-  (await httpClient.post<StartUploadResponse>('/upload/start', { filename })).data;
+export const startMultipartUpload = async (file: File, allowDuplicate = false): Promise<StartUploadResponse> => {
+  const request: StartUploadRequest = { filename: file.name, file_size: file.size, allow_duplicate: allowDuplicate };
+  return (await httpClient.post<StartUploadResponse>('/upload/start', request)).data;
+};
 
-export const getPresignedUrls = async (
-  slideId: string,
-  uploadId: string,
-  totalParts: number,
-): Promise<PresignedUrlsResponse> =>
-  (
-    await httpClient.post<PresignedUrlsResponse>('/upload/presigned-urls', {
-      slide_id: slideId,
-      upload_id: uploadId,
-      total_parts: totalParts,
-    })
-  ).data;
+/** Shares this browser's upload progress, so other tabs and admins see it on the slide card. */
+export const reportUploadProgress = async (slideId: string, percent: number): Promise<void> => {
+  await httpClient.post(`/upload/${slideId}/progress`, { percent });
+};
 
-export const refreshPresignedUrls = async (
+/** Presigned PUT URLs for the given parts. Used for every batch, not only expired ones: URLs are
+ * fetched just ahead of the parts that need them, so a long upload never starts on stale URLs. */
+export const presignParts = async (
   slideId: string,
   uploadId: string,
   pendingParts: number[],
@@ -37,10 +34,9 @@ export const refreshPresignedUrls = async (
     })
   ).data;
 
-/** Aborts an upload that failed halfway, so no multipart upload or `uploading` slide is left behind. */
-export const cancelMultipartUpload = async (slideId: string): Promise<void> => {
-  await httpClient.post(`/upload/${slideId}/cancel`);
-};
+/** Parts already in storage, to resume an interrupted upload (fails once the upload was aborted). */
+export const listUploadedParts = async (slideId: string, uploadId: string): Promise<UploadedPartsResponse> =>
+  (await httpClient.get<UploadedPartsResponse>(`/upload/${slideId}/parts`, { params: { upload_id: uploadId } })).data;
 
 export const completeMultipartUpload = async (
   slideId: string,

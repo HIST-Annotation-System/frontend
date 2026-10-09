@@ -22,6 +22,10 @@ export interface Slide {
   /** Bounding box of the detected tissue, in level-0 pixels. */
   tissue_bbox: Rect | null;
   created_at: string;
+  /** Username of the admin who uploaded/imported the slide; null for older slides or a deleted account. */
+  uploaded_by: string | null;
+  /** Optimistic-concurrency token: sent back in `If-Match` on rename/delete (409 if someone changed it). */
+  version: string;
 }
 
 export interface SlideDetail extends Slide {

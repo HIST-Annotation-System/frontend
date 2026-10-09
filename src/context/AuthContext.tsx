@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '../services/usersApi';
 import { authApi } from '../services/authApi';
 import type { AccountResponse } from '../types/user';
-import type { LoginRequest, ProfileSetup, TokenResponse } from '../types/auth';
+import type { LoginRequest, ProfileSetup } from '../types/auth';
 import { ApiError } from '../services/httpClient';
 
 interface AuthContextType {

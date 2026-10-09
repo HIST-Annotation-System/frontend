@@ -7,11 +7,14 @@ type QueryParams = Record<string, string | number>;
 
 export class ApiError extends Error {
   readonly status: number | null;
+  /** Backend error code (`{ detail, code }`), when the API sends one. */
+  readonly code: string | null;
 
-  constructor(message: string, status: number | null = null) {
+  constructor(message: string, status: number | null = null, code: string | null = null) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -37,7 +40,11 @@ const toApiError = async (error: unknown): Promise<ApiError> => {
   if (error instanceof ApiError) return error;
   if (isAxiosError(error)) {
     const body = await readErrorBody(error.response?.data);
-    return new ApiError(body ? describeDetail(body.detail) : error.message, error.response?.status ?? null);
+    return new ApiError(
+      body ? describeDetail(body.detail) : error.message,
+      error.response?.status ?? null,
+      body?.code ?? null,
+    );
   }
   return new ApiError(error instanceof Error ? error.message : 'Unexpected error');
 };

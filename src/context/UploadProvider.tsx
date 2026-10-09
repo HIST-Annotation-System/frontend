@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { useMultipartUpload } from '../features/upload/hooks/useMultipartUpload';
+import { useUploadQueue } from '../features/upload/hooks/useUploadQueue';
 
-type UploadContextValue = ReturnType<typeof useMultipartUpload>;
+type UploadContextValue = ReturnType<typeof useUploadQueue>;
 
 const UploadContext = createContext<UploadContextValue | null>(null);
 
@@ -9,9 +9,9 @@ interface UploadProviderProps {
   children: ReactNode;
 }
 
-/** Mounted above the router so an in-progress upload survives navigating between pages. */
+/** Mounted above the router so the upload queue survives navigating between pages. */
 export default function UploadProvider({ children }: UploadProviderProps) {
-  const value = useMultipartUpload();
+  const value = useUploadQueue();
   return <UploadContext.Provider value={value}>{children}</UploadContext.Provider>;
 }
 

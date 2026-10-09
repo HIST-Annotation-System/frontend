@@ -1,50 +1,46 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState, type DragEvent } from 'react';
+import { useRef, useState, type DragEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Modal from '../../../components/ui/Modal';
 import { useUpload } from '../../../context/UploadProvider';
 import StorageFilePicker from '../../storage/components/StorageFilePicker';
-import { useSlide } from '../../slides/hooks/useSlide';
 import { slideQueryKeys } from '../../../services/slidesApi';
 import { importFromStorage } from '../../../services/uploadApi';
 import type { StorageObject } from '../../../types/storage';
 import { getErrorMessage } from '../../../utils/errors';
-import { formatBytes } from '../../../utils/format';
 import { ACCEPTED_UPLOAD_EXTENSIONS } from '../slideFileRules';
+import InterruptedUploads from './InterruptedUploads';
 import SlideFormatGuide from './SlideFormatGuide';
+import UploadQueueList from './UploadQueueList';
 import './WsiUploader.css';
+
+const ALREADY_IMPORTED = 'Ten plik był już zaimportowany - w bibliotece jest istniejący slajd.';
 
 export default function WsiUploader() {
   const [isDragging, setIsDragging] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [importNotice, setImportNotice] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  const { status, progress, message, slideId, file, selectFile, upload, cancel } = useUpload();
-  const isUploading = status === 'uploading';
-  // "Wgraj" must stay disabled through server-side ingestion too, not just the browser upload -
-  // clicking it while "completed" would kick off a second upload of the same file mid-ingest.
-  const isBusy = isUploading || status === 'completed';
+  const { enqueue: addToQueue } = useUpload();
+  const [queueNotice, setQueueNotice] = useState<string | null>(null);
 
-  // The upload itself finishes at "completed", but ingestion keeps running server-side; watch the
-  // created slide so this panel doesn't keep saying "processing" forever once it's actually done.
-  const ingestedSlide = useSlide(slideId ?? '', { enabled: status === 'completed' && slideId !== null });
-  useEffect(() => {
-    if (status !== 'completed' || !ingestedSlide.data) return;
-    // Ready or failed - either way ingestion is done and the slide card below shows the outcome.
-    if (ingestedSlide.data.status === 'ready' || ingestedSlide.data.status === 'failed') {
-      selectFile(null);
-    }
-  }, [status, ingestedSlide.data, selectFile]);
+  const enqueue = (files: Iterable<File>) => {
+    const skipped = addToQueue(files);
+    setQueueNotice(skipped > 0 ? `Pominięto pliki już dodane do kolejki: ${skipped}.` : null);
+  };
 
   const selectFromStorage = async (object: StorageObject) => {
     setIsPickerOpen(false);
     setIsImporting(true);
     setImportError(null);
+    setImportNotice(null);
     try {
-      await importFromStorage(object.key);
+      const { created } = await importFromStorage(object.key);
+      if (!created) setImportNotice(ALREADY_IMPORTED);
       void queryClient.invalidateQueries({ queryKey: slideQueryKeys.all });
     } catch (error) {
       setImportError(getErrorMessage(error, 'Nie udało się zaimportować pliku z magazynu.'));
@@ -55,13 +51,13 @@ export default function WsiUploader() {
 
   const handleDragOver = (event: DragEvent) => {
     event.preventDefault();
-    if (!isUploading) setIsDragging(true);
+    setIsDragging(true);
   };
 
   const handleDrop = (event: DragEvent) => {
     event.preventDefault();
     setIsDragging(false);
-    if (!isUploading) selectFile(event.dataTransfer.files[0] ?? null);
+    enqueue(event.dataTransfer.files);
   };
 
   return (
@@ -73,55 +69,38 @@ export default function WsiUploader() {
     >
       <div className="wsi-uploader__pick">
         <p className="wsi-uploader__prompt">
-          Przeciągnij plik lub
-          <Button disabled={isUploading} onClick={() => inputRef.current?.click()}>
-            Wybierz plik
-          </Button>
+          Przeciągnij pliki lub
+          <Button onClick={() => inputRef.current?.click()}>Wybierz pliki</Button>
           lub
           <Button disabled={isImporting} onClick={() => setIsPickerOpen(true)}>
             {isImporting ? 'Importowanie…' : 'Wybierz z magazynu'}
           </Button>
         </p>
         <p className="wsi-uploader__hint">
-          Pojedynczy plik lub archiwum .zip dla formatów wieloplikowych - szczegóły poniżej.
+          Można wybrać kilka plików naraz - trafią do kolejki. Formaty wieloplikowe jako archiwum .zip, szczegóły
+          poniżej.
         </p>
         {importError && <ErrorMessage message={importError} onDismiss={() => setImportError(null)} />}
+        {importNotice && <p className="wsi-uploader__message">{importNotice}</p>}
+        {queueNotice && <p className="wsi-uploader__message">{queueNotice}</p>}
       </div>
 
-      {file && (
-        <>
-          <div className={`wsi-uploader__file wsi-uploader__file--${status}`}>
-            <div className="wsi-uploader__file-row">
-              <span className="wsi-uploader__name" title={file.name}>
-                {file.name}
-              </span>
-              <span className="mono-data">
-                {formatBytes(file.size)}
-                {isUploading && ` · ${progress}%`}
-              </span>
-            </div>
-            {(isUploading || status === 'completed') && (
-              <progress className="wsi-uploader__progress" value={progress} max={100} aria-label="Postęp przesyłania" />
-            )}
-            {message && <p className="wsi-uploader__message">{message}</p>}
-          </div>
-          <div className="wsi-uploader__file-actions">
-            <Button variant="primary" onClick={() => void upload(file)} disabled={isBusy}>
-              {isUploading ? 'Wgrywanie…' : status === 'completed' ? 'Przetwarzanie…' : 'Wgraj'}
-            </Button>
-            {isUploading && <Button onClick={() => void cancel()}>Anuluj</Button>}
-          </div>
-        </>
-      )}
+      <InterruptedUploads />
+      <UploadQueueList />
 
       <SlideFormatGuide />
 
       <input
         ref={inputRef}
         type="file"
+        multiple
         accept={ACCEPTED_UPLOAD_EXTENSIONS.join(',')}
         hidden
-        onChange={(event) => selectFile(event.target.files?.[0] ?? null)}
+        onChange={(event) => {
+          enqueue(event.target.files ?? []);
+          // Allows picking the same file again (e.g. after removing it from the queue).
+          event.target.value = '';
+        }}
       />
 
       <Modal title="Wybierz plik z magazynu" open={isPickerOpen} onClose={() => setIsPickerOpen(false)}>

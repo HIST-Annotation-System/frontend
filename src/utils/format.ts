@@ -15,3 +15,15 @@ export const formatDimensions = (width: number | null, height: number | null): s
 
 export const formatDateTime = (isoDate: string): string =>
   new Date(isoDate).toLocaleString('pl-PL', { dateStyle: 'medium', timeStyle: 'short' });
+
+export const formatTransferRate = (bytesPerSecond: number): string => `${formatBytes(bytesPerSecond)}/s`;
+
+/** Remaining time, rounded the way people read it: "~45 s", "~3 min 20 s", "~1 h 5 min". */
+export const formatRemainingTime = (seconds: number): string => {
+  const total = Math.max(1, Math.round(seconds));
+  if (total < 60) return `~${total} s`;
+  const minutes = Math.floor(total / 60);
+  if (minutes < 60) return `~${minutes} min${total % 60 ? ` ${total % 60} s` : ''}`;
+  const hours = Math.floor(minutes / 60);
+  return `~${hours} h${minutes % 60 ? ` ${minutes % 60} min` : ''}`;
+};

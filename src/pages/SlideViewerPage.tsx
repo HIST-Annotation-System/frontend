@@ -17,6 +17,7 @@ import HotspotCaptureOverlay from '../features/hotspots/components/HotspotCaptur
 import HotspotSavedNotice from '../features/hotspots/components/HotspotSavedNotice';
 import SlideStatusBadge from '../features/slides/components/SlideStatusBadge';
 import { useSlide } from '../features/slides/hooks/useSlide';
+import { isSlideGone } from '../features/slides/utils/slideConflicts';
 import SlideInfoPanel from '../features/viewer/components/SlideInfoPanel';
 import SlideViewer from '../features/viewer/components/SlideViewer';
 import type { AnnotationClass, AnnotationOwner } from '../types/annotation';
@@ -33,10 +34,17 @@ export default function SlideViewerPage() {
   if (slideQuery.isPending || classesQuery.isPending) {
     return <Spinner label="Wczytywanie slajdu…" />;
   }
-  if (slideQuery.isError || classesQuery.isError) {
+  // The slide is re-checked periodically. A failed re-check keeps the workspace (a network blip must
+  // not throw the user out of the editor); a 404 means someone deleted it - the workspace stays
+  // visible underneath but blocked, instead of letting tiles and saves fail one by one.
+  const isDeleted = isSlideGone(slideQuery.error);
+  if (!slideQuery.data || !classesQuery.data) {
+    const message = isDeleted
+      ? 'Ten slajd nie istnieje albo został usunięty.'
+      : getErrorMessage(slideQuery.error ?? classesQuery.error, 'Nie udało się wczytać slajdu.');
     return (
       <div className="viewer-page__notice">
-        <ErrorMessage message={getErrorMessage(slideQuery.error ?? classesQuery.error, 'Nie udało się wczytać slajdu.')} />
+        <ErrorMessage message={message} />
         <Link to="/">Wróć do biblioteki slajdów</Link>
       </div>
     );
@@ -59,15 +67,17 @@ export default function SlideViewerPage() {
   }
 
   // Keyed by slide: switching slides mounts a fresh viewer and annotator.
-  return <SlideWorkspace key={slide.id} slide={slide} classes={classesQuery.data} />;
+  return <SlideWorkspace key={slide.id} slide={slide} classes={classesQuery.data} deleted={isDeleted} />;
 }
 
 interface SlideWorkspaceProps {
   slide: SlideDetail;
   classes: AnnotationClass[];
+  /** Deleted by someone else while open here. */
+  deleted: boolean;
 }
 
-function SlideWorkspace({ slide, classes }: SlideWorkspaceProps) {
+function SlideWorkspace({ slide, classes, deleted }: SlideWorkspaceProps) {
   const tool = useAnnotationTool(classes);
   const [error, setError] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -142,12 +152,24 @@ function SlideWorkspace({ slide, classes }: SlideWorkspaceProps) {
               {savedHotspot && <HotspotSavedNotice hotspot={savedHotspot} onDismiss={() => setSavedHotspot(null)} />}
             </SlideViewer>
           </AnnotationLayer>
-          {error && (
+          {error && !deleted && (
             <div className="viewer-page__error">
               <ErrorMessage message={error} onDismiss={() => setError(null)} />
             </div>
           )}
         </div>
+        {deleted && (
+          <div className="viewer-page__deleted" role="alertdialog" aria-labelledby="viewer-page-deleted-title">
+            <div className="viewer-page__deleted-box">
+              <h2 id="viewer-page-deleted-title">Slajd został usunięty</h2>
+              <p>
+                Inny administrator usunął slajd „{slide.name}” wraz z jego anotacjami. Dalsza praca na nim nie jest
+                możliwa.
+              </p>
+              <Link to="/">Wróć do biblioteki slajdów</Link>
+            </div>
+          </div>
+        )}
       </div>
     </Annotorious>
   );

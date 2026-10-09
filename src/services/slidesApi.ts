@@ -14,11 +14,14 @@ export const listSlides = async (signal?: AbortSignal): Promise<Slide[]> =>
 export const getSlide = async (slideId: string, signal?: AbortSignal): Promise<SlideDetail> =>
   (await httpClient.get<SlideDetail>(`/slides/${slideId}`, { signal })).data;
 
-export const renameSlide = async (slideId: string, name: string): Promise<Slide> =>
-  (await httpClient.patch<Slide>(`/slides/${slideId}`, { name })).data;
+/** `version` is the slide's version the user saw: the backend answers 409 if someone changed it since. */
+const ifMatch = (version: string) => ({ 'If-Match': `"${version}"` });
 
-export const deleteSlide = async (slideId: string): Promise<void> => {
-  await httpClient.delete(`/slides/${slideId}`);
+export const renameSlide = async (slideId: string, name: string, version: string): Promise<Slide> =>
+  (await httpClient.patch<Slide>(`/slides/${slideId}`, { name }, { headers: ifMatch(version) })).data;
+
+export const deleteSlide = async (slideId: string, version: string): Promise<void> => {
+  await httpClient.delete(`/slides/${slideId}`, { headers: ifMatch(version) });
 };
 
 /** Deep Zoom descriptor; OpenSeadragon derives the tile URLs from it. */

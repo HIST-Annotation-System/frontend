@@ -46,3 +46,8 @@
 .upload-status-bar__progress::-moz-progress-bar {
   background: var(--color-primary);
 }
+
+.upload-status-bar__details {
+  font-size: 12px;
+  color: var(--color-secondary);
+}
