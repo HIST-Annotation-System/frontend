@@ -41,13 +41,31 @@ export interface Hotspot {
   created_at: string;
 }
 
-export interface HotspotCreate {
+/** Fixed-size slide squares to cut out into hotspots, each named `{name_prefix} ({x}, {y})`. */
+export interface HotspotBatchCreate {
+  /** Chosen by the client, so a retried request does not start the batch twice. */
+  id: string;
   slide_id: string;
   folder_id: string;
-  name: string;
-  x: number;
-  y: number;
-  size: number;
+  name_prefix: string;
+  /** Level-0 [x, y] top-left corner of each box to cut out. */
+  boxes: [number, number][];
+}
+
+export type HotspotBatchStatus = 'running' | 'done' | 'failed';
+
+/** Hotspots being cut out of a slide in the background. */
+export interface HotspotBatch {
+  id: string;
+  slide_id: string;
+  slide_name: string;
+  folder_id: string;
+  folder_name: string;
+  total: number;
+  done: number;
+  status: HotspotBatchStatus;
+  error_message: string | null;
+  created_at: string;
 }
 
 export interface HotspotUpdate {

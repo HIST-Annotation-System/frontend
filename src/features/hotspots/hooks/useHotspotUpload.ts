@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { hotspotQueryKeys, uploadHotspotImage } from '../../../services/hotspotsApi';
 import { getErrorMessage } from '../../../utils/errors';
 
@@ -9,6 +9,9 @@ export interface HotspotUploadFailure {
 }
 
 export interface HotspotUploadState {
+  /** The folder the files go to. */
+  folderId: string | null;
+  folderName: string | null;
   isUploading: boolean;
   done: number;
   total: number;
@@ -19,27 +22,24 @@ export interface HotspotUploadState {
   skipped: number;
 }
 
-const IDLE: HotspotUploadState = { isUploading: false, done: 0, total: 0, current: null, failures: [], skipped: 0 };
+const IDLE: HotspotUploadState = { folderId: null, folderName: null, isUploading: false, done: 0, total: 0, current: null, failures: [], skipped: 0 };
 
 /**
  * Uploads images into a hotspot folder one by one: the server handles a single file per request, so one
  * bad file only fails itself, and progress is reported per file. Each saved image appears in the
- * catalog right away.
+ * catalog right away. Used through `HotspotUploadProvider`, so uploads go on while navigating in the app.
  */
 export function useHotspotUpload() {
   const queryClient = useQueryClient();
   const [state, setState] = useState<HotspotUploadState>(IDLE);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Leaving the page stops the remaining uploads.
-  useEffect(() => () => abortRef.current?.abort(), []);
-
   const upload = useCallback(
-    async (folderId: string, files: File[], skipped: number) => {
+    async (folderId: string, folderName: string, files: File[], skipped: number) => {
       const controller = new AbortController();
       abortRef.current = controller;
       const failures: HotspotUploadFailure[] = [];
-      setState({ isUploading: true, done: 0, total: files.length, current: null, failures, skipped });
+      setState({ folderId, folderName, isUploading: true, done: 0, total: files.length, current: null, failures, skipped });
 
       for (const [index, file] of files.entries()) {
         if (controller.signal.aborted) break;

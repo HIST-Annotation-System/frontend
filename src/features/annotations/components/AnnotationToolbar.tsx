@@ -2,7 +2,7 @@ import { Redo2, Undo2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Button from '../../../components/ui/Button';
 import FloatingToolbar from '../../../components/ui/FloatingToolbar';
-import type { ToolMode } from '../hooks/useAnnotationTool';
+import type { ToolMode } from '../../../types/annotation';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
 import ToolModeToggle from './ToolModeToggle';
 import './AnnotationTools.css';

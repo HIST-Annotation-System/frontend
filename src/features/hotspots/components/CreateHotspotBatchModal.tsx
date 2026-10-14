@@ -3,29 +3,33 @@ import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Modal from '../../../components/ui/Modal';
 import { apiUrl } from '../../../services/httpClient';
-import type { Hotspot } from '../../../types/hotspot';
+import type { HotspotBatch } from '../../../types/hotspot';
 import type { SlideDetail } from '../../../types/slide';
 import { getErrorMessage } from '../../../utils/errors';
 import { useHotspotFolders, useHotspotMutations } from '../hooks/useHotspots';
 import { formatSquareSize } from '../utils/hotspotFormat';
-import type { SlideSquare } from '../utils/hotspotSquare';
+import { HOTSPOT_BOX_SIZE, type Box } from '../utils/hotspotBoxes';
 import { readLastFolderId, rememberLastFolderId } from '../utils/lastFolder';
 
 const NEW_FOLDER = '__new__';
 const DEFAULT_FOLDER_NAME = 'Hotspoty';
 const PREVIEW_SIZE = 240;
 
-interface CreateHotspotModalProps {
+interface CreateHotspotBatchModalProps {
   slide: SlideDetail;
-  square: SlideSquare;
+  /** The chosen boxes (at least one). */
+  boxes: Box[];
   onClose: () => void;
-  onCreated: (hotspot: Hotspot) => void;
+  onCreated: (batch: HotspotBatch) => void;
 }
 
-export default function CreateHotspotModal({ slide, square, onClose, onCreated }: CreateHotspotModalProps) {
+/** Where the chosen boxes go and how they are named; confirming starts cutting them out in the background. */
+export default function CreateHotspotBatchModal({ slide, boxes, onClose, onCreated }: CreateHotspotBatchModalProps) {
   const { data: folders = [], isPending: isLoadingFolders } = useHotspotFolders();
-  const { createFolder, createHotspot, isCreatingFolder, isCreating } = useHotspotMutations();
-  const [name, setName] = useState(`${slide.name} (${square.x}, ${square.y})`);
+  const { createFolder, createBatch, isCreatingFolder, isCreatingBatch } = useHotspotMutations();
+  // One id per dialog: a retry after a lost response finds the batch it already started.
+  const [batchId] = useState(() => crypto.randomUUID());
+  const [namePrefix, setNamePrefix] = useState(slide.name);
   const [chosenFolderId, setChosenFolderId] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState(DEFAULT_FOLDER_NAME);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +39,7 @@ export default function CreateHotspotModal({ slide, square, onClose, onCreated }
   const folderId =
     chosenFolderId ??
     (folders.some((folder) => folder.id === lastFolderId) ? lastFolderId : (folders[0]?.id ?? NEW_FOLDER));
-  const isSaving = isCreatingFolder || isCreating;
+  const isSaving = isCreatingFolder || isCreatingBatch;
 
   const save = async (event: FormEvent) => {
     event.preventDefault();
@@ -44,34 +48,44 @@ export default function CreateHotspotModal({ slide, square, onClose, onCreated }
       let targetFolderId = folderId;
       if (targetFolderId === NEW_FOLDER || targetFolderId === null) {
         targetFolderId = (await createFolder(newFolderName.trim())).id;
-        // A retry after a failed hotspot save must not create the folder a second time.
+        // A retry after a failed request must not create the folder a second time.
         setChosenFolderId(targetFolderId);
       }
-      const hotspot = await createHotspot({ slide_id: slide.id, folder_id: targetFolderId, name: name.trim(), ...square });
+      const batch = await createBatch({
+        id: batchId,
+        slide_id: slide.id,
+        folder_id: targetFolderId,
+        name_prefix: namePrefix.trim(),
+        boxes: boxes.map((box) => [box.x, box.y]),
+      });
       rememberLastFolderId(targetFolderId);
-      onCreated(hotspot);
+      onCreated(batch);
     } catch (requestError) {
-      setError(getErrorMessage(requestError, 'Nie udało się zapisać hotspotu.'));
+      setError(getErrorMessage(requestError, 'Nie udało się rozpocząć tworzenia hotspotów.'));
     }
   };
 
-  const previewUrl = apiUrl(`/slides/${slide.id}/region`, {
-    x: square.x,
-    y: square.y,
-    width: square.size,
-    height: square.size,
-    max_size: PREVIEW_SIZE,
-  });
+  const left = Math.min(...boxes.map((box) => box.x));
+  const top = Math.min(...boxes.map((box) => box.y));
+  const width = Math.max(...boxes.map((box) => box.x)) + HOTSPOT_BOX_SIZE - left;
+  const height = Math.max(...boxes.map((box) => box.y)) + HOTSPOT_BOX_SIZE - top;
+  const previewUrl = apiUrl(`/slides/${slide.id}/region`, { x: left, y: top, width, height, max_size: PREVIEW_SIZE });
 
   return (
-    <Modal title="Nowy hotspot" open onClose={onClose}>
+    <Modal title="Nowe hotspoty" open onClose={onClose}>
       <form className="hotspot-form" onSubmit={(event) => void save(event)}>
         <div className="hotspot-form__layout">
-          <img className="hotspot-form__preview" src={previewUrl} alt="Podgląd hotspotu" width={PREVIEW_SIZE} height={PREVIEW_SIZE} />
+          <img className="hotspot-form__preview" src={previewUrl} alt="Podgląd zaznaczonego obszaru" />
           <div className="hotspot-form__fields">
             <label className="hotspot-form__field">
-              <span className="label-caps">Nazwa</span>
-              <input value={name} required autoFocus maxLength={255} onChange={(event) => setName(event.target.value)} />
+              <span className="label-caps">Przedrostek nazwy</span>
+              <input
+                value={namePrefix}
+                required
+                autoFocus
+                maxLength={240}
+                onChange={(event) => setNamePrefix(event.target.value)}
+              />
             </label>
             <label className="hotspot-form__field">
               <span className="label-caps">Folder</span>
@@ -100,12 +114,14 @@ export default function CreateHotspotModal({ slide, square, onClose, onCreated }
               </label>
             )}
             <dl className="hotspot-form__meta mono-data">
-              <dt>Pozycja</dt>
-              <dd>
-                {square.x.toLocaleString('pl-PL')}, {square.y.toLocaleString('pl-PL')}
-              </dd>
+              <dt>Hotspoty</dt>
+              <dd>{boxes.length.toLocaleString('pl-PL')}</dd>
               <dt>Rozmiar</dt>
-              <dd>{formatSquareSize(square.size, slide.mpp_x)}</dd>
+              <dd>{formatSquareSize(HOTSPOT_BOX_SIZE, slide.mpp_x)}</dd>
+              <dt>Nazwy</dt>
+              <dd>
+                {namePrefix.trim()} ({boxes[0].x}, {boxes[0].y})…
+              </dd>
             </dl>
           </div>
         </div>
@@ -115,7 +131,7 @@ export default function CreateHotspotModal({ slide, square, onClose, onCreated }
             Anuluj
           </Button>
           <Button type="submit" variant="primary" disabled={isSaving || isLoadingFolders}>
-            {isSaving ? 'Zapisywanie…' : 'Zapisz'}
+            {isSaving ? 'Zapisywanie…' : `Utwórz ${boxes.length.toLocaleString('pl-PL')}`}
           </Button>
         </div>
       </form>

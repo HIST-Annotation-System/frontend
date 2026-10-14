@@ -5,6 +5,11 @@
   padding: var(--space-lg) var(--space-lg) var(--space-xl);
 }
 
+.hotspots-page > .hotspot-activity {
+  max-width: 1200px;
+  margin: 0 auto var(--space-md);
+}
+
 .hotspots-page__inner {
   display: flex;
   flex-direction: column;

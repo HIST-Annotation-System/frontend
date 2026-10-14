@@ -4,7 +4,7 @@ import { useMemo, type ReactNode } from 'react';
 import type { AnnotationClass, AnnotationOwner } from '../../../types/annotation';
 import type { Offset } from '../../../types/geometry';
 import { useAnnotations } from '../hooks/useAnnotations';
-import type { ToolMode } from '../hooks/useAnnotationTool';
+import type { ToolMode } from '../../../types/annotation';
 import { useAnnotoriousSync } from '../hooks/useAnnotoriousSync';
 import { createAnnotationAdapter } from '../utils/annotationAdapter';
 import { createAnnotationStyle, FALLBACK_ANNOTATION_COLOR } from '../utils/annotationStyle';

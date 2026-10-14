@@ -1,3 +1,4 @@
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import type { SlideDetail } from '../../../types/slide';
 import { formatBytes, formatDateTime, formatDimensions } from '../../../utils/format';
@@ -8,6 +9,7 @@ interface SlideInfoPanelProps {
   slide: SlideDetail;
 }
 
+/** The slide's parameters, floating in the viewer's bottom-left corner; the list unrolls upwards. */
 export default function SlideInfoPanel({ slide }: SlideInfoPanelProps) {
   const magnification = getNativeMagnification(slide);
   const [open, setOpen] = useState(false);
@@ -23,10 +25,9 @@ export default function SlideInfoPanel({ slide }: SlideInfoPanelProps) {
   ];
 
   return (
-    <div className="slide-info">
-      <details className="slide-info__properties" open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
-        <summary>Parametry slajdu ({rows.length})</summary>
-        <dl className="slide-info__list">
+    <div className="slide-info slide-info--floating">
+      {open && (
+        <dl id="slide-info-list" className="slide-info__list">
           {rows.map(([label, value]) => (
             <div key={label} className="slide-info__row">
               <dt>{label}</dt>
@@ -34,7 +35,17 @@ export default function SlideInfoPanel({ slide }: SlideInfoPanelProps) {
             </div>
           ))}
         </dl>
-      </details>
+      )}
+      <button
+        type="button"
+        className="slide-info__toggle"
+        aria-expanded={open}
+        aria-controls="slide-info-list"
+        onClick={() => setOpen(!open)}
+      >
+        Parametry slajdu
+        {open ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+      </button>
     </div>
   );
 }

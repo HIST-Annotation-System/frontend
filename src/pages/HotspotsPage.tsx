@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import SidebarSection from '../components/ui/SidebarSection';
 import Spinner from '../components/ui/Spinner';
+import HotspotActivityStrip from '../features/hotspots/components/HotspotActivityStrip';
 import HotspotCard from '../features/hotspots/components/HotspotCard';
 import HotspotFolderList from '../features/hotspots/components/HotspotFolderList';
 import HotspotSortControl from '../features/hotspots/components/HotspotSortControl';
@@ -59,6 +60,7 @@ export default function HotspotsPage() {
         </SidebarSection>
       </aside>
       <div className="hotspots-page">
+        <HotspotActivityStrip onSelectFolder={select} />
         {selected ? (
           <FolderContents
             folder={selected}
@@ -71,7 +73,7 @@ export default function HotspotsPage() {
           !foldersQuery.isPending && (
             <p className="slide-list__empty">
               Brak hotspotów. Utwórz folder po lewej i wgraj do niego obrazy PNG/JPG albo otwórz slajd, kliknij
-              „Hotspot” na pasku przeglądarki i zapisz wybrany kwadratowy fragment.
+              „Hotspoty” na pasku przeglądarki i przeciągnij po obszarze, który ma zostać pocięty na hotspoty.
             </p>
           )
         )}
@@ -104,8 +106,8 @@ function FolderContents({ folder, folders, sort, order, onSortChange }: FolderCo
         <ErrorMessage message={getErrorMessage(error, 'Nie udało się wczytać hotspotów.')} />
       ) : data.length === 0 ? (
         <p className="slide-list__empty">
-          Folder jest pusty. Wgraj obrazy PNG/JPG przyciskami powyżej albo zapisz hotspot ze slajdu przyciskiem
-          „Hotspot” w przeglądarce slajdów.
+          Folder jest pusty. Wgraj obrazy PNG/JPG przyciskami powyżej albo utwórz hotspoty ze slajdu przyciskiem
+          „Hotspoty” w przeglądarce slajdów.
         </p>
       ) : (
         <ul className={`slide-list${isPlaceholderData ? ' hotspots-page__list--stale' : ''}`} aria-busy={isPlaceholderData}>

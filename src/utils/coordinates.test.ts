@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  clampRect,
-  imageToSlidePosition,
-  imageToSlideRect,
-  slideToImagePosition,
-  slideToImageRect,
-} from './coordinates';
+import { imageToSlidePosition, slideToImagePosition, slideToImageRect } from './coordinates';
 
 const offset = { x: 1200, y: 800 };
 
@@ -15,14 +9,7 @@ describe('coordinates', () => {
     expect(slideToImagePosition([1210, 820], offset)).toEqual([10, 20]);
   });
 
-  it('round-trips rectangles', () => {
-    const rect = { x: 5, y: 6, width: 100, height: 50 };
-    expect(slideToImageRect(imageToSlideRect(rect, offset), offset)).toEqual(rect);
-  });
-
-  it('clamps rectangles to the slide area', () => {
-    expect(clampRect({ x: -10, y: -5, width: 50, height: 30 }, 100, 100)).toEqual({ x: 0, y: 0, width: 40, height: 25 });
-    expect(clampRect({ x: 90.4, y: 10, width: 50, height: 10 }, 100, 100)).toEqual({ x: 90, y: 10, width: 10, height: 10 });
-    expect(clampRect({ x: 200, y: 0, width: 10, height: 10 }, 100, 100)).toBeNull();
+  it('moves rectangles from slide to image space', () => {
+    expect(slideToImageRect({ x: 1205, y: 806, width: 100, height: 50 }, offset)).toEqual({ x: 5, y: 6, width: 100, height: 50 });
   });
 });

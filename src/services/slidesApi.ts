@@ -1,6 +1,5 @@
-import type { Rect } from '../types/geometry';
 import type { Slide, SlideDetail } from '../types/slide';
-import { apiUrl, fetchBlob, httpClient } from './httpClient';
+import { apiUrl, httpClient } from './httpClient';
 
 export const slideQueryKeys = {
   all: ['slides'] as const,
@@ -28,17 +27,3 @@ export const deleteSlide = async (slideId: string, version: string): Promise<voi
 export const getDziUrl = (slideId: string): string => apiUrl(`/slides/${slideId}/image.dzi`);
 
 export const getThumbnailUrl = (slideId: string): string => apiUrl(`/slides/${slideId}/thumbnail`);
-
-export interface RegionRequest extends Rect {
-  maxSize: number;
-}
-
-/** Level-0 region as PNG. */
-export const fetchRegion = (slideId: string, region: RegionRequest): Promise<Blob> =>
-  fetchBlob(`/slides/${slideId}/region`, {
-    x: region.x,
-    y: region.y,
-    width: region.width,
-    height: region.height,
-    max_size: region.maxSize,
-  });
