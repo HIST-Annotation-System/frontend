@@ -1,6 +1,6 @@
 import { MousePointer, PenTool } from 'lucide-react';
 import Button from '../../../components/ui/Button';
-import type { ToolMode } from '../hooks/useAnnotationTool';
+import type { ToolMode } from '../../../types/annotation';
 import './AnnotationTools.css';
 
 interface ToolModeToggleProps {

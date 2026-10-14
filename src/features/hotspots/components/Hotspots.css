@@ -1,25 +1,56 @@
-/* Capture mode: a square viewfinder over the slide; the slide underneath stays pannable and zoomable. */
-.hotspot-capture {
+/* Choosing hotspot boxes on the slide (grid or brush); the wheel still zooms. */
+.hotspot-grid {
   position: absolute;
   inset: 0;
   z-index: 70;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  container-type: size;
   pointer-events: none;
 }
 
-.hotspot-capture__frame {
-  width: min(70cqw, 70cqh);
-  aspect-ratio: 1 / 1;
-  border: 2px dashed #ffffff;
-  outline: 1px solid #000000;
-  /* Dims everything outside the frame. */
-  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.45);
+.hotspot-grid__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-.hotspot-capture__panel {
+.hotspot-grid__box {
+  fill: rgb(255 255 255 / 0.15);
+  stroke: #ffffff;
+  stroke-width: 2px;
+}
+
+.hotspot-grid__box--adding {
+  fill: rgb(255 255 255 / 0.25);
+  stroke-dasharray: 6 4;
+}
+
+.hotspot-grid__box--removing {
+  fill: rgb(220 38 38 / 0.3);
+  stroke: var(--color-error);
+  stroke-dasharray: 6 4;
+}
+
+.hotspot-grid__box--too-many {
+  fill: rgb(220 38 38 / 0.15);
+  stroke: var(--color-error);
+}
+
+.hotspot-grid__cursor {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 1px;
+  stroke-dasharray: 4 4;
+}
+
+.hotspot-grid__existing {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2px;
+  stroke-dasharray: 4 3;
+}
+
+.hotspot-grid__panel {
   position: absolute;
   bottom: var(--space-md);
   left: 50%;
@@ -34,9 +65,17 @@
   pointer-events: auto;
 }
 
-.hotspot-capture__size {
+.hotspot-grid__status {
   font-size: 12px;
-  white-space: nowrap;
+}
+
+.hotspot-grid__status--error,
+.hotspot-saved__error {
+  color: var(--color-error);
+}
+
+.slide-viewer__frame:has(.hotspot-grid--active) .slide-viewer__canvas {
+  cursor: crosshair;
 }
 
 .hotspot-saved {
@@ -238,42 +277,67 @@
 }
 
 /* Upload into a catalog folder. */
-.hotspot-upload {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-sm);
-  max-width: 100%;
-}
-
 .hotspot-upload__buttons {
   display: flex;
   gap: var(--space-sm);
 }
 
-.hotspot-upload__status {
+/* Hotspots being created: background batches and uploads from this browser. */
+.hotspot-activity {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
-  width: min(420px, 100%);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hotspot-activity__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
   padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-sm);
   border: var(--border);
   background: var(--color-surface-lowest);
   font-size: 12px;
 }
 
-.hotspot-upload__progress-row {
+.hotspot-activity__row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-sm);
+  min-height: 28px;
 }
 
-.hotspot-upload__progress-row .slide-card__progress {
+.hotspot-activity__row .slide-card__progress {
   flex: 1;
 }
 
-.hotspot-upload__current {
+.hotspot-activity__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hotspot-activity__folder {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.hotspot-activity__summary {
+  flex: 1;
+}
+
+.hotspot-activity__summary--error {
+  color: var(--color-error);
+}
+
+.hotspot-activity__current {
   overflow: hidden;
   color: var(--color-secondary);
   font-family: var(--font-mono);
@@ -282,7 +346,7 @@
   white-space: nowrap;
 }
 
-.hotspot-upload__failures {
+.hotspot-activity__failures {
   max-height: 160px;
   margin: 0;
   padding: 0 0 0 var(--space-md);

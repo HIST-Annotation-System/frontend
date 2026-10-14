@@ -1,19 +1,19 @@
 import type { Position } from './geometry';
 
-/** GeoJSON Polygon in level-0 slide pixels (single, closed exterior ring). */
+/** GeoJSON Polygon in hotspot image pixels (single, closed exterior ring). */
 export interface PolygonGeometry {
   type: 'Polygon';
   coordinates: Position[][];
 }
 
-/**
- * What a set of annotations belongs to: a whole slide (level-0 slide pixels) or a hotspot (hotspot image
- * pixels). Both expose the same annotation API under their own path.
- */
+/** What a set of annotations belongs to: a hotspot (annotations are in its image pixels). */
 export interface AnnotationOwner {
-  type: 'slides' | 'hotspots';
+  type: 'hotspots';
   id: string;
 }
+
+/** Canvas tool: pan and zoom, or draw polygons. */
+export type ToolMode = 'navigate' | 'draw';
 
 export interface AnnotationClass {
   id: string;

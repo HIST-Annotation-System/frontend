@@ -1,17 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import {
-  createHotspot,
+  createHotspotBatch,
   createHotspotFolder,
   deleteHotspot,
   deleteHotspotFolder,
   getHotspot,
+  getHotspotBatch,
+  hotspotBatchQueryKeys,
   hotspotQueryKeys,
+  listHotspotBatches,
   listHotspotFolders,
   listHotspots,
+  listSlideHotspots,
   renameHotspotFolder,
   updateHotspot,
 } from '../../../services/hotspotsApi';
-import type { HotspotCreate, HotspotSort, HotspotUpdate, SortOrder } from '../../../types/hotspot';
+import type { HotspotBatch, HotspotBatchCreate, HotspotSort, HotspotUpdate, SortOrder } from '../../../types/hotspot';
+
+const BATCH_POLL_INTERVAL_MS = 3000;
 
 export function useHotspotFolders() {
   return useQuery({
@@ -29,6 +36,52 @@ export function useHotspots(folderId: string | null, sort: HotspotSort, order: S
     placeholderData: (previous, previousQuery) =>
       previousQuery?.queryKey[2] === (folderId ?? '') ? previous : undefined,
   });
+}
+
+/** Hotspots already cut out of the slide (outlined on it while choosing new ones). */
+export function useSlideHotspots(slideId: string) {
+  return useQuery({
+    queryKey: hotspotQueryKeys.slide(slideId),
+    queryFn: ({ signal }) => listSlideHotspots(slideId, signal),
+  });
+}
+
+/** Running and recently failed batches, polled while any is running. */
+export function useHotspotBatches() {
+  const query = useQuery({
+    queryKey: hotspotBatchQueryKeys.list(),
+    queryFn: ({ signal }) => listHotspotBatches(signal),
+    refetchInterval: (current) =>
+      current.state.data?.some((batch) => batch.status === 'running') ? BATCH_POLL_INTERVAL_MS : false,
+    // Refetch-on-focus is off app-wide, so polling must go on in a background tab.
+    refetchIntervalInBackground: true,
+  });
+  useRefreshOnProgress(query.data);
+  return query;
+}
+
+/** One batch, polled until it has finished. */
+export function useHotspotBatch(batchId: string) {
+  const query = useQuery({
+    queryKey: hotspotBatchQueryKeys.detail(batchId),
+    queryFn: ({ signal }) => getHotspotBatch(batchId, signal),
+    refetchInterval: (current) => (current.state.data?.status === 'running' ? BATCH_POLL_INTERVAL_MS : false),
+    refetchIntervalInBackground: true,
+  });
+  useRefreshOnProgress(query.data && [query.data]);
+  return query;
+}
+
+/** Each newly cut-out hotspot refreshes the catalog (folder counts, lists, slide outlines). */
+function useRefreshOnProgress(batches: HotspotBatch[] | undefined) {
+  const queryClient = useQueryClient();
+  const progress = batches?.map((batch) => `${batch.id}:${batch.done}:${batch.status}`).join() ?? '';
+  const previous = useRef(progress);
+  useEffect(() => {
+    if (progress === previous.current) return;
+    previous.current = progress;
+    void queryClient.invalidateQueries({ queryKey: hotspotQueryKeys.all });
+  }, [progress, queryClient]);
 }
 
 export function useHotspot(hotspotId: string) {
@@ -68,9 +121,9 @@ export function useHotspotMutations() {
     mutationFn: (folderId: string) => deleteHotspotFolder(folderId),
     onSuccess: refresh,
   });
-  const { mutateAsync: create, isPending: isCreating } = useMutation({
-    mutationFn: (payload: HotspotCreate) => createHotspot(payload),
-    onSuccess: refresh,
+  const { mutateAsync: createBatch, isPending: isCreatingBatch } = useMutation({
+    mutationFn: (payload: HotspotBatchCreate) => createHotspotBatch(payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: hotspotBatchQueryKeys.all }),
   });
   const { mutateAsync: update, isPending: isUpdating } = useMutation({
     mutationFn: ({ hotspotId, changes }: UpdateHotspotVariables) => updateHotspot(hotspotId, changes),
@@ -88,8 +141,8 @@ export function useHotspotMutations() {
     isRenamingFolder,
     deleteFolder: removeFolder,
     isDeletingFolder,
-    createHotspot: create,
-    isCreating,
+    createBatch,
+    isCreatingBatch,
     updateHotspot: update,
     isUpdating,
     deleteHotspot: remove,
