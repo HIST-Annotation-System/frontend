@@ -1,3 +1,4 @@
+import { useSelection } from '@annotorious/react';
 import { Redo2, Undo2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Button from '../../../components/ui/Button';
@@ -10,11 +11,28 @@ import './AnnotationTools.css';
 interface AnnotationToolbarProps {
   mode: ToolMode;
   onModeChange: (mode: ToolMode) => void;
+  canDraw: boolean;
 }
 
-/** Tool strip on the canvas: navigate/draw, undo/redo (also Ctrl+Z / Ctrl+Y), plus drawing instructions. */
-export default function AnnotationToolbar({ mode, onModeChange }: AnnotationToolbarProps) {
+const DRAWING_HINTS: Record<ToolMode, string | null> = {
+  navigate: null,
+  polygon: 'Klik dodaje punkt · dwuklik lub pierwszy punkt zamyka · Esc anuluje',
+  curve: 'Klik dodaje punkt krzywej · dwuklik lub pierwszy punkt zamyka i wygładza · Esc anuluje',
+  freehand: 'Przytrzymaj i rysuj · kółko przybliża · prawy przycisk przesuwa · Esc anuluje',
+};
+
+const EDITING_HINT = 'Klik w punkt: łuk / narożnik · Del usuwa zaznaczony punkt · Esc kończy edycję';
+
+const NO_CLASS_HINT = 'Wybierz typ komórki, aby rysować';
+
+const isTextField = (target: EventTarget | null): boolean =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+
+/** Tool strip on the canvas: tools, undo/redo (also Ctrl+Z / Ctrl+Y), hints; Esc cancels drawing or editing. */
+export default function AnnotationToolbar({ mode, onModeChange, canDraw }: AnnotationToolbarProps) {
   const anno = useSlideAnnotator();
+  const { selected } = useSelection();
   const [history, setHistory] = useState({ canUndo: false, canRedo: false });
 
   useEffect(() => {
@@ -33,11 +51,34 @@ export default function AnnotationToolbar({ mode, onModeChange }: AnnotationTool
     };
   }, [anno]);
 
+  useEffect(() => {
+    if (!anno) return undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || isTextField(event.target)) return;
+      anno.cancelDrawing();
+      anno.cancelSelected();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [anno]);
+
+  // The path editor deletes the selected point on Delete/Backspace anywhere in the window, also in text fields.
+  useEffect(() => {
+    const shieldTextFields = (event: KeyboardEvent) => {
+      if ((event.key === 'Delete' || event.key === 'Backspace') && isTextField(event.target)) event.stopPropagation();
+    };
+    document.addEventListener('keydown', shieldTextFields);
+    return () => document.removeEventListener('keydown', shieldTextFields);
+  }, []);
+
+  const drawingHint = DRAWING_HINTS[mode] && !canDraw ? NO_CLASS_HINT : DRAWING_HINTS[mode];
+  const hint = selected.length > 0 ? EDITING_HINT : drawingHint;
+
   return (
     <>
-      {mode === 'draw' && (
+      {hint && (
         <p className="drawing-hint" role="status">
-          Dwuklik lub pierwszy punkt zamyka · Esc anuluje
+          {hint}
         </p>
       )}
       <FloatingToolbar label="Narzędzia anotacji">

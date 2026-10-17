@@ -3,8 +3,9 @@ import { useLatest } from '../../../hooks/useLatest';
 import { ApiError } from '../../../services/httpClient';
 import type { Annotation, AnnotationDraft, AnnotationOwner } from '../../../types/annotation';
 import { getErrorMessage } from '../../../utils/errors';
-import { sameGeometry } from '../../../utils/geometry';
+import { hasArea, sameGeometry } from '../../../utils/geometry';
 import { toAnnotationDraft } from '../utils/annotationAdapter';
+import { sameCurve } from '../utils/curve';
 import { useAnnotationMutations } from './useAnnotations';
 import { useSlideAnnotator, type SlideAnnotator } from './useSlideAnnotator';
 
@@ -56,7 +57,7 @@ export function useAnnotoriousSync({ owner, annotations, activeClassId, onError 
 
     const handleCreate = (draft: AnnotationDraft) => {
       const classId = draft.class_id ?? knownClasses.get(draft.id) ?? latest.current.activeClassId;
-      if (!classId) {
+      if (!classId || !hasArea(draft.geometry)) {
         anno.removeAnnotation(draft.id);
         return;
       }
@@ -67,7 +68,12 @@ export function useAnnotoriousSync({ owner, annotations, activeClassId, onError 
       enqueue(draft.id, async () => {
         try {
           // The annotator's own UUID becomes the server id, so undo/redo keep referring to the same annotation.
-          await latest.current.mutations.createAnnotation({ id: draft.id, class_id: classId, geometry: draft.geometry });
+          await latest.current.mutations.createAnnotation({
+            id: draft.id,
+            class_id: classId,
+            geometry: draft.geometry,
+            curve: draft.curve,
+          });
         } catch (error) {
           anno.removeAnnotation(draft.id);
           report(error, 'Nie udało się zapisać anotacji.');
@@ -82,13 +88,14 @@ export function useAnnotoriousSync({ owner, annotations, activeClassId, onError 
         const saved = latest.current.mutations.getSavedAnnotation(draft.id);
         if (!saved) return;
         const classChanged = draft.class_id !== null && draft.class_id !== saved.class_id;
-        const geometryChanged = !sameGeometry(draft.geometry, saved.geometry);
+        const geometryChanged =
+          !sameGeometry(draft.geometry, saved.geometry) || !sameCurve(draft.curve, saved.curve ?? null);
         if (!classChanged && !geometryChanged) return;
         try {
           await latest.current.mutations.updateAnnotation({
             id: draft.id,
             changes: {
-              ...(geometryChanged ? { geometry: draft.geometry } : {}),
+              ...(geometryChanged ? { geometry: draft.geometry, curve: draft.curve } : {}),
               ...(classChanged && draft.class_id ? { class_id: draft.class_id } : {}),
             },
           });

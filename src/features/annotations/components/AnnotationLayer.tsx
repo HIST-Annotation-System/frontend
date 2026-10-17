@@ -1,11 +1,14 @@
-import { OpenSeadragonAnnotator, UserSelectAction } from '@annotorious/react';
+import { OpenSeadragonAnnotator, UserSelectAction, useSelection } from '@annotorious/react';
 import '@annotorious/react/annotorious-react.css';
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, type ReactNode } from 'react';
+import { useLatest } from '../../../hooks/useLatest';
 import type { AnnotationClass, AnnotationOwner } from '../../../types/annotation';
 import type { Offset } from '../../../types/geometry';
 import { useAnnotations } from '../hooks/useAnnotations';
 import type { ToolMode } from '../../../types/annotation';
 import { useAnnotoriousSync } from '../hooks/useAnnotoriousSync';
+import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
+import { DRAWING_TOOLS, registerDrawingTools } from '../tools/drawingTools';
 import { createAnnotationAdapter } from '../utils/annotationAdapter';
 import { createAnnotationStyle, FALLBACK_ANNOTATION_COLOR } from '../utils/annotationStyle';
 
@@ -21,7 +24,7 @@ interface AnnotationLayerProps {
   children: ReactNode;
 }
 
-/** Polygon annotation layer on top of the OpenSeadragon viewer (a slide or a hotspot), synchronised with the API. */
+/** Annotation layer on top of the OpenSeadragon viewer (a slide or a hotspot), synchronised with the API. */
 export default function AnnotationLayer({
   owner,
   imageOffset,
@@ -34,6 +37,34 @@ export default function AnnotationLayer({
   const { data: annotations } = useAnnotations(owner);
   useAnnotoriousSync({ owner, annotations, activeClassId, onError });
 
+  // Layout effect: tools must be registered before <OpenSeadragonAnnotator> sets the tool.
+  const anno = useSlideAnnotator();
+  useLayoutEffect(() => {
+    if (anno) registerDrawingTools(anno);
+  }, [anno]);
+
+  // A selected shape's editor replaces the drawing tool, so switching tools ends editing.
+  useEffect(() => {
+    anno?.cancelSelected();
+  }, [anno, mode]);
+
+  // Freehand shapes are drawn one after another: deselect the new one so the next stroke draws.
+  const latestMode = useLatest(mode);
+  useEffect(() => {
+    if (!anno) return undefined;
+    const deselectFreehand = () => {
+      if (latestMode.current === 'freehand') anno.cancelSelected();
+    };
+    anno.on('createAnnotation', deselectFreehand);
+    return () => anno.off('createAnnotation', deselectFreehand);
+  }, [anno, latestMode]);
+
+  // The freehand tool turns mouse navigation off; keep it on while a shape is edited (e.g. picked from the list).
+  const { selected } = useSelection();
+  useEffect(() => {
+    if (anno && selected.length > 0) anno.viewer.setMouseNavEnabled(true);
+  }, [anno, selected]);
+
   const { x, y } = imageOffset;
   const adapter = useMemo(() => createAnnotationAdapter({ x, y }), [x, y]);
   const style = useMemo(() => {
@@ -44,9 +75,9 @@ export default function AnnotationLayer({
   return (
     <OpenSeadragonAnnotator
       adapter={adapter}
-      tool="polygon"
+      tool={DRAWING_TOOLS[mode === 'navigate' ? 'polygon' : mode]}
       drawingMode="click"
-      drawingEnabled={mode === 'draw'}
+      drawingEnabled={mode !== 'navigate' && activeClassId !== null}
       userSelectAction={UserSelectAction.EDIT}
       style={style}
     >

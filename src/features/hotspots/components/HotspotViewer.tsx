@@ -8,6 +8,8 @@ import { useMagnification } from '../../viewer/hooks/useMagnification';
 import { createViewerOptions } from '../../viewer/viewerOptions';
 import '../../viewer/components/SlideViewer.css';
 
+const HOTSPOT_MAX_ZOOM_PIXEL_RATIO = 10;
+
 interface HotspotViewerProps {
   hotspot: Hotspot;
   /** Extra overlays rendered on top of the viewer canvas (e.g. annotation tools). */
@@ -20,7 +22,11 @@ interface HotspotViewerProps {
  */
 export default function HotspotViewer({ hotspot, children }: HotspotViewerProps) {
   const options = useMemo(
-    () => createViewerOptions({ type: 'image', url: getHotspotImageUrl(hotspot.id) }),
+    () =>
+      createViewerOptions(
+        { type: 'image', url: getHotspotImageUrl(hotspot.id) },
+        { maxZoomPixelRatio: HOTSPOT_MAX_ZOOM_PIXEL_RATIO },
+      ),
     [hotspot.id],
   );
   const { imageZoom } = useMagnification(null);

@@ -1,7 +1,10 @@
 import type OpenSeadragon from 'openseadragon';
 
 /** Viewer options for a Deep Zoom descriptor URL, or another tile source (e.g. a single image). */
-export const createViewerOptions = (tileSources: OpenSeadragon.Options['tileSources']): OpenSeadragon.Options => ({
+export const createViewerOptions = (
+  tileSources: OpenSeadragon.Options['tileSources'],
+  overrides: OpenSeadragon.Options = {},
+): OpenSeadragon.Options => ({
   tileSources,
   // Tiles come from the API origin; OpenSeadragon 6 picks the WebGL drawer, which needs CORS-enabled images.
   crossOriginPolicy: 'Anonymous',
@@ -19,4 +22,5 @@ export const createViewerOptions = (tileSources: OpenSeadragon.Options['tileSour
   constrainDuringPan: true,
   animationTime: 0.3,
   blendTime: 0.1,
+  ...overrides,
 });

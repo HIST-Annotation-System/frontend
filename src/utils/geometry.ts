@@ -37,3 +37,7 @@ export const sameGeometry = (a: PolygonGeometry, b: PolygonGeometry): boolean =>
 
 /** Vertices of a polygon's exterior ring, without the closing point. */
 export const polygonVertices = (geometry: PolygonGeometry): Position[] => openRing(geometry.coordinates[0] ?? []);
+
+/** True when the polygon has the 3 distinct vertices the API requires. */
+export const hasArea = (geometry: PolygonGeometry): boolean =>
+  new Set(polygonVertices(geometry).map(([x, y]) => `${x},${y}`)).size >= 3;

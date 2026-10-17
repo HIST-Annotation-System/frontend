@@ -23,6 +23,7 @@ const draft: AnnotationDraft = {
       ],
     ],
   },
+  curve: null,
 };
 
 const parse = (value: AnnotationDraft): ImageAnnotation => {
@@ -32,17 +33,18 @@ const parse = (value: AnnotationDraft): ImageAnnotation => {
 };
 
 describe('annotation adapter', () => {
-  it('parses level-0 GeoJSON into an open polygon in image coordinates', () => {
+  it('parses level-0 GeoJSON into a closed path of corners in image coordinates', () => {
     const annotation = parse(draft);
 
     expect(annotation.target.selector).toEqual({
-      type: ShapeType.POLYGON,
+      type: ShapeType.POLYLINE,
       geometry: {
         points: [
-          [100, 100],
-          [300, 100],
-          [200, 300],
+          { type: 'CORNER', point: [100, 100] },
+          { type: 'CORNER', point: [300, 100] },
+          { type: 'CORNER', point: [200, 300] },
         ],
+        closed: true,
         bounds: { minX: 100, minY: 100, maxX: 300, maxY: 300 },
       },
     });

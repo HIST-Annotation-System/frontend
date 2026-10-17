@@ -14,7 +14,7 @@ import { useAnnotations } from '../features/annotations/hooks/useAnnotations';
 import HotspotInfoPanel from '../features/hotspots/components/HotspotInfoPanel';
 import HotspotViewer from '../features/hotspots/components/HotspotViewer';
 import { useHotspot, useHotspotFolders } from '../features/hotspots/hooks/useHotspots';
-import type { AnnotationClass, AnnotationOwner } from '../types/annotation';
+import type { AnnotationClass, AnnotationOwner, ToolMode } from '../types/annotation';
 import type { CellType } from '../types/cellType';
 import type { Hotspot } from '../types/hotspot';
 import { getErrorMessage } from '../utils/errors';
@@ -59,6 +59,7 @@ interface HotspotWorkspaceProps {
 
 function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<ToolMode>('polygon');
   const { data: folders } = useHotspotFolders();
   const owner: AnnotationOwner = { type: 'hotspots', id: hotspot.id };
 
@@ -114,15 +115,12 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
             owner={owner}
             imageOffset={NO_OFFSET}
             classes={classes}
-            mode={activeCellTypeId != null ? 'draw' : 'navigate'}
+            mode={mode}
             activeClassId={activeClassId}
             onError={setError}
           >
             <HotspotViewer hotspot={hotspot}>
-              <AnnotationToolbar
-                mode={activeCellTypeId != null ? 'draw' : 'navigate'}
-                onModeChange={() => {}}
-              />
+              <AnnotationToolbar mode={mode} onModeChange={setMode} canDraw={activeClassId !== null} />
             </HotspotViewer>
           </AnnotationLayer>
           {error && (
