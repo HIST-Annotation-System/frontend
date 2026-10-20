@@ -14,10 +14,12 @@ const FIT_PADDING_PX = 80;
 interface AnnotationListProps {
   owner: AnnotationOwner;
   classes: AnnotationClass[];
+  /** Annotations can be shown, but not reclassified or deleted. */
+  readOnly?: boolean;
   onError: (message: string) => void;
 }
 
-export default function AnnotationList({ owner, classes, onError }: AnnotationListProps) {
+export default function AnnotationList({ owner, classes, readOnly = false, onError }: AnnotationListProps) {
   const { data: annotations, isPending, isError, error } = useAnnotations(owner);
   const { updateAnnotation, deleteAnnotation } = useAnnotationMutations(owner);
   const anno = useSlideAnnotator();
@@ -25,7 +27,7 @@ export default function AnnotationList({ owner, classes, onError }: AnnotationLi
   const selectedIds = new Set(selection.selected.map(({ annotation }) => annotation.id));
 
   const showAnnotation = (annotationId: string) => {
-    anno?.setSelected(annotationId, true);
+    anno?.setSelected(annotationId, !readOnly);
     anno?.fitBounds(annotationId, { padding: FIT_PADDING_PX });
   };
 
@@ -66,6 +68,7 @@ export default function AnnotationList({ owner, classes, onError }: AnnotationLi
           annotation={annotation}
           classes={classes}
           selected={selectedIds.has(annotation.id)}
+          readOnly={readOnly}
           onSelect={showAnnotation}
           onClassChange={(annotationId, classId) => void changeClass(annotationId, classId)}
           onDelete={(annotationId) => void removeAnnotation(annotationId)}

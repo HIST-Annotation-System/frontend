@@ -1,4 +1,4 @@
-import { Check, Folder, FolderPlus, Pencil, Trash2, X } from 'lucide-react';
+import { Check, Folder, FolderPlus, Folders, Pencil, Trash2, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -6,15 +6,18 @@ import Modal from '../../../components/ui/Modal';
 import type { HotspotFolder } from '../../../types/hotspot';
 import { getErrorMessage } from '../../../utils/errors';
 import { useHotspotMutations } from '../hooks/useHotspots';
+import { ALL_FOLDERS } from '../utils/hotspotReview';
 import './Hotspots.css';
 
 interface HotspotFolderListProps {
   folders: HotspotFolder[];
+  /** A folder id, or `ALL_FOLDERS`. */
   selectedId: string | null;
+  /** Gets a folder id, or `ALL_FOLDERS`. */
   onSelect: (folderId: string) => void;
 }
 
-/** The catalog's folders: pick one to browse, add, rename or delete (with its hotspots). */
+/** The catalog's folders: pick one (or all of them) to browse, add, rename or delete (with its hotspots). */
 export default function HotspotFolderList({ folders, selectedId, onSelect }: HotspotFolderListProps) {
   const { createFolder, isCreatingFolder, renameFolder, isRenamingFolder, deleteFolder, isDeletingFolder } =
     useHotspotMutations();
@@ -91,6 +94,17 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
         <p className="hotspot-folders__empty">Brak folderów</p>
       ) : (
         <ul className="hotspot-folders__list">
+          <li
+            className={`hotspot-folders__item${selectedId === ALL_FOLDERS ? ' hotspot-folders__item--selected' : ''}`}
+          >
+            <button type="button" className="hotspot-folders__select" onClick={() => onSelect(ALL_FOLDERS)}>
+              <Folders size={14} aria-hidden="true" />
+              <span className="hotspot-folders__name">Wszystkie foldery</span>
+              <span className="hotspot-folders__count mono-data">
+                {folders.reduce((total, folder) => total + folder.hotspot_count, 0)}
+              </span>
+            </button>
+          </li>
           {folders.map((folder) => (
             <li
               key={folder.id}

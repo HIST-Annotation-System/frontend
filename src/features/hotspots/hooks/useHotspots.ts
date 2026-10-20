@@ -16,7 +16,7 @@ import {
   renameHotspotFolder,
   updateHotspot,
 } from '../../../services/hotspotsApi';
-import type { HotspotBatch, HotspotBatchCreate, HotspotSort, HotspotUpdate, SortOrder } from '../../../types/hotspot';
+import type { HotspotBatch, HotspotBatchCreate, HotspotListQuery, HotspotUpdate } from '../../../types/hotspot';
 
 const BATCH_POLL_INTERVAL_MS = 3000;
 
@@ -27,14 +27,13 @@ export function useHotspotFolders() {
   });
 }
 
-export function useHotspots(folderId: string | null, sort: HotspotSort, order: SortOrder) {
+export function useHotspots(query: HotspotListQuery) {
   return useQuery({
-    queryKey: hotspotQueryKeys.list(folderId ?? '', sort, order),
-    queryFn: ({ signal }) => listHotspots(folderId ?? '', sort, order, signal),
-    enabled: folderId !== null,
-    // Keeps the current cards on screen while the same folder loads in another order (not another folder).
+    queryKey: hotspotQueryKeys.list(query),
+    queryFn: ({ signal }) => listHotspots(query, signal),
+    // Keeps the current cards on screen while the same folder loads in another order or filter (not another folder).
     placeholderData: (previous, previousQuery) =>
-      previousQuery?.queryKey[2] === (folderId ?? '') ? previous : undefined,
+      previousQuery?.queryKey[2].folderId === query.folderId ? previous : undefined,
   });
 }
 

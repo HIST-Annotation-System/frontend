@@ -42,3 +42,45 @@
   opacity: 0.6;
   transition: opacity 0.15s;
 }
+
+.hotspots-page__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.hotspots-page__selection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: 32px;
+}
+
+.hotspots-page__select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.hotspots-page__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.hotspots-page__subtitle {
+  margin: 0;
+  color: var(--color-secondary);
+  font-size: 13px;
+}
+
+.hotspots-page__folder {
+  color: var(--color-on-surface);
+  font-weight: 600;
+}

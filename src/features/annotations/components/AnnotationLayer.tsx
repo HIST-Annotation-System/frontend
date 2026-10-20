@@ -19,6 +19,8 @@ interface AnnotationLayerProps {
   classes: AnnotationClass[];
   mode: ToolMode;
   activeClassId: string | null;
+  /** Shapes can be looked at and selected, but not drawn or edited. */
+  readOnly?: boolean;
   onError: (message: string) => void;
   /** The viewer the annotations are drawn on (must contain `<OpenSeadragonViewer>`). */
   children: ReactNode;
@@ -31,6 +33,7 @@ export default function AnnotationLayer({
   classes,
   mode,
   activeClassId,
+  readOnly = false,
   onError,
   children,
 }: AnnotationLayerProps) {
@@ -77,8 +80,8 @@ export default function AnnotationLayer({
       adapter={adapter}
       tool={DRAWING_TOOLS[mode === 'navigate' ? 'polygon' : mode]}
       drawingMode="click"
-      drawingEnabled={mode !== 'navigate' && activeClassId !== null}
-      userSelectAction={UserSelectAction.EDIT}
+      drawingEnabled={!readOnly && mode !== 'navigate' && activeClassId !== null}
+      userSelectAction={readOnly ? UserSelectAction.SELECT : UserSelectAction.EDIT}
       style={style}
     >
       {children}
