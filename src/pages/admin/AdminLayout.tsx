@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Users, Settings, Dna } from 'lucide-react';
+import { Users, Settings, Dna, Tags } from 'lucide-react';
 import './AdminLayout.css';
 
 export default function AdminLayout() {
@@ -24,6 +24,11 @@ export default function AdminLayout() {
           <NavLink to="/admin/cell-types" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
             <Dna size={18} />
             <span>Typy komórek</span>
+          </NavLink>
+
+          <NavLink to="/admin/tags" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
+            <Tags size={18} />
+            <span>Tagi hotspotów</span>
           </NavLink>
         </nav>
       </aside>

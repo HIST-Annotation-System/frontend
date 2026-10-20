@@ -1,6 +1,6 @@
 import { Annotorious } from '@annotorious/react';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import SidebarSection from '../components/ui/SidebarSection';
 import Spinner from '../components/ui/Spinner';
@@ -8,12 +8,20 @@ import AnnotationLayer from '../features/annotations/components/AnnotationLayer'
 import AnnotationList from '../features/annotations/components/AnnotationList';
 import AnnotationToolbar from '../features/annotations/components/AnnotationToolbar';
 import CellTypeSelector from '../features/annotations/components/CellTypeSelector';
-import ExportAnnotationsButton from '../features/annotations/components/ExportAnnotationsButton';
 import { useCellTypes, useCellTypeTool } from '../features/annotations/hooks/useCellTypes';
 import { useAnnotations } from '../features/annotations/hooks/useAnnotations';
 import HotspotInfoPanel from '../features/hotspots/components/HotspotInfoPanel';
+import HotspotQueueNav from '../features/hotspots/components/HotspotQueueNav';
+import HotspotTagPanel from '../features/hotspots/components/HotspotTagPanel';
 import HotspotViewer from '../features/hotspots/components/HotspotViewer';
 import { useHotspot, useHotspotFolders } from '../features/hotspots/hooks/useHotspots';
+import {
+  catalogDefaults,
+  HOTSPOT_MODES,
+  readCatalogParams,
+  resolveFolderId,
+  writeCatalogParams,
+} from '../features/hotspots/utils/hotspotReview';
 import type { AnnotationClass, AnnotationOwner, ToolMode } from '../types/annotation';
 import type { CellType } from '../types/cellType';
 import type { Hotspot } from '../types/hotspot';
@@ -25,6 +33,7 @@ const NO_OFFSET = { x: 0, y: 0 };
 
 export default function HotspotViewerPage() {
   const { hotspotId = '' } = useParams();
+  const [searchParams] = useSearchParams();
   const hotspotQuery = useHotspot(hotspotId);
   const cellTypesQuery = useCellTypes();
 
@@ -42,10 +51,11 @@ export default function HotspotViewerPage() {
     );
   }
 
-  // Keyed by hotspot: switching hotspots mounts a fresh viewer and annotator.
+  // Keyed by hotspot and mode: switching either mounts a fresh viewer and annotator (the mode decides whether
+  // annotations can be edited).
   return (
     <HotspotWorkspace
-      key={hotspotQuery.data.id}
+      key={`${hotspotQuery.data.id}:${readCatalogParams(searchParams).mode}`}
       hotspot={hotspotQuery.data}
       cellTypes={cellTypesQuery.data}
     />
@@ -57,9 +67,19 @@ interface HotspotWorkspaceProps {
   cellTypes: CellType[];
 }
 
+/**
+ * One hotspot, opened from the catalog: the catalog's mode and filters come along in the URL, so the viewer walks
+ * the same list. Assessing only tags (annotations are read-only); browsing and reannotating also annotate.
+ */
 function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
+  const [searchParams] = useSearchParams();
+  const { search } = useLocation();
+  const navigate = useNavigate();
+  const catalog = readCatalogParams(searchParams);
+  const assessing = catalog.mode === 'assess';
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<ToolMode>('polygon');
+  const [toolMode, setToolMode] = useState<ToolMode>('polygon');
+  const mode = assessing ? 'navigate' : toolMode;
   const { data: folders } = useHotspotFolders();
   const owner: AnnotationOwner = { type: 'hotspots', id: hotspot.id };
 
@@ -84,28 +104,48 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
     <Annotorious>
       <div className="viewer-page">
         <aside className="viewer-page__sidebar">
-          <SidebarSection title="Typ komórki" compact>
-            <div style={{ padding: '8px' }}>
-              <CellTypeSelector
-                cellTypes={cellTypes}
-                activeCellTypeId={activeCellTypeId}
-                colorMap={colorMap}
-                onSelect={handleSelectCellType}
-              />
-            </div>
-          </SidebarSection>
-          <SidebarSection
-            title="Anotacje"
-            actions={<ExportAnnotationsButton owner={owner} name={hotspot.name} onError={setError} />}
-            grow
-            compact
-          >
-            <AnnotationList owner={owner} classes={classes} onError={setError} />
-          </SidebarSection>
-          <SidebarSection title="Hotspot">
-            <HotspotInfoPanel
+          <SidebarSection compact>
+            <HotspotQueueNav
               hotspot={hotspot}
-              folderName={folders?.find((folder) => folder.id === hotspot.folder_id)?.name}
+              query={{
+                // Browsing without a folder in the URL lists the first folder: the one this hotspot was opened from.
+                folderId: resolveFolderId(catalog, hotspot.folder_id),
+                sort: catalog.sort,
+                order: catalog.order,
+                status: catalog.status,
+                tagIds: catalog.tagIds,
+              }}
+              search={search}
+            />
+          </SidebarSection>
+          {!assessing && (
+            <SidebarSection title="Typ komórki" compact>
+              <div style={{ padding: '8px' }}>
+                <CellTypeSelector
+                  cellTypes={cellTypes}
+                  activeCellTypeId={activeCellTypeId}
+                  colorMap={colorMap}
+                  onSelect={handleSelectCellType}
+                />
+              </div>
+            </SidebarSection>
+          )}
+          <SidebarSection title="Anotacje" grow compact>
+            <AnnotationList owner={owner} classes={classes} readOnly={assessing} onError={setError} />
+          </SidebarSection>
+          {/* Assessing is the expert's job, so the panel starts unrolled there only. */}
+          <SidebarSection title="Ocena eksperta" collapsible defaultOpen={assessing}>
+            <HotspotTagPanel
+              hotspot={hotspot}
+              mode={catalog.mode}
+              onReannotate={() =>
+                navigate({
+                  pathname: `/hotspots/${hotspot.id}`,
+                  search: new URLSearchParams(
+                    writeCatalogParams({ ...catalogDefaults('reannotate'), folder: catalog.folder }),
+                  ).toString(),
+                })
+              }
             />
           </SidebarSection>
         </aside>
@@ -117,10 +157,21 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
             classes={classes}
             mode={mode}
             activeClassId={activeClassId}
+            readOnly={assessing}
             onError={setError}
           >
-            <HotspotViewer hotspot={hotspot}>
-              <AnnotationToolbar mode={mode} onModeChange={setMode} canDraw={activeClassId !== null} />
+            <HotspotViewer
+              hotspot={hotspot}
+              modeLabel={HOTSPOT_MODES.find((option) => option.value === catalog.mode)?.label}
+            >
+              {!assessing && (
+                <AnnotationToolbar mode={toolMode} onModeChange={setToolMode} canDraw={activeClassId !== null} />
+              )}
+              <HotspotInfoPanel
+                hotspot={hotspot}
+                folderName={folders?.find((folder) => folder.id === hotspot.folder_id)?.name}
+                onError={setError}
+              />
             </HotspotViewer>
           </AnnotationLayer>
           {error && (

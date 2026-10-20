@@ -1,18 +1,20 @@
 import { ArrowDownWideNarrow, ArrowUpNarrowWide } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import type { HotspotSort, SortOrder } from '../../../types/hotspot';
-import { HOTSPOT_SORT_OPTIONS } from '../utils/hotspotSort';
+import type { HotspotSortOption } from '../utils/hotspotSort';
 import './Hotspots.css';
 
 interface HotspotSortControlProps {
+  /** The orders this mode offers. */
+  options: HotspotSortOption[];
   sort: HotspotSort;
   order: SortOrder;
   onChange: (sort: HotspotSort, order: SortOrder) => void;
 }
 
-/** Orders a folder's hotspots by date or by an image feature, ascending or descending. */
-export default function HotspotSortControl({ sort, order, onChange }: HotspotSortControlProps) {
-  const selected = HOTSPOT_SORT_OPTIONS.find((option) => option.value === sort);
+/** Orders the catalog by date, an image feature or the tags, ascending or descending. */
+export default function HotspotSortControl({ options, sort, order, onChange }: HotspotSortControlProps) {
+  const selected = options.find((option) => option.value === sort);
   const descending = order === 'desc';
 
   return (
@@ -24,7 +26,7 @@ export default function HotspotSortControl({ sort, order, onChange }: HotspotSor
         value={sort}
         onChange={(event) => onChange(event.target.value as HotspotSort, order)}
       >
-        {HOTSPOT_SORT_OPTIONS.map((option) => (
+        {options.map((option) => (
           <option key={option.value} value={option.value} title={option.description}>
             {option.label}
           </option>

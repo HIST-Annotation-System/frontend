@@ -3,18 +3,17 @@ import type {
   HotspotBatch,
   HotspotBatchCreate,
   HotspotFolder,
-  HotspotSort,
+  HotspotListQuery,
   HotspotUpdate,
-  SortOrder,
 } from '../types/hotspot';
+import type { HotspotTagsBulk } from '../types/tag';
 import { apiUrl, httpClient } from './httpClient';
 
 export const hotspotQueryKeys = {
   all: ['hotspots'] as const,
   folders: () => [...hotspotQueryKeys.all, 'folders'] as const,
   lists: () => [...hotspotQueryKeys.all, 'list'] as const,
-  list: (folderId: string, sort: HotspotSort, order: SortOrder) =>
-    [...hotspotQueryKeys.lists(), folderId, sort, order] as const,
+  list: (query: HotspotListQuery) => [...hotspotQueryKeys.lists(), query] as const,
   detail: (hotspotId: string) => [...hotspotQueryKeys.all, 'detail', hotspotId] as const,
   slide: (slideId: string) => [...hotspotQueryKeys.all, 'slide', slideId] as const,
 };
@@ -40,12 +39,17 @@ export const deleteHotspotFolder = async (folderId: string): Promise<void> => {
 };
 
 export const listHotspots = async (
-  folderId: string,
-  sort: HotspotSort,
-  order: SortOrder,
+  { folderId, sort, order, status, tagIds }: HotspotListQuery,
   signal?: AbortSignal,
 ): Promise<Hotspot[]> =>
-  (await httpClient.get<Hotspot[]>('/hotspots', { params: { folder_id: folderId, sort, order }, signal })).data;
+  (
+    await httpClient.get<Hotspot[]>('/hotspots', {
+      params: { folder_id: folderId ?? undefined, sort, order, status: status ?? undefined, tag_ids: tagIds },
+      // `tag_ids=1&tag_ids=2`, as FastAPI expects (not `tag_ids[]=1`).
+      paramsSerializer: { indexes: null },
+      signal,
+    })
+  ).data;
 
 /** Hotspots cut out of a slide (newest first). */
 export const listSlideHotspots = async (slideId: string, signal?: AbortSignal): Promise<Hotspot[]> =>
@@ -74,6 +78,17 @@ export const uploadHotspotImage = async (folderId: string, file: File, signal?: 
 
 export const updateHotspot = async (hotspotId: string, changes: HotspotUpdate): Promise<Hotspot> =>
   (await httpClient.patch<Hotspot>(`/hotspots/${hotspotId}`, changes)).data;
+
+/** A core tag replaces the hotspot's tag of the same dimension. */
+export const addHotspotTag = async (hotspotId: string, tagId: number): Promise<Hotspot> =>
+  (await httpClient.put<Hotspot>(`/hotspots/${hotspotId}/tags/${tagId}`)).data;
+
+export const removeHotspotTag = async (hotspotId: string, tagId: number): Promise<Hotspot> =>
+  (await httpClient.delete<Hotspot>(`/hotspots/${hotspotId}/tags/${tagId}`)).data;
+
+export const bulkTagHotspots = async (payload: HotspotTagsBulk): Promise<void> => {
+  await httpClient.post('/hotspots/tags/bulk', payload);
+};
 
 export const deleteHotspot = async (hotspotId: string): Promise<void> => {
   await httpClient.delete(`/hotspots/${hotspotId}`);

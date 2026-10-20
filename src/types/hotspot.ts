@@ -1,3 +1,5 @@
+import type { Tag } from './tag';
+
 export interface HotspotFolder {
   id: string;
   name: string;
@@ -10,7 +12,11 @@ export type HotspotImageType = 'png' | 'jpeg';
 /** Image descriptors computed on a hotspot's thumbnail; the catalog can be sorted by any of them. */
 export type HotspotFeature = 'entropy' | 'glcm_contrast' | 'edge_density' | 'colorfulness';
 
-export type HotspotSort = 'created_at' | HotspotFeature;
+/** Creation time, an image feature, the summed tag weights, or the weight of the importance/accuracy tag. */
+export type HotspotSort = 'created_at' | HotspotFeature | 'score' | 'importance' | 'accuracy';
+
+/** Where a hotspot is in the review; tagged means both importance and accuracy are set. */
+export type HotspotStatus = 'untagged' | 'to_reannotate' | 'reannotated';
 
 export type SortOrder = 'asc' | 'desc';
 
@@ -38,7 +44,28 @@ export interface Hotspot {
   mpp: number | null;
   /** Feature values; null (or a key missing) when they could not be computed. */
   features: Partial<Record<HotspotFeature, number>> | null;
+  /** Core tags first (by dimension), then the rest by name. */
+  tags: Tag[];
+  /** The summed weights of the tags. */
+  score: number;
+  /** When an annotator marked it as reannotated; cleared when an expert changes its verdict. */
+  reannotated_at: string | null;
+  /** Who set the latest importance/accuracy verdict. */
+  assessed_by: string | null;
+  annotation_count: number;
   created_at: string;
+}
+
+/** Which hotspots the catalog lists, and in what order. */
+export interface HotspotListQuery {
+  /** null: every folder. */
+  folderId: string | null;
+  sort: HotspotSort;
+  order: SortOrder;
+  /** null: any status. */
+  status: HotspotStatus | null;
+  /** Hotspots must carry all of them. */
+  tagIds: number[];
 }
 
 /** Fixed-size slide squares to cut out into hotspots, each named `{name_prefix} ({x}, {y})`. */
@@ -71,4 +98,5 @@ export interface HotspotBatch {
 export interface HotspotUpdate {
   name?: string;
   folder_id?: string;
+  reannotated?: boolean;
 }

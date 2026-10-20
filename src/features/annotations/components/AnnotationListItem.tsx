@@ -8,6 +8,7 @@ interface AnnotationListItemProps {
   annotation: Annotation;
   classes: AnnotationClass[];
   selected: boolean;
+  readOnly: boolean;
   onSelect: (annotationId: string) => void;
   onClassChange: (annotationId: string, classId: string) => void;
   onDelete: (annotationId: string) => void;
@@ -17,6 +18,7 @@ export default function AnnotationListItem({
   annotation,
   classes,
   selected,
+  readOnly,
   onSelect,
   onClassChange,
   onDelete,
@@ -39,6 +41,7 @@ export default function AnnotationListItem({
         className="annotation-item__class"
         aria-label="Klasa tkanki"
         value={annotation.class_id}
+        disabled={readOnly}
         onChange={(event) => onClassChange(annotation.id, event.target.value)}
       >
         {classes.map((item) => (
@@ -47,13 +50,15 @@ export default function AnnotationListItem({
           </option>
         ))}
       </select>
-      <Button
-        variant="ghost"
-        icon={<Trash2 size={14} />}
-        title="Usuń anotację"
-        aria-label="Usuń anotację"
-        onClick={() => onDelete(annotation.id)}
-      />
+      {!readOnly && (
+        <Button
+          variant="ghost"
+          icon={<Trash2 size={14} />}
+          title="Usuń anotację"
+          aria-label="Usuń anotację"
+          onClick={() => onDelete(annotation.id)}
+        />
+      )}
     </li>
   );
 }

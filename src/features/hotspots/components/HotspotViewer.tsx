@@ -12,6 +12,8 @@ const HOTSPOT_MAX_ZOOM_PIXEL_RATIO = 10;
 
 interface HotspotViewerProps {
   hotspot: Hotspot;
+  /** The catalog mode the hotspot was opened in, shown first in the status bar. */
+  modeLabel?: string;
   /** Extra overlays rendered on top of the viewer canvas (e.g. annotation tools). */
   children?: ReactNode;
 }
@@ -20,7 +22,7 @@ interface HotspotViewerProps {
  * The hotspot image in OpenSeadragon (one PNG/JPEG, no Deep Zoom pyramid), laid out like the slide viewer.
  * Must be rendered inside `<OpenSeadragonAnnotator>`, which owns the viewer shared with the annotation layer.
  */
-export default function HotspotViewer({ hotspot, children }: HotspotViewerProps) {
+export default function HotspotViewer({ hotspot, modeLabel, children }: HotspotViewerProps) {
   const options = useMemo(
     () =>
       createViewerOptions(
@@ -35,6 +37,11 @@ export default function HotspotViewer({ hotspot, children }: HotspotViewerProps)
     <div className="slide-viewer">
       <div className="slide-viewer__bar">
         <div className="viewer-status label-caps">
+          {modeLabel && (
+            <span>
+              Tryb: <span className="viewer-status__value">{modeLabel}</span>
+            </span>
+          )}
           <span className="viewer-status__file" title={hotspot.name}>
             Hotspot: <span className="viewer-status__value">{hotspot.name}</span>
           </span>
