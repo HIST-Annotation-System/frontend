@@ -20,7 +20,7 @@ export default function MagnificationPresets({ nativeMagnification }: Magnificat
       {presets.map((preset) => (
         <Button
           key={preset}
-          className="mono-data"
+          className="tabular"
           active={magnification !== null && Math.abs(magnification - preset) <= preset * ACTIVE_PRESET_TOLERANCE}
           title={`Powiększenie ${preset}×`}
           onClick={() => zoomToMagnification(preset)}

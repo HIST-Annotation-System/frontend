@@ -23,7 +23,7 @@ export default function UploadStatusBar() {
       <span className="upload-status-bar__name" title={active.file.name}>
         {active.file.name}
       </span>
-      <span className="mono-data upload-status-bar__details">
+      <span className="tabular upload-status-bar__details">
         {active.status === 'finalizing' ? 'finalizowanie…' : describeTransfer(active)}
         {queuedCount > 0 && ` · +${queuedCount} w kolejce`}
       </span>

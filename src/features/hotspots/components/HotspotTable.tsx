@@ -106,7 +106,7 @@ export default function HotspotTable({
               {HOTSPOT_STATUS_OPTIONS.find((option) => option.value === hotspotStatus(hotspot))?.label}
             </td>
             <td className="data-table__num">{hotspot.annotation_count}</td>
-            <td className="mono-data">{formatDateTime(hotspot.created_at)}</td>
+            <td className="tabular">{formatDateTime(hotspot.created_at)}</td>
           </tr>
         ))}
       </tbody>

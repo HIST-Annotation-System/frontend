@@ -22,8 +22,8 @@ export default function StorageFilePicker({ onSelect }: StorageFilePickerProps) 
             <File size={16} aria-hidden="true" />
             <span className="storage-item__name">{name}</span>
           </button>
-          <span className="storage-item__meta mono-data">{formatBytes(object.size)}</span>
-          <span className="storage-item__meta mono-data">{formatDateTime(object.last_modified)}</span>
+          <span className="storage-item__meta tabular">{formatBytes(object.size)}</span>
+          <span className="storage-item__meta tabular">{formatDateTime(object.last_modified)}</span>
         </li>
       )}
     />

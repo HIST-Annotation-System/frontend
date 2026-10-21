@@ -401,7 +401,7 @@ export default function HotspotSelectionOverlay({
             ) : (
               <>
                 <p>
-                  <span className="mono-data">{count}</span> {fieldsWord(count)}{' '}
+                  <span className="tabular">{count}</span> {fieldsWord(count)}{' '}
                   {formatSquareSize(HOTSPOT_BOX_SIZE, slide.mpp_x)}
                 </p>
                 <Button variant="primary" block onClick={() => setPendingBoxes([...chosen.values()])}>

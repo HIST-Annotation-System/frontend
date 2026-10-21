@@ -38,16 +38,16 @@ export default function HotspotCard({ hotspot, mode, sort, linkSearch, selected,
       <span className="hotspot-tile__meta">
         {reannotating ? (
           <>
-            Wynik <span className="mono-data">{hotspot.score}</span> ·{' '}
+            Wynik <span className="tabular">{hotspot.score}</span> ·{' '}
             <TagText tags={hotspot.tags.filter((tag) => tag.dimension !== null)} allTags={allTags} />
           </>
         ) : feature ? (
           <>
-            {feature.shortLabel} <span className="mono-data">{featureValue === undefined ? '—' : featureValue.toFixed(2)}</span>
+            {feature.shortLabel} <span className="tabular">{featureValue === undefined ? '—' : featureValue.toFixed(2)}</span>
           </>
         ) : (
           <>
-            Anotacje <span className="mono-data">{hotspot.annotation_count}</span>
+            Anotacje <span className="tabular">{hotspot.annotation_count}</span>
           </>
         )}
       </span>

@@ -33,7 +33,7 @@ export default function ZoomControls({ onFocusTissue, showActualSize }: ZoomCont
       </Button>
       {showActualSize && (
         <Button
-          className="mono-data"
+          className="tabular"
           title="Pełna rozdzielczość (1 piksel ekranu = 1 piksel skanu)"
           onClick={() => viewer && zoomToImageZoom(viewer, 1)}
         >

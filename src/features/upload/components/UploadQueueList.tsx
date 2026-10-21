@@ -15,7 +15,7 @@ function UploadQueueRow({ item }: { item: UploadItem }) {
       <span className="upload-queue__name" title={item.file.name}>
         {item.file.name}
       </span>
-      <span className="mono-data upload-queue__size">
+      <span className="tabular upload-queue__size">
         {formatBytes(item.file.size)}
         {item.status === 'uploading' && ` · ${describeTransfer(item)}`}
         {item.status === 'queued' && ' · w kolejce'}
@@ -68,7 +68,7 @@ export default function UploadQueueList() {
     <section className="upload-queue" aria-label="Kolejka przesyłania">
       <header className="upload-queue__header">
         <span>
-          Przesyłanie · <span className="mono-data">{done}</span> z <span className="mono-data">{items.length}</span>
+          Przesyłanie · <span className="tabular">{done}</span> z <span className="tabular">{items.length}</span>
         </span>
         {hasFinished && (
           <Button small onClick={clearFinished}>

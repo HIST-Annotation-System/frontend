@@ -32,7 +32,7 @@ export default function SidebarSection({
     <>
       {collapsible && <span className="sidebar-section__caret">{open ? '▾' : '▸'}</span>}
       {title}
-      {meta != null && <span className="sidebar-section__meta mono-data">{meta}</span>}
+      {meta != null && <span className="sidebar-section__meta tabular">{meta}</span>}
     </>
   );
 

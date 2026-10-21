@@ -104,7 +104,7 @@ function FolderLink({ name, onClick, children }: { name: string | null; onClick:
 function Progress({ done, total }: { done: number; total: number }) {
   return (
     <>
-      <span className="mono-data">
+      <span className="tabular">
         {done} / {total}
       </span>
       <progress className="hotspot-activity__progress" value={done} max={Math.max(total, 1)} aria-label="Postęp" />

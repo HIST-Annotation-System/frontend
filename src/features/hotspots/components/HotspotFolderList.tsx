@@ -86,7 +86,7 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
           >
             <Folders size={14} aria-hidden="true" />
             <span className="hotspot-folders__name">Wszystkie</span>
-            <span className="hotspot-folders__count mono-data">
+            <span className="hotspot-folders__count tabular">
               {folders.reduce((total, folder) => total + folder.hotspot_count, 0)}
             </span>
           </button>
@@ -120,7 +120,7 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
                 <span className="hotspot-folders__name" title={folder.name}>
                   {folder.name}
                 </span>
-                <span className="hotspot-folders__count mono-data">{folder.hotspot_count}</span>
+                <span className="hotspot-folders__count tabular">{folder.hotspot_count}</span>
               </button>
             )}
           </li>

@@ -18,7 +18,7 @@ export default function HotspotBatchNotice({ batchId, onDismiss }: HotspotBatchN
       {batch.status === 'running' && (
         <span>
           Tworzenie hotspotów{' '}
-          <span className="mono-data">
+          <span className="tabular">
             {batch.done} / {batch.total}
           </span>
           …
@@ -26,7 +26,7 @@ export default function HotspotBatchNotice({ batchId, onDismiss }: HotspotBatchN
       )}
       {batch.status === 'done' && (
         <span>
-          Utworzono hotspoty: <span className="mono-data">{batch.total}</span>
+          Utworzono hotspoty: <span className="tabular">{batch.total}</span>
         </span>
       )}
       {batch.status === 'failed' && (

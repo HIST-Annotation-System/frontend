@@ -38,7 +38,7 @@ export default function InterruptedUploads() {
             <span className="upload-queue__name" title={upload.fileName}>
               {upload.fileName}
             </span>
-            <span className="mono-data upload-queue__size">{formatBytes(upload.fileSize)}</span>
+            <span className="tabular upload-queue__size">{formatBytes(upload.fileSize)}</span>
             <span />
             <span className="upload-queue__actions">
               <Button small onClick={() => pickFileFor(upload)}>

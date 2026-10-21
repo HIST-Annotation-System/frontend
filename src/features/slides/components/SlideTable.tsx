@@ -28,7 +28,7 @@ export function SlideStatus({ slide, progress }: { slide: Slide; progress: numbe
   return (
     <span>
       {text}
-      {progress !== null && <span className="mono-data"> {progress}%</span>}
+      {progress !== null && <span className="tabular"> {progress}%</span>}
     </span>
   );
 }
@@ -92,10 +92,10 @@ export default function SlideTable({ slides, selectedId, onSelect }: SlideTableP
                 {slide.name}
               </td>
               <td className="data-table__num">{formatDimensions(slide)}</td>
-              <td className="mono-data">{magnification ? `${magnification}×` : '—'}</td>
+              <td className="tabular">{magnification ? `${magnification}×` : '—'}</td>
               <td className="data-table__muted">{slide.vendor ?? '—'}</td>
               <td className="data-table__muted">{slide.uploaded_by ?? '—'}</td>
-              <td className="mono-data">{formatDateTime(slide.created_at)}</td>
+              <td className="tabular">{formatDateTime(slide.created_at)}</td>
               <td>
                 <SlideStatus slide={slide} progress={progressOf(slide)} />
               </td>

@@ -46,8 +46,8 @@ export default function StorageBrowser() {
               <File size={16} aria-hidden="true" />
               <span className="storage-item__name">{name}</span>
             </span>
-            <span className="storage-item__meta mono-data">{formatBytes(object.size)}</span>
-            <span className="storage-item__meta mono-data">{formatDateTime(object.last_modified)}</span>
+            <span className="storage-item__meta tabular">{formatBytes(object.size)}</span>
+            <span className="storage-item__meta tabular">{formatDateTime(object.last_modified)}</span>
             <Button small disabled={downloadingKey === object.key} onClick={() => void openObject(object.key)}>
               Pobierz
             </Button>

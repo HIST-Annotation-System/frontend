@@ -74,7 +74,7 @@ export default function ViewerStatusBar({
     <>
       {hint}
       {hint && <span className="viewer-status__sep" />}
-      <span className="mono-data">
+      <span className="tabular">
         {cursor ? (
           <>
             x <span className="viewer-status__value">{formatCoordinate(cursor[0])}</span> y{' '}
@@ -85,13 +85,13 @@ export default function ViewerStatusBar({
         )}
       </span>
       <span className="viewer-status__spacer" />
-      <span className="mono-data viewer-status__value">{scale}</span>
+      <span className="tabular viewer-status__value">{scale}</span>
       {presets && <MagnificationPresets nativeMagnification={nativeMagnification} />}
       <div className="btn-group" role="group" aria-label="Powiększanie">
         <ZoomControls onFocusTissue={onFocusTissue} showActualSize={showActualSize} />
       </div>
       <span className="viewer-status__sep" />
-      <span className="mono-data">{mpp ? `${mpp.toFixed(4).replace('.', ',')} µm/px` : '— µm/px'}</span>
+      <span className="tabular">{mpp ? `${mpp.toFixed(4).replace('.', ',')} µm/px` : '— µm/px'}</span>
     </>
   );
 }

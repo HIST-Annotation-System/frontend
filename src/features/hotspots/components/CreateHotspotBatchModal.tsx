@@ -113,7 +113,7 @@ export default function CreateHotspotBatchModal({ slide, boxes, onClose, onCreat
                 />
               </label>
             )}
-            <dl className="hotspot-form__meta mono-data">
+            <dl className="hotspot-form__meta tabular">
               <dt>Hotspoty</dt>
               <dd>{boxes.length.toLocaleString('pl-PL')}</dd>
               <dt>Rozmiar</dt>

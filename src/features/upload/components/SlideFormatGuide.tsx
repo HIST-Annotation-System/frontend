@@ -18,7 +18,7 @@ export default function SlideFormatGuide() {
             {SLIDE_FORMATS.map((format) => (
               <tr key={format.name} className={format.multiFile ? 'format-guide__row--archive' : undefined}>
                 <td>{format.name}</td>
-                <td className="mono-data">{format.extensions.join(', ')}</td>
+                <td className="tabular">{format.extensions.join(', ')}</td>
                 <td>{format.upload}</td>
               </tr>
             ))}

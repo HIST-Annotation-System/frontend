@@ -55,10 +55,8 @@ input[type='radio'] {
   line-height: 1.2;
 }
 
-.mono-data {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  line-height: 1.4;
+/* Digits of equal width, so numbers line up in columns (the UI font stays the same). */
+.tabular {
   font-variant-numeric: tabular-nums;
 }
 
@@ -134,7 +132,7 @@ textarea.field {
 .page-strip__count {
   margin-left: var(--space-xs);
   color: var(--color-outline);
-  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: var(--font-size-sm);
   font-weight: 400;
 }
@@ -186,14 +184,8 @@ textarea.field {
 }
 
 .data-table__num {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
   font-variant-numeric: tabular-nums;
   text-align: right;
-}
-
-.data-table th.data-table__num {
-  font-family: inherit;
 }
 
 .data-table__muted {
@@ -219,8 +211,7 @@ tr[aria-selected='true'] .data-table__muted {
 .kv dd {
   overflow: hidden;
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
   text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;

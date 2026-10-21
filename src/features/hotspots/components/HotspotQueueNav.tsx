@@ -29,7 +29,7 @@ export default function HotspotQueueNav({ hotspot, query, search }: HotspotQueue
       <QueueLink target={previous} search={search} label="Poprzedni hotspot">
         ‹
       </QueueLink>
-      <span className="hotspot-queue__position mono-data">{position}</span>
+      <span className="hotspot-queue__position tabular">{position}</span>
       <QueueLink target={next} search={search} label="Następny hotspot">
         ›
       </QueueLink>

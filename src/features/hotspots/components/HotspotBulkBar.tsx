@@ -51,7 +51,7 @@ export default function HotspotBulkBar({ hotspotIds, onClear }: HotspotBulkBarPr
   return (
     <div className="hotspot-bulk" role="region" aria-label="Zaznaczone hotspoty">
       <span className="hotspot-bulk__count">
-        Zaznaczono: <span className="mono-data">{hotspotIds.length}</span>
+        Zaznaczono: <span className="tabular">{hotspotIds.length}</span>
       </span>
       {TAG_DIMENSIONS.map((dimension) =>
         actionSelect(`Ustaw: ${dimension.label.toLowerCase()}`, dimensionTags(tags, dimension.value), (tagId) =>
