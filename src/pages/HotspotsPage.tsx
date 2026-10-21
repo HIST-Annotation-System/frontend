@@ -8,6 +8,7 @@ import HotspotBulkBar from '../features/hotspots/components/HotspotBulkBar';
 import HotspotCard from '../features/hotspots/components/HotspotCard';
 import HotspotFilters from '../features/hotspots/components/HotspotFilters';
 import HotspotFolderList from '../features/hotspots/components/HotspotFolderList';
+import HotspotDetails from '../features/hotspots/components/HotspotDetails';
 import HotspotModeSwitch from '../features/hotspots/components/HotspotModeSwitch';
 import HotspotSortControl from '../features/hotspots/components/HotspotSortControl';
 import HotspotTable from '../features/hotspots/components/HotspotTable';
@@ -148,6 +149,10 @@ function HotspotCatalogList({
 }: HotspotCatalogListProps) {
   const { data, isPending, isError, error, isPlaceholderData } = useHotspots(query);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
+  const [detailId, setDetailId] = useState<string | null>(null);
+  // The panel closes by itself when its hotspot leaves the list (filter, folder, deletion).
+  const detailHotspot = data?.find((hotspot) => hotspot.id === detailId) ?? null;
+  const showDetails = (hotspotId: string) => setDetailId((current) => (current === hotspotId ? null : hotspotId));
   // Only what is listed stays selected (filters and folders change what that is).
   const selected = (data ?? []).filter((hotspot) => selectedIds.has(hotspot.id)).map((hotspot) => hotspot.id);
   const allSelected = data !== undefined && data.length > 0 && selected.length === data.length;
@@ -208,60 +213,79 @@ function HotspotCatalogList({
           </div>
         )}
       </div>
-      <div className={`hotspots-page__body${selected.length > 0 ? ' hotspots-page__body--bulk' : ''}`}>
-        {activity}
-        {isPending ? (
-          <Spinner label="Wczytywanie hotspotów…" />
-        ) : isError ? (
-          <ErrorMessage message={getErrorMessage(error, 'Nie udało się wczytać hotspotów.')} />
-        ) : data.length === 0 ? (
-          <div className="hotspots-page__empty">
-            <span className="hotspots-page__empty-icon">
-              {!isEmpty ? <FilterX size={20} aria-hidden="true" /> : <FolderOpen size={20} aria-hidden="true" />}
-            </span>
-            <span className="hotspots-page__empty-title">
-              {!isEmpty ? 'Brak wyników' : !folder ? 'Brak hotspotów' : 'Folder jest pusty'}
-            </span>
-            <span className="hotspots-page__empty-text">
-              {!isEmpty
-                ? 'Żaden hotspot nie spełnia wybranych filtrów.'
-                : !folder
-                  ? 'Żaden folder nie zawiera jeszcze hotspotów.'
-                  : browsing
-                    ? 'Wgraj obrazy PNG/JPG przyciskami powyżej albo utwórz hotspoty ze slajdu przyciskiem „Hotspoty” w przeglądarce slajdów.'
-                    : 'W tym folderze nie ma jeszcze hotspotów.'}
-            </span>
-          </div>
-        ) : browsing ? (
-          <div className={isPlaceholderData ? 'hotspots-page__list--stale' : undefined} aria-busy={isPlaceholderData}>
-            <HotspotTable
-              hotspots={data}
-              folders={folders}
-              sort={params.sort}
-              linkSearch={linkSearch}
-              selectedIds={selectedIds}
-              onToggleSelect={toggle}
-              onToggleAll={toggleAll}
-            />
-          </div>
-        ) : (
-          <ul
-            className={`hotspots-page__grid${isPlaceholderData ? ' hotspots-page__list--stale' : ''}`}
-            aria-busy={isPlaceholderData}
-          >
-            {data.map((hotspot) => (
-              <li key={hotspot.id}>
-                <HotspotCard
-                  hotspot={hotspot}
-                  mode={params.mode}
-                  sort={params.sort}
-                  linkSearch={linkSearch}
-                  selected={selectedIds.has(hotspot.id)}
-                  onToggleSelect={() => toggle(hotspot.id)}
-                />
-              </li>
-            ))}
-          </ul>
+      <div className="hotspots-page__content">
+        <div className={`hotspots-page__body${selected.length > 0 ? ' hotspots-page__body--bulk' : ''}`}>
+          {activity}
+          {isPending ? (
+            <Spinner label="Wczytywanie hotspotów…" />
+          ) : isError ? (
+            <ErrorMessage message={getErrorMessage(error, 'Nie udało się wczytać hotspotów.')} />
+          ) : data.length === 0 ? (
+            <div className="hotspots-page__empty">
+              <span className="hotspots-page__empty-icon">
+                {!isEmpty ? <FilterX size={20} aria-hidden="true" /> : <FolderOpen size={20} aria-hidden="true" />}
+              </span>
+              <span className="hotspots-page__empty-title">
+                {!isEmpty ? 'Brak wyników' : !folder ? 'Brak hotspotów' : 'Folder jest pusty'}
+              </span>
+              <span className="hotspots-page__empty-text">
+                {!isEmpty
+                  ? 'Żaden hotspot nie spełnia wybranych filtrów.'
+                  : !folder
+                    ? 'Żaden folder nie zawiera jeszcze hotspotów.'
+                    : browsing
+                      ? 'Wgraj obrazy PNG/JPG przyciskami powyżej albo utwórz hotspoty ze slajdu przyciskiem „Hotspoty” w przeglądarce slajdów.'
+                      : 'W tym folderze nie ma jeszcze hotspotów.'}
+              </span>
+            </div>
+          ) : browsing ? (
+            <div className={isPlaceholderData ? 'hotspots-page__list--stale' : undefined} aria-busy={isPlaceholderData}>
+              <HotspotTable
+                hotspots={data}
+                folders={folders}
+                sort={params.sort}
+                linkSearch={linkSearch}
+                selectedIds={selectedIds}
+                onToggleSelect={toggle}
+                onToggleAll={toggleAll}
+                showFolder={folder === null}
+                detailId={detailHotspot?.id ?? null}
+                onShowDetails={showDetails}
+              />
+            </div>
+          ) : (
+            <ul
+              className={`hotspots-page__grid${isPlaceholderData ? ' hotspots-page__list--stale' : ''}`}
+              aria-busy={isPlaceholderData}
+            >
+              {data.map((hotspot) => (
+                <li key={hotspot.id}>
+                  <HotspotCard
+                    hotspot={hotspot}
+                    mode={params.mode}
+                    sort={params.sort}
+                    linkSearch={linkSearch}
+                    selected={selectedIds.has(hotspot.id)}
+                    onToggleSelect={() => toggle(hotspot.id)}
+                    detailsOpen={detailHotspot?.id === hotspot.id}
+                    onShowDetails={() => showDetails(hotspot.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {detailHotspot && data && (
+          <HotspotDetails
+            // A new hotspot starts with a fresh panel (no half-typed name or old error).
+            key={detailHotspot.id}
+            hotspot={detailHotspot}
+            folders={folders}
+            listed={data}
+            linkSearch={linkSearch}
+            manage={browsing}
+            onClose={() => setDetailId(null)}
+          />
         )}
       </div>
       {data !== undefined && selected.length > 0 && (

@@ -90,9 +90,6 @@ export default function CellTypesPage() {
       <div className="admin-page-header">
         <div className="admin-page-header__text">
           <h1 className="page-title">Typy komórek</h1>
-          <p className="page-subtitle">
-            Zarządzaj dostępnymi typami komórek używanymi podczas anotacji hotspotów.
-          </p>
         </div>
       </div>
 

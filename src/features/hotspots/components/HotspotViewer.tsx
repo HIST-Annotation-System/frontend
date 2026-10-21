@@ -51,7 +51,6 @@ export default function HotspotViewer({ hotspot, status, children }: HotspotView
             <span className="viewer-status__value viewer-status__value--strong">{zoom}</span>
           </span>
           {status}
-          <span className="viewer-status__hint">Kółko — przybliż / oddal</span>
         </div>
       </div>
     </div>

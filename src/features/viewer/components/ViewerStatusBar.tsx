@@ -26,7 +26,6 @@ export default function ViewerStatusBar({ slide, nativeMagnification }: ViewerSt
         <span className="viewer-status__label">Hotspoty</span>
         <span className="viewer-status__value">{hotspots ? hotspots.length : '—'}</span>
       </span>
-      <span className="viewer-status__hint">Kółko — powiększ · przeciągnij — przesuń</span>
     </div>
   );
 }

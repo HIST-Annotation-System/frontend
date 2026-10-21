@@ -1,4 +1,5 @@
-import { Check, Image as ImageIcon, PencilLine, PenTool, Scissors, Star } from 'lucide-react';
+import { Check, Image as ImageIcon, PanelRight, PencilLine, PenTool, Scissors, Star } from 'lucide-react';
+import Button from '../../../components/ui/Button';
 import { Link } from 'react-router-dom';
 import { getHotspotThumbnailUrl } from '../../../services/hotspotsApi';
 import type { Hotspot, HotspotSort } from '../../../types/hotspot';
@@ -18,15 +19,26 @@ interface HotspotCardProps {
   linkSearch: string;
   selected: boolean;
   onToggleSelect: () => void;
+  detailsOpen?: boolean;
+  onShowDetails?: () => void;
 }
 
 /** A hotspot of the assess/reannotate queues; managing hotspots happens in the browse table. */
-export default function HotspotCard({ hotspot, mode, sort, linkSearch, selected, onToggleSelect }: HotspotCardProps) {
+export default function HotspotCard({
+  hotspot,
+  mode,
+  sort,
+  linkSearch,
+  selected,
+  onToggleSelect,
+  detailsOpen = false,
+  onShowDetails,
+}: HotspotCardProps) {
   const reannotating = mode === 'reannotate';
   const link = `/hotspots/${hotspot.id}${linkSearch}`;
 
   return (
-    <div className={`hotspot-card${selected ? ' hotspot-card--selected' : ''}`}>
+    <div className={`hotspot-card${selected ? ' hotspot-card--selected' : ''}${detailsOpen ? ' hotspot-card--details' : ''}`}>
       <Link to={link} className="hotspot-card__thumb" aria-label={`Otwórz hotspot ${hotspot.name}`} title="Otwórz do anotacji">
         <img src={getHotspotThumbnailUrl(hotspot.id)} alt="" loading="lazy" />
         <span className="hotspot-card__overlay hotspot-card__overlay--count" title="Anotacje">
@@ -57,8 +69,20 @@ export default function HotspotCard({ hotspot, mode, sort, linkSearch, selected,
         </span>
       </label>
       <div className="hotspot-card__body">
-        <span className="hotspot-card__name" title={hotspot.name}>
-          {hotspot.name}
+        <span className="hotspot-card__title">
+          <span className="hotspot-card__name" title={hotspot.name}>
+            {hotspot.name}
+          </span>
+          {onShowDetails && (
+            <Button
+              variant="ghost"
+              active={detailsOpen}
+              icon={<PanelRight size={14} />}
+              title="Szczegóły"
+              aria-label={`Szczegóły hotspotu ${hotspot.name}`}
+              onClick={onShowDetails}
+            />
+          )}
         </span>
         <span className="hotspot-card__source" title={hotspot.slide_name ?? undefined}>
           {hotspot.slide_name === null ? (

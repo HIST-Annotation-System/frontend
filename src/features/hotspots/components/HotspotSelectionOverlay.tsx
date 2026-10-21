@@ -334,12 +334,9 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
 
   const tooManyInDrag = preview && !preview.boxes;
   const count = chosen.size;
-  let status: string;
-  if (isOverLimit || tooManyInDrag) status = `Za dużo pól - najwyżej ${MAX_BATCH_BOXES} naraz`;
-  else if (!tool) status = `Wybrane pola: ${count} · wybierz pędzel lub siatkę, aby je zmienić`;
-  else if (count === 0)
-    status = `${tool === 'grid' ? 'Przeciągnij' : 'Maluj'} po slajdzie, aby zaznaczyć pola ${formatSquareSize(HOTSPOT_BOX_SIZE, slide.mpp_x)}`;
-  else status = `Wybrane pola: ${count} · lewy przycisk dodaje, prawy usuwa · Esc: przesuwanie slajdu`;
+  // Only the limit is announced on the canvas; the strip above already shows the count and the tools.
+  const overLimit = isOverLimit || tooManyInDrag;
+  const status = `Za dużo pól - najwyżej ${MAX_BATCH_BOXES} naraz`;
 
   return (
     <>
@@ -435,11 +432,8 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
             )}
           </div>
         )}
-        {(tool || count > 0) && (
-          <div
-            className={`hotspot-mark__hint${isOverLimit || tooManyInDrag ? ' hotspot-mark__hint--error' : ''}`}
-            role="status"
-          >
+        {overLimit && (
+          <div className="hotspot-mark__hint hotspot-mark__hint--error" role="status">
             {status}
           </div>
         )}

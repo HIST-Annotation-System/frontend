@@ -143,7 +143,6 @@ export default function UsersPage() {
       <div className="admin-page-header">
         <div className="admin-page-header__text">
           <h1 className="page-title">Użytkownicy</h1>
-          <p className="page-subtitle">Lista wszystkich kont anotatorów i administratorów.</p>
         </div>
         <button onClick={() => setIsModalOpen(true)} className="btn-primary">
           <UserPlus size={16} />
@@ -306,7 +305,6 @@ export default function UsersPage() {
                   />
                   <span className="users-toggle__text">
                     <span className="users-toggle__title">Uprawnienia do wgrywania plików</span>
-                    <span className="users-toggle__hint">Może wgrywać slajdy do biblioteki.</span>
                   </span>
                 </label>
               </div>
@@ -384,7 +382,6 @@ export default function UsersPage() {
                   />
                   <span className="users-toggle__text">
                     <span className="users-toggle__title">Uprawnienia do wgrywania plików</span>
-                    <span className="users-toggle__hint">Może wgrywać slajdy do biblioteki.</span>
                   </span>
                 </label>
               </div>

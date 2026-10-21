@@ -74,10 +74,6 @@ export default function WsiUploader() {
         </span>
         <p className="wsi-uploader__prompt">Przeciągnij pliki tutaj</p>
         <p className="wsi-uploader__extensions">{ACCEPTED_UPLOAD_EXTENSIONS.join(' ')}</p>
-        <p className="wsi-uploader__hint">
-          Można wybrać kilka plików naraz - trafią do kolejki. Formaty wieloplikowe jako archiwum .zip, szczegóły
-          poniżej.
-        </p>
         <div className="wsi-uploader__buttons">
           <Button variant="primary" icon={<FolderOpen size={16} />} onClick={() => inputRef.current?.click()}>
             Wybierz pliki

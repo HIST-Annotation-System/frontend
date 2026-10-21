@@ -1,4 +1,4 @@
-import { Check, FolderInput, Pencil, Trash2, X } from 'lucide-react';
+import { Check, FolderInput, PanelRight, Pencil, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Badge, { type BadgeTone } from '../../../components/ui/Badge';
@@ -6,17 +6,15 @@ import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Modal from '../../../components/ui/Modal';
 import { getHotspotThumbnailUrl } from '../../../services/hotspotsApi';
-import type { Hotspot, HotspotFolder, HotspotSort, HotspotStatus } from '../../../types/hotspot';
+import type { Hotspot, HotspotFeature, HotspotFolder, HotspotSort, HotspotStatus } from '../../../types/hotspot';
 import type { Tag } from '../../../types/tag';
 import { getErrorMessage } from '../../../utils/errors';
-import { formatDateTime, formatDimensions } from '../../../utils/format';
+import { formatDateTime } from '../../../utils/format';
 import { useHotspotMutations } from '../hooks/useHotspots';
 import { useTags } from '../hooks/useTags';
-import { formatLength } from '../utils/hotspotFormat';
 import { HOTSPOT_STATUS_OPTIONS, hotspotStatus } from '../utils/hotspotReview';
 import { HOTSPOT_FEATURES } from '../utils/hotspotSort';
 import { TAG_DIMENSIONS, tagLabel, tagTone } from '../utils/hotspotTags';
-import HotspotSource from './HotspotSource';
 import './Hotspots.css';
 
 const STATUS_TONES: Record<HotspotStatus, BadgeTone> = {
@@ -36,9 +34,14 @@ interface HotspotTableProps {
   onToggleSelect: (hotspotId: string) => void;
   /** Selects every listed hotspot, or clears the selection when all are selected (header checkbox). */
   onToggleAll?: () => void;
+  /** The folder column only helps when several folders are listed. */
+  showFolder?: boolean;
+  /** The hotspot shown in the details panel; its row is highlighted. */
+  detailId?: string | null;
+  onShowDetails?: (hotspotId: string) => void;
 }
 
-/** The browse view: one dense row per hotspot with everything known about it, and its management. */
+/** The browse view: the essentials of each hotspot and its management; the rest is in the details panel. */
 export default function HotspotTable({
   hotspots,
   folders,
@@ -47,11 +50,16 @@ export default function HotspotTable({
   selectedIds,
   onToggleSelect,
   onToggleAll,
+  showFolder = true,
+  detailId = null,
+  onShowDetails,
 }: HotspotTableProps) {
   const { data: allTags = [] } = useTags();
   const selectedCount = hotspots.filter((hotspot) => selectedIds.has(hotspot.id)).length;
   const allSelected = hotspots.length > 0 && selectedCount === hotspots.length;
   const tagSort = TAG_DIMENSIONS.some((dimension) => dimension.value === sort);
+  // Sorting by an image feature shows that one feature, so the order can be read.
+  const sortFeature = HOTSPOT_FEATURES.find((feature) => feature.value === sort) ?? null;
 
   return (
     <div className="hotspot-table__scroll">
@@ -72,25 +80,19 @@ export default function HotspotTable({
                 />
               )}
             </th>
-            <th>Podgląd</th>
+            <th className="hotspot-table__thumb-head">Podgląd</th>
             <th>Nazwa</th>
-            <th>Folder</th>
-            <th>Źródło</th>
-            <th>Rozmiar</th>
-            <th className="hotspot-table__number">Anotacje</th>
-            {HOTSPOT_FEATURES.map((feature) => (
-              <th
-                key={feature.value}
-                title={feature.description}
-                className={`hotspot-table__number${feature.value === sort ? ' hotspot-table__active' : ''}`}
-              >
-                {feature.shortLabel}
+            {sortFeature && (
+              <th title={sortFeature.description} className="hotspot-table__number hotspot-table__active">
+                {sortFeature.shortLabel}
               </th>
-            ))}
+            )}
+            {showFolder && <th>Folder</th>}
             <th className={tagSort ? 'hotspot-table__active' : undefined}>Tagi</th>
             <th>Status</th>
+            <th className="hotspot-table__number">Anotacje</th>
             <th className={`hotspot-table__number${sort === 'score' ? ' hotspot-table__active' : ''}`}>Wynik</th>
-            <th className={sort === 'created_at' ? 'hotspot-table__active' : undefined}>Utworzono</th>
+            <th className={`hotspot-table__date${sort === 'created_at' ? ' hotspot-table__active' : ''}`}>Utworzono</th>
             <th className="hotspot-table__actions">Akcje</th>
           </tr>
         </thead>
@@ -104,6 +106,10 @@ export default function HotspotTable({
               linkSearch={linkSearch}
               selected={selectedIds.has(hotspot.id)}
               onToggleSelect={() => onToggleSelect(hotspot.id)}
+              sortFeature={sortFeature?.value ?? null}
+              showFolder={showFolder}
+              detailsOpen={detailId === hotspot.id}
+              onShowDetails={onShowDetails ? () => onShowDetails(hotspot.id) : undefined}
             />
           ))}
         </tbody>
@@ -119,9 +125,24 @@ interface HotspotRowProps {
   linkSearch: string;
   selected: boolean;
   onToggleSelect: () => void;
+  sortFeature: HotspotFeature | null;
+  showFolder: boolean;
+  detailsOpen: boolean;
+  onShowDetails?: () => void;
 }
 
-function HotspotRow({ hotspot, folders, allTags, linkSearch, selected, onToggleSelect }: HotspotRowProps) {
+function HotspotRow({
+  hotspot,
+  folders,
+  allTags,
+  linkSearch,
+  selected,
+  onToggleSelect,
+  sortFeature,
+  showFolder,
+  detailsOpen,
+  onShowDetails,
+}: HotspotRowProps) {
   const { updateHotspot, isUpdating, deleteHotspot, isDeleting } = useHotspotMutations();
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -185,7 +206,13 @@ function HotspotRow({ hotspot, folders, allTags, linkSearch, selected, onToggleS
   };
 
   return (
-    <tr className={selected ? 'hotspot-table__row--selected' : undefined}>
+    <tr
+      className={
+        [selected ? 'hotspot-table__row--selected' : '', detailsOpen ? 'hotspot-table__row--details' : '']
+          .filter(Boolean)
+          .join(' ') || undefined
+      }
+    >
       <td className="hotspot-table__check">
         <input type="checkbox" checked={selected} aria-label={`Zaznacz hotspot ${hotspot.name}`} onChange={onToggleSelect} />
       </td>
@@ -230,25 +257,16 @@ function HotspotRow({ hotspot, folders, allTags, linkSearch, selected, onToggleS
         )}
         {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
       </td>
-      <td className="hotspot-table__text" title={folderName}>
-        {folderName ?? '—'}
-      </td>
-      <td className="hotspot-table__text" title={hotspot.slide_name ?? undefined}>
-        <HotspotSource hotspot={hotspot} />
-      </td>
-      <td className="mono-data">
-        {formatDimensions(hotspot.image_width, hotspot.image_height)}
-        {hotspot.mpp ? ` · ${formatLength(hotspot.image_width, hotspot.mpp)}` : ''}
-      </td>
-      <td className="hotspot-table__number mono-data hotspot-table__strong">{hotspot.annotation_count}</td>
-      {HOTSPOT_FEATURES.map((feature) => {
-        const value = hotspot.features?.[feature.value];
-        return (
-          <td key={feature.value} className="hotspot-table__number mono-data">
-            {value === undefined ? '—' : value.toFixed(2)}
-          </td>
-        );
-      })}
+      {sortFeature && (
+        <td className="hotspot-table__number mono-data hotspot-table__strong">
+          {hotspot.features?.[sortFeature] === undefined ? '—' : hotspot.features[sortFeature].toFixed(2)}
+        </td>
+      )}
+      {showFolder && (
+        <td className="hotspot-table__text" title={folderName}>
+          {folderName ?? '—'}
+        </td>
+      )}
       <td>
         {tags.length === 0 ? (
           <span className="hotspot-table__none">—</span>
@@ -263,10 +281,21 @@ function HotspotRow({ hotspot, folders, allTags, linkSearch, selected, onToggleS
         )}
       </td>
       <td>{status && <Badge tone={STATUS_TONES[status.value]}>{status.label}</Badge>}</td>
+      <td className="hotspot-table__number mono-data">{hotspot.annotation_count}</td>
       <td className="hotspot-table__number mono-data hotspot-table__strong">{hotspot.score}</td>
       <td className="mono-data hotspot-table__date">{formatDateTime(hotspot.created_at)}</td>
       <td className="hotspot-table__actions">
         <div className="hotspot-table__action-row">
+          {onShowDetails && (
+            <Button
+              variant="ghost"
+              active={detailsOpen}
+              icon={<PanelRight size={14} />}
+              title="Szczegóły"
+              aria-label={`Szczegóły hotspotu ${hotspot.name}`}
+              onClick={onShowDetails}
+            />
+          )}
           <Button
             variant="ghost"
             icon={<Pencil size={14} />}

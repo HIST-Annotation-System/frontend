@@ -4,7 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { usersApi } from '../../services/usersApi';
 import { dictionariesApi } from '../../services/dictionariesApi';
 import type { ProfileUpdate, Role } from '../../types/user';
-import { Pencil, Check, Lock, Info, CircleAlert, CircleCheck, X } from 'lucide-react';
+import { Pencil, Check, Lock, CircleAlert, CircleCheck, X } from 'lucide-react';
 import './ProfilePage.css';
 
 const ROLE_LABELS: Record<Role, string> = { ADMIN: 'Administrator', ANNOTATOR: 'Anotator' };
@@ -161,7 +161,6 @@ export default function ProfilePage() {
           <span className="profile-avatar" aria-hidden="true">{initials}</span>
           <div className="profile-header__text">
             <h1 className="page-title">Mój profil</h1>
-            <p className="page-subtitle">Przeglądaj i aktualizuj swoje dane.</p>
           </div>
         </div>
 
@@ -275,11 +274,6 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
-
-        <p className="profile-note">
-          <Info size={13} aria-hidden="true" />
-          Rolę i grupę anotatorów może zmienić tylko administrator.
-        </p>
       </div>
     </div>
   );

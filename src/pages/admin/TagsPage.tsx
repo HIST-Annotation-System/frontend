@@ -54,11 +54,6 @@ export default function TagsPage() {
       <div className="admin-page-header">
         <div className="admin-page-header__text">
           <h1 className="page-title">Tagi hotspotów</h1>
-          <p className="page-subtitle">
-            Wynik hotspotu to suma wag jego tagów; tryb „Reannotuj” sortuje według niego. Ważność i poprawność można
-            tylko przeważyć. Tagi własne muszą ważyć mniej niż najlżejsza niezerowa ocena
-            {cap === null ? '' : ` (obecnie < ${cap})`}.
-          </p>
         </div>
       </div>
 
@@ -85,10 +80,6 @@ export default function TagsPage() {
         <div className="admin-card admin-card--narrow">
           <div className="tags-card__header">
             <h2 className="admin-card__title">Oceny podstawowe</h2>
-            <span className="admin-card__note">
-              <Lock size={12} aria-hidden="true" />
-              Nazw ocen nie można zmieniać. Ocen nie można usuwać. Zmienić można tylko wagę.
-            </span>
           </div>
           {TAG_DIMENSIONS.map((dimension) => {
             const groupTags = baseTags.filter((tag) => tag.dimension === dimension.value);
@@ -129,6 +120,7 @@ export default function TagsPage() {
               type="number"
               className="admin-input admin-input--weight"
               aria-label="Waga nowego tagu"
+              title={`Wynik hotspotu to suma wag jego tagów. Tag własny musi ważyć mniej niż najlżejsza niezerowa ocena${cap === null ? '' : ` (obecnie < ${cap})`}.`}
               min={0}
               max={maxCustomWeight(tags)}
               value={newWeight}

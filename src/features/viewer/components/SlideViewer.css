@@ -177,6 +177,8 @@
 /* OpenSeadragon navigator (minimap): colours only - OpenSeadragon sizes it with its own 2px borders.
    Its inline styles need !important. */
 .slide-viewer__frame .navigator {
+  /* Keep the minimap off the canvas edges. */
+  margin: 0 var(--space-4) var(--space-4) 0 !important;
   border-color: var(--c-border) !important;
   background-color: var(--c-viewer) !important;
   box-shadow: var(--shadow-md);

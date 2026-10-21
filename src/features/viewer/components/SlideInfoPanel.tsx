@@ -11,14 +11,7 @@ interface SlideInfoPanelProps {
   slide: SlideDetail;
 }
 
-/** Shortcuts that work on the slide viewer. */
-const SHORTCUTS: [action: string, key: string][] = [
-  ['Powiększ / pomniejsz', 'Kółko'],
-  ['Usuń pola (Pędzel / Siatka)', 'Prawy przycisk'],
-  ['Zakończ zaznaczanie', 'Esc'],
-];
-
-/** The slide viewer's right-hand panel: the slide's parameters, its hotspots by folder, and shortcuts. */
+/** The slide viewer's right-hand panel: the slide's parameters, and its hotspots by folder. */
 export default function SlideInfoPanel({ slide }: SlideInfoPanelProps) {
   const magnification = getNativeMagnification(slide);
   const [open, setOpen] = useState(true);
@@ -105,15 +98,6 @@ export default function SlideInfoPanel({ slide }: SlideInfoPanelProps) {
               </Link>
             ))
           )}
-        </section>
-        <section className="slide-info__group slide-info__group--keys">
-          <h3 className="label-caps">Skróty</h3>
-          {SHORTCUTS.map(([action, key]) => (
-            <div key={action} className="slide-info__key">
-              <span>{action}</span>
-              <kbd>{key}</kbd>
-            </div>
-          ))}
         </section>
       </div>
     </aside>

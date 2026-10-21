@@ -98,9 +98,6 @@ export default function SettingsPage() {
       <div className="admin-page-header">
         <div className="admin-page-header__text">
           <h1 className="page-title">Kategorie i grupy</h1>
-          <p className="page-subtitle">
-            Kategorie porządkują obrazy, grupy łączą anotatorów pracujących nad tymi samymi zestawami.
-          </p>
         </div>
       </div>
 

@@ -5,25 +5,15 @@ import Button from '../../../components/ui/Button';
 import type { AnnotationClass, ToolMode } from '../../../types/annotation';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
 import ToolModeToggle from './ToolModeToggle';
-import { TOOL_MODES } from './toolModes';
 import './AnnotationTools.css';
 
 interface AnnotationToolbarProps {
   mode: ToolMode;
   onModeChange: (mode: ToolMode) => void;
   canDraw: boolean;
-  /** The cell type new outlines get, shown in the hint chip. */
+  /** The cell type new outlines get. */
   activeClass?: AnnotationClass | null;
 }
-
-const DRAWING_HINTS: Record<ToolMode, string | null> = {
-  navigate: null,
-  polygon: 'Klik dodaje punkt · dwuklik lub pierwszy punkt zamyka · Esc anuluje',
-  curve: 'Klik dodaje punkt krzywej · dwuklik lub pierwszy punkt zamyka i wygładza · Esc anuluje',
-  freehand: 'Przytrzymaj i rysuj · kółko przybliża · prawy przycisk przesuwa · Esc anuluje',
-};
-
-const EDITING_HINT = 'Klik w punkt: łuk / narożnik · Del usuwa zaznaczony punkt · Esc kończy edycję';
 
 const NO_CLASS_HINT = 'Wybierz typ komórki, aby rysować';
 
@@ -32,7 +22,7 @@ const isTextField = (target: EventTarget | null): boolean =>
   (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 
 /** Tool strip on the canvas: tools, undo/redo (also Ctrl+Z / Ctrl+Y), hints; Esc cancels drawing or editing. */
-export default function AnnotationToolbar({ mode, onModeChange, canDraw, activeClass }: AnnotationToolbarProps) {
+export default function AnnotationToolbar({ mode, onModeChange, canDraw }: AnnotationToolbarProps) {
   const anno = useSlideAnnotator();
   const { selected } = useSelection();
   const [history, setHistory] = useState({ canUndo: false, canRedo: false });
@@ -73,9 +63,8 @@ export default function AnnotationToolbar({ mode, onModeChange, canDraw, activeC
     return () => document.removeEventListener('keydown', shieldTextFields);
   }, []);
 
-  const drawingHint = DRAWING_HINTS[mode] && !canDraw ? NO_CLASS_HINT : DRAWING_HINTS[mode];
-  const hint = selected.length > 0 ? EDITING_HINT : drawingHint;
-  const tool = TOOL_MODES.find((item) => item.mode === mode);
+  // Only a blocking state is announced on the canvas; usage hints would just clutter the image.
+  const blocked = mode !== 'navigate' && !canDraw && selected.length === 0;
 
   return (
     <>
@@ -100,25 +89,11 @@ export default function AnnotationToolbar({ mode, onModeChange, canDraw, activeC
           onClick={() => anno?.redo()}
         />
       </div>
-      {/* Dark chip beside the strip: the tool, the cell type it draws, and how to use it. */}
-      <div className="drawing-hint" role="status">
-        {tool && (
-          <span className="drawing-hint__tool">
-            <tool.Icon size={13} aria-hidden="true" />
-            {tool.label}
-          </span>
-        )}
-        {activeClass && mode !== 'navigate' && (
-          <>
-            <span className="drawing-hint__class">
-              <span className="drawing-hint__swatch" style={{ background: activeClass.color }} aria-hidden="true" />
-              {activeClass.name}
-            </span>
-            {hint && <span className="drawing-hint__dot">·</span>}
-          </>
-        )}
-        {hint && <span className="drawing-hint__text">{hint}</span>}
-      </div>
+      {blocked && (
+        <div className="drawing-hint" role="status">
+          <span className="drawing-hint__text">{NO_CLASS_HINT}</span>
+        </div>
+      )}
     </>
   );
 }

@@ -1264,7 +1264,7 @@
   top: 0;
   z-index: 2;
   height: 36px;
-  padding: 0 4px;
+  padding: 0 10px;
   border-bottom: var(--border-width) solid var(--c-border);
   background: var(--c-surface-2);
   color: var(--c-text-2);
@@ -1286,7 +1286,7 @@
 
 .hotspot-table td {
   height: 60px;
-  padding: 6px 4px;
+  padding: 6px 10px;
   border-bottom: var(--border-width) solid var(--c-border);
   vertical-align: middle;
 }
@@ -1318,11 +1318,8 @@
 }
 
 /* Date over time: keeps the wide table within a laptop screen. */
-.hotspot-table td.hotspot-table__date {
-  min-width: 80px;
-  max-width: 92px;
-  line-height: 16px;
-  white-space: normal;
+.hotspot-table .hotspot-table__date {
+  white-space: nowrap;
 }
 
 .hotspot-table__none {
@@ -1356,13 +1353,28 @@
   background: var(--c-accent-soft);
 }
 
+/* The row whose details are open: an accent edge on the left. */
+.hotspot-table tbody .hotspot-table__row--details td:first-child {
+  box-shadow: inset 3px 0 0 var(--c-accent);
+}
+
+.hotspot-table tbody .hotspot-table__row--details {
+  background: var(--c-hover);
+}
+
 .hotspot-table td.mono-data {
   color: var(--c-text-2);
   font-size: 12px;
 }
 
 .hotspot-table .hotspot-table__number {
+  width: 1%;
   text-align: right;
+  white-space: nowrap;
+}
+
+.hotspot-table .hotspot-table__thumb-head {
+  width: 1%;
 }
 
 .hotspot-table th.hotspot-table__active {
@@ -2035,4 +2047,222 @@ a.hotspot-queue__step:focus-visible {
   line-height: 18px;
   text-align: center;
   white-space: normal;
+}
+
+/* Card title row: the name and the details button. */
+.hotspot-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.hotspot-card__title .hotspot-card__name {
+  flex: 1;
+  min-width: 0;
+}
+
+.hotspot-card--details {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 1px var(--c-accent);
+}
+
+/* Details panel beside the catalog list (table or cards). */
+.hotspot-details {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 320px;
+  min-height: 0;
+  border-left: var(--border-width) solid var(--c-border);
+  background: var(--c-surface);
+}
+
+.hotspot-details__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 var(--space-2) 0 var(--space-4);
+  border-bottom: var(--border-width) solid var(--c-border);
+}
+
+.hotspot-details__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+/* The body scrolls; its blocks keep their size instead of shrinking. */
+.hotspot-details__body > * {
+  flex-shrink: 0;
+}
+
+.hotspot-details__image {
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: var(--border-width) solid var(--c-border);
+  border-radius: var(--radius-md);
+  background: var(--c-viewer);
+}
+
+.hotspot-details__image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hotspot-details__name {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hotspot-details__rename {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.hotspot-details__rename input {
+  flex: 1;
+  min-width: 0;
+  height: var(--control-md);
+  padding: 0 10px;
+}
+
+.hotspot-details__open {
+  width: 100%;
+}
+
+.hotspot-details__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--c-border);
+}
+
+.hotspot-details__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.hotspot-details__row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 22px;
+  font-size: 13px;
+}
+
+.hotspot-details__row dt {
+  color: var(--c-text-2);
+}
+
+.hotspot-details__row dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.hotspot-details__tags {
+  justify-content: flex-end;
+}
+
+.hotspot-details__features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hotspot-details__feature {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  row-gap: 4px;
+  font-size: 13px;
+}
+
+.hotspot-details__feature-label {
+  overflow: hidden;
+  color: var(--c-text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hotspot-details__feature-value {
+  color: var(--c-text);
+  font-size: 13px;
+  text-align: right;
+}
+
+.hotspot-details__bar {
+  position: relative;
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--c-track);
+}
+
+.hotspot-details__bar-mark {
+  position: absolute;
+  top: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  box-shadow: 0 0 0 2px var(--c-surface);
+  transform: translateX(-50%);
+}
+
+.hotspot-details__manage {
+  gap: var(--space-2);
+}
+
+.hotspot-details__manage .btn,
+.hotspot-details__manage select {
+  width: 100%;
+}
+
+.hotspot-details__delete {
+  color: var(--c-danger-text);
+}
+
+.hotspot-details__delete:hover:not(:disabled) {
+  background: var(--c-danger-soft);
+  color: var(--c-danger-text);
+}
+
+/* Narrower screens: the panel floats over the list instead of squeezing the table. */
+@media (max-width: 1599px) {
+  .hotspots-page__content {
+    position: relative;
+  }
+
+  .hotspot-details {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    box-shadow: var(--shadow-lg);
+  }
 }
