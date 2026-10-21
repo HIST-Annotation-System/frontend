@@ -1,56 +1,30 @@
+/* Shared by the slide and hotspot viewer pages. */
 .viewer-page {
   display: flex;
   flex: 1;
+  flex-direction: column;
   min-height: 0;
 }
 
-.viewer-page__sidebar {
+.viewer-page__panel {
   display: flex;
   flex-direction: column;
-  width: var(--sidebar-width);
-  flex-shrink: 0;
-  overflow-y: auto;
-  background: var(--color-surface-lowest);
-  border-right: var(--border);
-}
-
-.viewer-page__main {
-  position: relative;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-  padding: 0;
-  background: var(--color-surface-low);
-}
-
-/* Over the top of the canvas frame, just below the action bar. */
-.viewer-page__error {
-  position: absolute;
-  top: 88px;
-  left: 50%;
-  z-index: 90;
-  width: min(520px, 90%);
-  transform: translateX(-50%);
+  gap: var(--space-sm);
 }
 
 .viewer-page__notice {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-sm);
-  max-width: 560px;
+  max-width: 520px;
   margin: 0 auto;
-  padding: 4rem 2rem;
-  text-align: center;
-  color: var(--color-on-surface-variant);
+  padding: 48px var(--space-lg);
 }
 
 .viewer-page__notice h2 {
-  font-size: 24px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
 }
 
 /* Blocks the whole workspace once the slide was deleted elsewhere. */
@@ -62,21 +36,20 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-lg);
-  background: rgba(0, 0, 0, 0.45);
+  background: rgb(0 0 0 / 0.4);
 }
 
 .viewer-page__deleted-box {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
-  max-width: 440px;
+  max-width: 420px;
   padding: var(--space-lg);
-  border: var(--border);
+  border: var(--border-strong);
   background: var(--color-surface-lowest);
 }
 
 .viewer-page__deleted-box h2 {
-  font-size: 18px;
-  font-weight: 700;
-  text-transform: uppercase;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
 }

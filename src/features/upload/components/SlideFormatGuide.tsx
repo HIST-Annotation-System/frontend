@@ -1,11 +1,10 @@
 import { SLIDE_FORMATS } from '../slideFileRules';
 import './SlideFormatGuide.css';
 
-/** Every supported slide format and how to upload it. */
+/** Every supported slide format and how to upload it (shown in a modal from the library). */
 export default function SlideFormatGuide() {
   return (
-    <details className="format-guide">
-      <summary>Obsługiwane formaty i sposób przesyłania</summary>
+    <>
       <div className="format-guide__table-wrap">
         <table className="format-guide__table">
           <thead>
@@ -31,6 +30,6 @@ export default function SlideFormatGuide() {
         .zip może zawierać tylko jeden slajd wieloplikowy – plików jednoplikowych nie pakuj. Nieobsługiwane: obrazy
         JPG/PNG/BMP, płaskie i OME-TIFF, Olympus VSI, Philips iSyntax.
       </p>
-    </details>
+    </>
   );
 }

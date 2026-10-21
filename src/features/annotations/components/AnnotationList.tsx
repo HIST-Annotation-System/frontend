@@ -1,4 +1,5 @@
 import { useSelection } from '@annotorious/react';
+import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Spinner from '../../../components/ui/Spinner';
 import type { AnnotationClass, AnnotationOwner } from '../../../types/annotation';
@@ -19,12 +20,14 @@ interface AnnotationListProps {
   onError: (message: string) => void;
 }
 
+/** The owner's annotations; the selected one (here or on the image) can be reclassified or deleted below the list. */
 export default function AnnotationList({ owner, classes, readOnly = false, onError }: AnnotationListProps) {
   const { data: annotations, isPending, isError, error } = useAnnotations(owner);
   const { updateAnnotation, deleteAnnotation } = useAnnotationMutations(owner);
   const anno = useSlideAnnotator();
   const selection = useSelection();
   const selectedIds = new Set(selection.selected.map(({ annotation }) => annotation.id));
+  const selected = annotations?.find((annotation) => selectedIds.has(annotation.id));
 
   const showAnnotation = (annotationId: string) => {
     anno?.setSelected(annotationId, !readOnly);
@@ -52,28 +55,42 @@ export default function AnnotationList({ owner, classes, readOnly = false, onErr
 
   if (isPending) return <Spinner label="Wczytywanie anotacji…" />;
   if (isError) return <ErrorMessage message={getErrorMessage(error, 'Nie udało się wczytać anotacji.')} />;
-  if (annotations.length === 0) {
-    return (
-      <p className="annotation-list__empty">
-        Brak anotacji
-      </p>
-    );
-  }
+  if (annotations.length === 0) return <p className="text-muted">Brak anotacji.</p>;
 
   return (
-    <ul className="annotation-list">
-      {annotations.map((annotation) => (
-        <AnnotationListItem
-          key={annotation.id}
-          annotation={annotation}
-          classes={classes}
-          selected={selectedIds.has(annotation.id)}
-          readOnly={readOnly}
-          onSelect={showAnnotation}
-          onClassChange={(annotationId, classId) => void changeClass(annotationId, classId)}
-          onDelete={(annotationId) => void removeAnnotation(annotationId)}
-        />
-      ))}
-    </ul>
+    <>
+      <ul className="annotation-list">
+        {annotations.map((annotation) => (
+          <AnnotationListItem
+            key={annotation.id}
+            annotation={annotation}
+            classes={classes}
+            selected={selectedIds.has(annotation.id)}
+            onSelect={showAnnotation}
+          />
+        ))}
+      </ul>
+      {!readOnly && (
+        <div className="annotation-list__actions">
+          <select
+            className="field"
+            aria-label="Typ komórki zaznaczonej anotacji"
+            value={selected?.class_id ?? ''}
+            disabled={!selected}
+            onChange={(event) => selected && void changeClass(selected.id, event.target.value)}
+          >
+            {!selected && <option value="">Zmień typ…</option>}
+            {classes.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+          <Button variant="danger" small disabled={!selected} onClick={() => selected && void removeAnnotation(selected.id)}>
+            Usuń zaznaczoną
+          </Button>
+        </div>
+      )}
+    </>
   );
 }

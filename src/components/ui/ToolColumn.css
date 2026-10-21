@@ -1,0 +1,42 @@
+.tool-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 3px;
+}
+
+.tool-column__button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--color-secondary);
+  cursor: pointer;
+}
+
+.tool-column__button:hover:not(:disabled) {
+  background: var(--color-surface-high);
+  color: var(--color-on-surface);
+}
+
+.tool-column__button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.tool-column__button--active,
+.tool-column__button--active:hover:not(:disabled) {
+  background: var(--color-selected);
+  color: var(--color-on-selected);
+}
+
+.tool-column__divider {
+  width: auto;
+  margin: var(--space-xs) 4px;
+  border: none;
+  border-top: var(--border);
+}

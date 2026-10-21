@@ -1,28 +1,29 @@
+/* A small text tag: role, status or hotspot tag. */
 .badge {
   display: inline-flex;
-  align-items: center;
   flex-shrink: 0;
-  padding: 3px 6px;
-  border: var(--border);
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  border: var(--border-strong);
+  border-radius: var(--radius);
   background: var(--color-surface-lowest);
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--font-size-sm);
   line-height: 1;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .badge--neutral {
   color: var(--color-secondary);
 }
 
-.badge--info {
-  color: var(--color-primary);
+.badge--info,
+.badge--success {
+  color: var(--color-on-surface);
 }
 
 .badge--success {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+  border-color: var(--color-on-surface);
 }
 
 .badge--danger {

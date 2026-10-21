@@ -1,4 +1,3 @@
-import { ChevronDown } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Button from '../../../components/ui/Button';
 import type { Tag } from '../../../types/tag';
@@ -58,8 +57,7 @@ export default function HotspotTagFilter({ tagIds, onChange }: HotspotTagFilterP
         aria-haspopup="true"
         onClick={() => setOpen(!open)}
       >
-        Tagi{tagIds.length > 0 && ` (${tagIds.length})`}
-        <ChevronDown size={14} />
+        Tagi{tagIds.length > 0 && ` (${tagIds.length})`} ▾
       </Button>
       {open && (
         <div className="hotspot-tag-filter__menu" role="group" aria-label="Filtr tagów">
@@ -74,7 +72,7 @@ export default function HotspotTagFilter({ tagIds, onChange }: HotspotTagFilterP
               ))}
             </fieldset>
           ))}
-          <Button variant="ghost" disabled={tagIds.length === 0} onClick={() => onChange([])}>
+          <Button small disabled={tagIds.length === 0} onClick={() => onChange([])}>
             Wyczyść
           </Button>
         </div>

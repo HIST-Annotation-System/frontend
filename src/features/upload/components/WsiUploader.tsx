@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useRef, useState, type DragEvent } from 'react';
+import { useRef, useState } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Modal from '../../../components/ui/Modal';
@@ -10,37 +10,33 @@ import { importFromStorage } from '../../../services/uploadApi';
 import type { StorageObject } from '../../../types/storage';
 import { getErrorMessage } from '../../../utils/errors';
 import { ACCEPTED_UPLOAD_EXTENSIONS } from '../slideFileRules';
-import InterruptedUploads from './InterruptedUploads';
 import SlideFormatGuide from './SlideFormatGuide';
-import UploadQueueList from './UploadQueueList';
 import './WsiUploader.css';
 
 const ALREADY_IMPORTED = 'Ten plik był już zaimportowany - w bibliotece jest istniejący slajd.';
 
+/**
+ * The library toolbar's ways of adding slides: pick files (they join the upload queue docked under the table),
+ * import one from storage, and the list of supported formats. Files can also be dropped anywhere on the page.
+ */
 export default function WsiUploader() {
-  const [isDragging, setIsDragging] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
-  const [importNotice, setImportNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  const { enqueue: addToQueue } = useUpload();
-  const [queueNotice, setQueueNotice] = useState<string | null>(null);
-
-  const enqueue = (files: Iterable<File>) => {
-    const skipped = addToQueue(files);
-    setQueueNotice(skipped > 0 ? `Pominięto pliki już dodane do kolejki: ${skipped}.` : null);
-  };
+  const { enqueue } = useUpload();
 
   const selectFromStorage = async (object: StorageObject) => {
     setIsPickerOpen(false);
     setIsImporting(true);
     setImportError(null);
-    setImportNotice(null);
+    setNotice(null);
     try {
       const { created } = await importFromStorage(object.key);
-      if (!created) setImportNotice(ALREADY_IMPORTED);
+      if (!created) setNotice(ALREADY_IMPORTED);
       void queryClient.invalidateQueries({ queryKey: slideQueryKeys.all });
     } catch (error) {
       setImportError(getErrorMessage(error, 'Nie udało się zaimportować pliku z magazynu.'));
@@ -49,46 +45,26 @@ export default function WsiUploader() {
     }
   };
 
-  const handleDragOver = (event: DragEvent) => {
-    event.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDrop = (event: DragEvent) => {
-    event.preventDefault();
-    setIsDragging(false);
-    enqueue(event.dataTransfer.files);
-  };
-
   return (
-    <div
-      className={`wsi-uploader${isDragging ? ' wsi-uploader--dragging' : ''}`}
-      onDragOver={handleDragOver}
-      onDragLeave={() => setIsDragging(false)}
-      onDrop={handleDrop}
-    >
-      <div className="wsi-uploader__pick">
-        <p className="wsi-uploader__prompt">
-          Przeciągnij pliki lub
-          <Button onClick={() => inputRef.current?.click()}>Wybierz pliki</Button>
-          lub
-          <Button disabled={isImporting} onClick={() => setIsPickerOpen(true)}>
-            {isImporting ? 'Importowanie…' : 'Wybierz z magazynu'}
-          </Button>
-        </p>
-        <p className="wsi-uploader__hint">
-          Można wybrać kilka plików naraz - trafią do kolejki. Formaty wieloplikowe jako archiwum .zip, szczegóły
-          poniżej.
-        </p>
-        {importError && <ErrorMessage message={importError} onDismiss={() => setImportError(null)} />}
-        {importNotice && <p className="wsi-uploader__message">{importNotice}</p>}
-        {queueNotice && <p className="wsi-uploader__message">{queueNotice}</p>}
-      </div>
-
-      <InterruptedUploads />
-      <UploadQueueList />
-
-      <SlideFormatGuide />
+    <>
+      <Button variant="primary" onClick={() => inputRef.current?.click()}>
+        Prześlij…
+      </Button>
+      <Button disabled={isImporting} onClick={() => setIsPickerOpen(true)}>
+        {isImporting ? 'Importowanie…' : 'Z magazynu…'}
+      </Button>
+      <button type="button" className="wsi-uploader__guide" onClick={() => setIsGuideOpen(true)}>
+        Obsługiwane formaty
+      </button>
+      {notice && (
+        <span className="wsi-uploader__notice">
+          {notice}{' '}
+          <button type="button" className="wsi-uploader__guide" onClick={() => setNotice(null)}>
+            Ukryj
+          </button>
+        </span>
+      )}
+      {importError && <ErrorMessage message={importError} onDismiss={() => setImportError(null)} />}
 
       <input
         ref={inputRef}
@@ -97,7 +73,8 @@ export default function WsiUploader() {
         accept={ACCEPTED_UPLOAD_EXTENSIONS.join(',')}
         hidden
         onChange={(event) => {
-          enqueue(event.target.files ?? []);
+          const skipped = enqueue(event.target.files ?? []);
+          setNotice(skipped > 0 ? `Pominięto pliki już dodane do kolejki: ${skipped}.` : null);
           // Allows picking the same file again (e.g. after removing it from the queue).
           event.target.value = '';
         }}
@@ -106,6 +83,9 @@ export default function WsiUploader() {
       <Modal title="Wybierz plik z magazynu" open={isPickerOpen} onClose={() => setIsPickerOpen(false)}>
         <StorageFilePicker onSelect={(object) => void selectFromStorage(object)} />
       </Modal>
-    </div>
+      <Modal title="Obsługiwane formaty i sposób przesyłania" open={isGuideOpen} onClose={() => setIsGuideOpen(false)}>
+        <SlideFormatGuide />
+      </Modal>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { ChevronRight, Cloud, Folder } from 'lucide-react';
+import { Folder } from 'lucide-react';
 import type { ReactNode } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -28,12 +28,11 @@ export default function StorageExplorer({ prefix, onNavigate, renderFile }: Stor
     <div className="storage-explorer">
       <nav className="storage-breadcrumb" aria-label="Ścieżka w magazynie">
         <button type="button" className="storage-breadcrumb__crumb" onClick={() => onNavigate('')}>
-          <Cloud size={14} aria-hidden="true" />
-          Magazyn
+          magazyn
         </button>
         {segments.map((segment, index) => (
           <span key={segment + index.toString()} className="storage-breadcrumb__segment">
-            <ChevronRight size={12} className="storage-breadcrumb__sep" aria-hidden="true" />
+            <span className="storage-breadcrumb__sep">/</span>
             <button
               type="button"
               className="storage-breadcrumb__crumb"
@@ -67,7 +66,7 @@ export default function StorageExplorer({ prefix, onNavigate, renderFile }: Stor
       )}
 
       {hasMore && (
-        <Button disabled={isLoadingMore} onClick={loadMore}>
+        <Button small disabled={isLoadingMore} onClick={loadMore}>
           {isLoadingMore ? 'Wczytywanie…' : 'Wczytaj więcej'}
         </Button>
       )}

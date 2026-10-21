@@ -1,4 +1,3 @@
-import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import Button from '../../../components/ui/Button';
 import { useHotspotUploadContext } from '../../../context/HotspotUploadProvider';
@@ -31,7 +30,9 @@ export default function HotspotActivityStrip({ onSelectFolder }: HotspotActivity
             {upload.isUploading ? (
               <>
                 <Progress done={upload.done} total={upload.total} />
-                <Button variant="ghost" icon={<X size={14} />} title="Przerwij" aria-label="Przerwij przesyłanie" onClick={upload.cancel} />
+                <Button small onClick={upload.cancel}>
+                  Przerwij
+                </Button>
               </>
             ) : (
               <>
@@ -41,7 +42,9 @@ export default function HotspotActivityStrip({ onSelectFolder }: HotspotActivity
                     : `Wgrano ${upload.done - upload.failures.length} z ${upload.total}${upload.done < upload.total ? ' (przerwano)' : ''}.`}
                   {upload.skipped > 0 && ` Pominięto ${upload.skipped} plików innego typu.`}
                 </span>
-                <Button variant="ghost" icon={<X size={14} />} aria-label="Zamknij" onClick={upload.reset} />
+                <Button small onClick={upload.reset}>
+                  Zamknij
+                </Button>
               </>
             )}
           </div>
@@ -104,9 +107,7 @@ function Progress({ done, total }: { done: number; total: number }) {
       <span className="mono-data">
         {done} / {total}
       </span>
-      <div className="slide-card__progress">
-        <div className="slide-card__progress-bar" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
-      </div>
+      <progress className="hotspot-activity__progress" value={done} max={Math.max(total, 1)} aria-label="Postęp" />
     </>
   );
 }

@@ -10,11 +10,10 @@ interface HotspotModeSwitchProps {
 /** Browse the catalog, assess untagged hotspots, or reannotate tagged ones. */
 export default function HotspotModeSwitch({ mode, onChange }: HotspotModeSwitchProps) {
   return (
-    <div className="hotspot-modes" role="group" aria-label="Tryb pracy">
+    <div className="btn-group" role="group" aria-label="Tryb pracy">
       {HOTSPOT_MODES.map((option) => (
         <Button
           key={option.value}
-          variant={option.value === mode ? 'primary' : 'default'}
           active={option.value === mode}
           title={option.description}
           onClick={() => onChange(option.value)}

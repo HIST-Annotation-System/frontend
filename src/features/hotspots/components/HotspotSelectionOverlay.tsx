@@ -1,6 +1,6 @@
-import { Check, X } from 'lucide-react';
 import OpenSeadragon from 'openseadragon';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Button from '../../../components/ui/Button';
 import { useLatest } from '../../../hooks/useLatest';
 import type { Offset, Position, Rect } from '../../../types/geometry';
@@ -53,12 +53,23 @@ interface ActiveDrag {
 
 const RIGHT_BUTTON = 2;
 
+/** Polish plural of "pole" (field) for a count. */
+const fieldsWord = (count: number) => {
+  if (count === 1) return 'pole';
+  const tens = count % 100;
+  return count % 10 >= 2 && count % 10 <= 4 && (tens < 12 || tens > 14) ? 'pola' : 'pól';
+};
+
 interface HotspotSelectionOverlayProps {
   slide: SlideDetail;
   /** The active tool; with none, dragging pans the slide and the chosen boxes just stay shown. */
   tool: HotspotTool | null;
   onToolChange: (tool: HotspotTool | null) => void;
   onCreated: (batch: HotspotBatch) => void;
+  /** Inspector panel element that receives the selection summary and its actions. */
+  panelTarget: HTMLElement | null;
+  /** Status bar element that receives the tool hint. */
+  hintTarget: HTMLElement | null;
 }
 
 /**
@@ -72,7 +83,14 @@ interface HotspotSelectionOverlayProps {
  * The boxes are drawn in level-0 slide pixels inside one SVG group whose transform follows the viewport
  * in the same frame OpenSeadragon draws, so they never trail the image while panning or zooming.
  */
-export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onCreated }: HotspotSelectionOverlayProps) {
+export default function HotspotSelectionOverlay({
+  slide,
+  tool,
+  onToolChange,
+  onCreated,
+  panelTarget,
+  hintTarget,
+}: HotspotSelectionOverlayProps) {
   const viewer = useOsdViewer();
   const { data: existing = [] } = useSlideHotspots(slide.id);
   const layerRef = useRef<SVGGElement>(null);
@@ -325,13 +343,14 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
   const square = (box: Box) => ({ ...box, width: HOTSPOT_BOX_SIZE, height: HOTSPOT_BOX_SIZE });
 
   const tooManyInDrag = preview && !preview.boxes;
+  const tooMany = Boolean(isOverLimit || tooManyInDrag);
   const count = chosen.size;
-  let status: string;
-  if (isOverLimit || tooManyInDrag) status = `Za dużo pól - najwyżej ${MAX_BATCH_BOXES} naraz`;
-  else if (!tool) status = `Wybrane pola: ${count} · wybierz siatkę lub pędzel po lewej, aby je zmienić`;
-  else if (count === 0)
-    status = `${tool === 'grid' ? 'Przeciągnij' : 'Maluj'} po slajdzie, aby zaznaczyć pola ${formatSquareSize(HOTSPOT_BOX_SIZE, slide.mpp_x)}`;
-  else status = `Wybrane pola: ${count} · lewy przycisk dodaje, prawy usuwa · Esc: przesuwanie slajdu`;
+  let hint: string | null = null;
+  if (tooMany) hint = `Za dużo pól: najwyżej ${MAX_BATCH_BOXES} naraz`;
+  else if (tool === 'grid')
+    hint = `Siatka: przeciągnij, aby zaznaczyć pola ${formatSquareSize(HOTSPOT_BOX_SIZE, slide.mpp_x)}; prawy przycisk usuwa; Esc kończy`;
+  else if (tool === 'brush')
+    hint = `Pędzel: maluj, aby stawiać pola ${formatSquareSize(HOTSPOT_BOX_SIZE, slide.mpp_x)}; prawy przycisk usuwa; Esc kończy`;
 
   return (
     <>
@@ -369,28 +388,36 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
             />
           </g>
         </svg>
-        {(tool || count > 0) && (
-          <div className="hotspot-grid__panel" role="group" aria-label="Wybór hotspotów">
-            <span className={`hotspot-grid__status${isOverLimit || tooManyInDrag ? ' hotspot-grid__status--error' : ''}`}>
-              {status}
-            </span>
-            <Button
-              variant="primary"
-              icon={<Check size={16} />}
-              disabled={count === 0}
-              onClick={() => setPendingBoxes([...chosen.values()])}
-            >
-              Utwórz hotspoty
-            </Button>
-            <Button
-              icon={<X size={16} />}
-              title="Wyczyść zaznaczenie (następne przeciągnięcie siatką zacznie nową siatkę)"
-              aria-label="Wyczyść zaznaczenie"
-              disabled={count === 0}
-              onClick={clear}
-            />
-          </div>
-        )}
+        {hint &&
+          hintTarget &&
+          createPortal(
+            <span className={`viewer-status__hint${tooMany ? ' viewer-status__hint--error' : ''}`}>{hint}</span>,
+            hintTarget,
+          )}
+        {panelTarget &&
+          createPortal(
+            count === 0 ? (
+              <p className="text-muted">Wybierz Siatkę (G) lub Pędzel (B) i zaznacz pola na slajdzie.</p>
+            ) : (
+              <>
+                <p>
+                  <span className="mono-data">{count}</span> {fieldsWord(count)}{' '}
+                  {formatSquareSize(HOTSPOT_BOX_SIZE, slide.mpp_x)}
+                </p>
+                <Button variant="primary" block onClick={() => setPendingBoxes([...chosen.values()])}>
+                  Utwórz hotspoty…
+                </Button>
+                <Button
+                  block
+                  title="Następne przeciągnięcie siatką zacznie nową siatkę"
+                  onClick={clear}
+                >
+                  Wyczyść zaznaczenie
+                </Button>
+              </>
+            ),
+            panelTarget,
+          )}
       </div>
       {/* Outside the overlay: it sets pointer-events: none (inherited), which would make the dialog unclickable. */}
       {pendingBoxes && (

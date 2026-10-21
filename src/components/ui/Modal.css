@@ -9,16 +9,18 @@
   /* A modal dialog makes the rest of the page inert, so it must stay clickable even when rendered
      inside a click-through overlay (pointer-events is inherited). */
   pointer-events: auto;
-  width: min(640px, calc(100vw - 32px));
+  width: min(560px, calc(100vw - 32px));
   max-height: min(80vh, 720px);
   padding: 0;
-  border: var(--border);
+  overflow: hidden;
+  border: var(--border-strong);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-lowest);
   color: var(--color-on-surface);
 }
 
 .modal::backdrop {
-  background: rgb(0 0 0 / 0.5);
+  background: rgb(0 0 0 / 0.4);
 }
 
 .modal__header {
@@ -27,19 +29,47 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
-  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
+  height: 32px;
+  padding: 0 4px 0 var(--space-md);
   border-bottom: var(--border);
+  background: var(--color-surface-low);
 }
 
 .modal__title {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+}
+
+.modal__close {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--color-secondary);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal__close:hover {
+  background: var(--color-surface-high);
+  color: var(--color-on-surface);
 }
 
 .modal__body {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  gap: var(--space-md);
   overflow-y: auto;
   padding: var(--space-md);
+}
+
+/* Confirm / cancel row at the end of a modal body. */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
 }

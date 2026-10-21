@@ -4,41 +4,62 @@
   border-bottom: var(--border);
 }
 
-/* Takes the spare height, but never shrinks below its content (the sidebar itself scrolls). */
+/* Takes the spare height, but never shrinks below its content (the pane itself scrolls). */
 .sidebar-section--grow {
   flex: 1 0 auto;
 }
 
 .sidebar-section__header {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
-  min-height: 36px;
-  padding: var(--space-sm) var(--space-md);
+  height: 26px;
+  padding: 0 var(--space-xs) 0 10px;
   border-bottom: var(--border);
-  background: var(--color-surface-low);
+  background: var(--color-surface-high);
 }
 
-.sidebar-section__body {
-  padding: var(--space-md);
-}
-
-.sidebar-section__body--compact {
-  padding: var(--space-sm);
-}
-
+.sidebar-section__title,
 .sidebar-section__toggle {
   display: flex;
   flex: 1;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 6px;
+  min-width: 0;
+}
+
+.sidebar-section__toggle {
+  height: 100%;
   padding: 0;
   border: none;
   background: none;
   color: inherit;
   cursor: pointer;
   text-align: left;
+}
+
+.sidebar-section__caret {
+  width: 10px;
+  color: var(--color-secondary);
+  font-weight: 400;
+}
+
+.sidebar-section__meta {
+  color: var(--color-secondary);
+  font-weight: 400;
+}
+
+.sidebar-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+}
+
+.sidebar-section__body--compact {
+  padding: var(--space-sm);
 }
 
 /* A rolled-up section is just its header. */

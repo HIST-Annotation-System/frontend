@@ -4,8 +4,9 @@ import './NotFound.css';
 export default function NotFound() {
   return (
     <div className="not-found">
-      <h1>404 - Nie znaleziono</h1>
-      <Link to="/">Wróć do biblioteki slajdów</Link>
+      <h1>Nie znaleziono strony</h1>
+      <p className="text-muted">Adres nie istnieje albo strona została przeniesiona.</p>
+      <Link to="/">Wróć do listy slajdów</Link>
     </div>
   );
 }

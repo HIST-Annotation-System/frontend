@@ -1,15 +1,19 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import Spinner from '../../components/ui/Spinner';
 import { cellTypesApi, cellTypeQueryKeys } from '../../services/cellTypesApi';
 import type { CellType } from '../../types/cellType';
-import { Trash2, Plus, Pencil, Check, X } from 'lucide-react';
-import './CellTypesPage.css';
+import { getErrorMessage } from '../../utils/errors';
 
 export default function CellTypesPage() {
   const queryClient = useQueryClient();
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
+  const [deleting, setDeleting] = useState<CellType | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const { data: cellTypes, isLoading } = useQuery({
@@ -24,9 +28,7 @@ export default function CellTypesPage() {
       setNewName('');
       setApiError(null);
     },
-    onError: (err: unknown) => {
-      setApiError(extractError(err, 'Nie udało się utworzyć typu komórki.'));
-    },
+    onError: (err: unknown) => setApiError(getErrorMessage(err, 'Nie udało się utworzyć typu komórki.')),
   });
 
   const updateMutation = useMutation({
@@ -36,9 +38,7 @@ export default function CellTypesPage() {
       setEditingId(null);
       setApiError(null);
     },
-    onError: (err: unknown) => {
-      setApiError(extractError(err, 'Nie udało się zaktualizować nazwy.'));
-    },
+    onError: (err: unknown) => setApiError(getErrorMessage(err, 'Nie udało się zaktualizować nazwy.')),
   });
 
   const deleteMutation = useMutation({
@@ -47,9 +47,9 @@ export default function CellTypesPage() {
       queryClient.invalidateQueries({ queryKey: cellTypeQueryKeys.all });
       setApiError(null);
     },
-    onError: (err: unknown) => {
-      setApiError(extractError(err, 'Nie można usunąć — typ komórki jest używany w anotacjach.'));
-    },
+    onError: (err: unknown) =>
+      setApiError(getErrorMessage(err, 'Nie można usunąć: typ komórki jest używany w anotacjach.')),
+    onSettled: () => setDeleting(null),
   });
 
   const handleCreate = (e: React.FormEvent) => {
@@ -65,152 +65,113 @@ export default function CellTypesPage() {
     setApiError(null);
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
-    setApiError(null);
-  };
-
   const confirmEdit = (id: number) => {
     const trimmed = editName.trim();
     if (!trimmed) return;
     updateMutation.mutate({ id, name: trimmed });
   };
 
-  const handleDelete = (ct: CellType) => {
-    if (window.confirm(`Usunąć typ komórki „${ct.name}"?`)) {
-      deleteMutation.mutate(ct.id);
-    }
-  };
-
   return (
-    <div className="ct-page">
-      <div className="page-header">
-        <h1 className="page-title">Typy komórek</h1>
-        <p className="page-subtitle">
-          Zarządzaj dostępnymi typami komórek używanymi podczas anotacji hotspotów.
-        </p>
+    <>
+      <div className="page-strip">
+        <h1 className="page-strip__title">
+          Typy komórek
+          {cellTypes && <span className="page-strip__count">{cellTypes.length}</span>}
+        </h1>
       </div>
-
-      {apiError && (
-        <div className="ct-api-error" role="alert">
-          <span>{apiError}</span>
-          <button type="button" className="ct-api-error__dismiss" onClick={() => setApiError(null)}>
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
-      <div className="ct-card">
-        <div className="ct-card__header">
-          <h2>Dostępne typy komórek</h2>
-          <span className="ct-badge">{cellTypes?.length ?? 0}</span>
-        </div>
-
-        {/* Create form */}
-        <form onSubmit={handleCreate} className="ct-add-form">
-          <input
-            id="new-cell-type-input"
-            type="text"
-            className="ct-input"
-            placeholder="Nazwa nowego typu komórki…"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            autoComplete="off"
-          />
-          <button
-            id="add-cell-type-btn"
-            type="submit"
-            className="btn-primary btn-sm"
-            disabled={createMutation.isPending || !newName.trim()}
-          >
-            <Plus size={15} />
+      <div className="admin-page__body">
+        <p className="admin-page__intro">Typy komórek, które annotatorzy przypisują do anotacji hotspotów.</p>
+        <form onSubmit={handleCreate} className="admin-page__add">
+          <label className="form-field">
+            <span className="form-field__label">Nowy typ komórki</span>
+            <input
+              className="field"
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              autoComplete="off"
+            />
+          </label>
+          <Button type="submit" disabled={createMutation.isPending || !newName.trim()}>
             Dodaj
-          </button>
+          </Button>
         </form>
+        {apiError && <ErrorMessage message={apiError} onDismiss={() => setApiError(null)} />}
 
-        {/* List */}
-        <div className="ct-list-container">
-          {isLoading ? (
-            <div className="ct-loading">Ładowanie…</div>
-          ) : (
-            <ul className="ct-list" role="list">
-              {cellTypes?.length === 0 && (
-                <li className="ct-empty">Brak typów komórek. Dodaj pierwszy powyżej.</li>
-              )}
+        {isLoading ? (
+          <Spinner />
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Nazwa</th>
+                <th aria-label="Akcje" />
+              </tr>
+            </thead>
+            <tbody>
               {cellTypes?.map((ct) => (
-                <li key={ct.id} className="ct-item">
+                <tr key={ct.id}>
                   {editingId === ct.id ? (
-                    /* Inline edit row */
-                    <div className="ct-item__edit-row">
-                      <input
-                        id={`edit-cell-type-${ct.id}`}
-                        type="text"
-                        className="ct-input ct-input--inline"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') confirmEdit(ct.id);
-                          if (e.key === 'Escape') cancelEdit();
-                        }}
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        className="icon-button success"
-                        title="Zapisz"
-                        onClick={() => confirmEdit(ct.id)}
-                        disabled={updateMutation.isPending || !editName.trim()}
-                      >
-                        <Check size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        className="icon-button"
-                        title="Anuluj"
-                        onClick={cancelEdit}
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
-                  ) : (
-                    /* Normal row */
                     <>
-                      <span className="ct-item__name">{ct.name}</span>
-                      <div className="ct-item__actions">
-                        <button
-                          type="button"
-                          className="icon-button"
-                          title="Edytuj"
-                          onClick={() => startEdit(ct)}
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          className="icon-button danger"
-                          title="Usuń"
-                          onClick={() => handleDelete(ct)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
+                      <td>
+                        <input
+                          className="field admin-page__inline-input"
+                          type="text"
+                          aria-label="Nazwa typu komórki"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') confirmEdit(ct.id);
+                            if (e.key === 'Escape') setEditingId(null);
+                          }}
+                          autoFocus
+                        />
+                      </td>
+                      <td className="admin-page__row-actions">
+                        <Button small disabled={updateMutation.isPending || !editName.trim()} onClick={() => confirmEdit(ct.id)}>
+                          Zapisz
+                        </Button>
+                        <Button small onClick={() => setEditingId(null)}>
+                          Anuluj
+                        </Button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td>{ct.name}</td>
+                      <td className="admin-page__row-actions">
+                        <Button small onClick={() => startEdit(ct)}>
+                          Zmień nazwę
+                        </Button>
+                        <Button small variant="danger" disabled={deleteMutation.isPending} onClick={() => setDeleting(ct)}>
+                          Usuń
+                        </Button>
+                      </td>
                     </>
                   )}
-                </li>
+                </tr>
               ))}
-            </ul>
-          )}
-        </div>
+              {cellTypes?.length === 0 && (
+                <tr>
+                  <td className="data-table__muted" colSpan={2}>
+                    Brak typów komórek. Dodaj pierwszy powyżej.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
-    </div>
+      <ConfirmDialog
+        title="Usuń typ komórki"
+        open={deleting !== null}
+        confirmLabel="Usuń"
+        busy={deleteMutation.isPending}
+        onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
+        onCancel={() => setDeleting(null)}
+      >
+        Usunąć typ komórki „{deleting?.name}”?
+      </ConfirmDialog>
+    </>
   );
-}
-
-function extractError(err: unknown, fallback: string): string {
-  if (err && typeof err === 'object' && 'response' in err) {
-    const response = (err as { response?: { data?: { detail?: string } } }).response;
-    if (response?.data?.detail) return response.data.detail;
-  }
-  return fallback;
 }

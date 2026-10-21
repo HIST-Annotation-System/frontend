@@ -4,6 +4,7 @@ import ErrorMessage from '../../../components/ui/ErrorMessage';
 import { useUpload } from '../../../context/UploadProvider';
 import { formatBytes, formatDateTime } from '../../../utils/format';
 import type { ResumableUpload } from '../utils/resumableUploads';
+import './UploadQueueList.css';
 
 /** Uploads cut off by a reload or a closed tab: continue them by picking the same file again. */
 export default function InterruptedUploads() {
@@ -28,23 +29,25 @@ export default function InterruptedUploads() {
 
   return (
     <section className="upload-queue" aria-label="Przerwane przesyłanie">
+      <header className="upload-queue__header">
+        <span>Przerwane przesyłanie</span>
+      </header>
       <ul className="upload-queue__list">
         {interrupted.map((upload) => (
           <li key={upload.slideId} className="upload-queue__item upload-queue__item--error">
-            <div className="upload-queue__row">
-              <span className="upload-queue__name" title={upload.fileName}>
-                {upload.fileName}
-              </span>
-              <span className="mono-data upload-queue__size">{formatBytes(upload.fileSize)}</span>
-              <span className="upload-queue__actions">
-                <Button variant="ghost" onClick={() => pickFileFor(upload)}>
-                  Wznów
-                </Button>
-                <Button variant="ghost" onClick={() => void discardInterrupted(upload)}>
-                  Odrzuć
-                </Button>
-              </span>
-            </div>
+            <span className="upload-queue__name" title={upload.fileName}>
+              {upload.fileName}
+            </span>
+            <span className="mono-data upload-queue__size">{formatBytes(upload.fileSize)}</span>
+            <span />
+            <span className="upload-queue__actions">
+              <Button small onClick={() => pickFileFor(upload)}>
+                Wznów…
+              </Button>
+              <Button small onClick={() => void discardInterrupted(upload)}>
+                Odrzuć
+              </Button>
+            </span>
             <p className="upload-queue__message">
               Przesyłanie rozpoczęte {formatDateTime(upload.startedAt)} zostało przerwane. Aby je dokończyć, wybierz
               ponownie ten sam plik.

@@ -1,38 +1,25 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Users, Settings, Dna, Tags } from 'lucide-react';
 import './AdminLayout.css';
+
+const SECTIONS = [
+  { to: '/admin/users', label: 'Użytkownicy' },
+  { to: '/admin/settings', label: 'Kategorie i grupy' },
+  { to: '/admin/cell-types', label: 'Typy komórek' },
+  { to: '/admin/tags', label: 'Tagi hotspotów' },
+  { to: '/admin/storage', label: 'Magazyn' },
+];
 
 export default function AdminLayout() {
   return (
     <div className="admin-layout">
-      <aside className="admin-sidebar">
-        <div className="admin-sidebar-header">
-          <h2>Administracja</h2>
-        </div>
-        
-        <nav className="admin-nav">
-          <NavLink to="/admin/users" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-            <Users size={18} />
-            <span>Użytkownicy</span>
+      <nav className="admin-nav" aria-label="Administracja">
+        <h2 className="admin-nav__title">Administracja</h2>
+        {SECTIONS.map((section) => (
+          <NavLink key={section.to} to={section.to} className="admin-nav__item">
+            {section.label}
           </NavLink>
-
-          <NavLink to="/admin/settings" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-            <Settings size={18} />
-            <span>Kategorie i grupy</span>
-          </NavLink>
-
-          <NavLink to="/admin/cell-types" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-            <Dna size={18} />
-            <span>Typy komórek</span>
-          </NavLink>
-
-          <NavLink to="/admin/tags" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
-            <Tags size={18} />
-            <span>Tagi hotspotów</span>
-          </NavLink>
-        </nav>
-      </aside>
-      
+        ))}
+      </nav>
       <main className="admin-main">
         <Outlet />
       </main>

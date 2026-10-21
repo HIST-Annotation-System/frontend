@@ -1,6 +1,4 @@
-import { X } from 'lucide-react';
 import { useEffect, useRef, type ReactNode } from 'react';
-import Button from './Button';
 import './Modal.css';
 
 interface ModalProps {
@@ -31,7 +29,9 @@ export default function Modal({ title, open, onClose, children }: ModalProps) {
     >
       <div className="modal__header">
         <h2 className="modal__title">{title}</h2>
-        <Button variant="ghost" icon={<X size={16} />} aria-label="Zamknij" onClick={() => ref.current?.close()} />
+        <button type="button" className="modal__close" aria-label="Zamknij" onClick={() => ref.current?.close()}>
+          ×
+        </button>
       </div>
       <div className="modal__body">{children}</div>
     </dialog>

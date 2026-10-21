@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Search, Clock, ChevronDown } from 'lucide-react';
 import type { CellType } from '../../../types/cellType';
+import { getCellTypeColor } from '../utils/cellTypeColors';
 import './CellTypeSelector.css';
 
 const RECENT_MAX = 5;
@@ -25,7 +25,7 @@ export default function CellTypeSelector({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const activeCellType = cellTypes.find((ct) => ct.id === activeCellTypeId) ?? null;
-  const activeColor = activeCellTypeId != null ? (colorMap.get(activeCellTypeId) ?? '#94a3b8') : '#94a3b8';
+  const activeColor = getCellTypeColor(colorMap, activeCellTypeId);
 
   // Close on outside click
   useEffect(() => {
@@ -77,20 +77,21 @@ export default function CellTypeSelector({
         <span className="cts-trigger__label">
           {activeCellType ? activeCellType.name : 'Wybierz typ komórki…'}
         </span>
-        <ChevronDown size={14} className={`cts-trigger__chevron${open ? ' cts-trigger__chevron--open' : ''}`} />
+        <span className="cts-trigger__chevron" aria-hidden="true">
+          ▾
+        </span>
       </button>
 
       {open && (
         <div className="cts-dropdown" role="dialog" aria-label="Wybierz typ komórki">
           {/* Search */}
           <div className="cts-search">
-            <Search size={14} className="cts-search__icon" aria-hidden="true" />
             <input
               ref={inputRef}
               id="cell-type-search-input"
               type="text"
-              className="cts-search__input"
-              placeholder="Szukaj typu komórki…"
+              className="field cts-search__input"
+              placeholder="Szukaj typu…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -100,15 +101,12 @@ export default function CellTypeSelector({
             {/* Recently used — only when no search query */}
             {!query && recentTypes.length > 0 && (
               <section className="cts-section">
-                <div className="cts-section__label">
-                  <Clock size={11} aria-hidden="true" />
-                  Ostatnio używane
-                </div>
+                <div className="cts-section__label">Ostatnio używane</div>
                 {recentTypes.map((ct) => (
                   <CellTypeOption
                     key={ct.id}
                     cellType={ct}
-                    color={colorMap.get(ct.id) ?? '#94a3b8'}
+                    color={getCellTypeColor(colorMap, ct.id)}
                     active={ct.id === activeCellTypeId}
                     onSelect={handleSelect}
                   />
@@ -128,7 +126,7 @@ export default function CellTypeSelector({
                   <CellTypeOption
                     key={ct.id}
                     cellType={ct}
-                    color={colorMap.get(ct.id) ?? '#94a3b8'}
+                    color={getCellTypeColor(colorMap, ct.id)}
                     active={ct.id === activeCellTypeId}
                     onSelect={handleSelect}
                   />

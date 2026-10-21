@@ -1,0 +1,32 @@
+.slide-table tbody tr {
+  cursor: default;
+}
+
+.slide-table__name {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slide-table__sort {
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.slide-table__sort:hover {
+  color: var(--color-on-surface);
+}
+
+th[aria-sort] .slide-table__sort {
+  color: var(--color-on-surface);
+  font-weight: 600;
+}
+
+tr[aria-selected='true'] .text-error {
+  color: inherit;
+}

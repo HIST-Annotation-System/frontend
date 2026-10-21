@@ -1,7 +1,8 @@
 .storage-explorer {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-sm);
+  align-items: flex-start;
 }
 
 .storage-breadcrumb {
@@ -9,7 +10,7 @@
   flex-wrap: wrap;
   align-items: center;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
 }
 
 .storage-breadcrumb__segment {
@@ -18,15 +19,12 @@
 }
 
 .storage-breadcrumb__sep {
-  margin: 0 var(--space-xs);
+  margin: 0 2px;
   color: var(--color-outline);
 }
 
 .storage-breadcrumb__crumb {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-xs);
+  padding: 2px 4px;
   border: none;
   background: none;
   color: var(--color-secondary);
@@ -35,44 +33,53 @@
 
 .storage-breadcrumb__crumb:hover,
 .storage-breadcrumb__segment:last-child .storage-breadcrumb__crumb {
-  color: var(--color-primary);
+  color: var(--color-on-surface);
 }
 
 .storage-list {
-  display: flex;
-  flex-direction: column;
+  align-self: stretch;
   margin: 0;
   padding: 0;
+  overflow: hidden;
   border: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-lowest);
   list-style: none;
 }
 
 .storage-list__empty {
-  padding: var(--space-lg);
-  border: var(--border);
-  background: var(--color-surface-lowest);
   color: var(--color-secondary);
 }
 
 .storage-item {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-md);
-  background: var(--color-surface-lowest);
+  gap: var(--space-md);
+  min-height: 28px;
+  padding: 0 var(--space-sm);
 }
 
 .storage-item + .storage-item {
   border-top: var(--border);
 }
 
+.storage-item:hover {
+  background: var(--color-surface-low);
+}
+
+.storage-item svg {
+  flex-shrink: 0;
+  color: var(--color-secondary);
+}
+
 .storage-item__main {
   display: flex;
   flex: 1;
-  min-width: 0;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-xs) 0;
+  min-width: 0;
+  height: 28px;
+  padding: 0;
   border: none;
   background: none;
   color: inherit;
@@ -84,14 +91,6 @@
   cursor: default;
 }
 
-.storage-item__main:hover .storage-item__name {
-  text-decoration: underline;
-}
-
-.storage-item__main--file:hover .storage-item__name {
-  text-decoration: none;
-}
-
 .storage-item__name {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -101,6 +100,5 @@
 .storage-item__meta {
   flex-shrink: 0;
   color: var(--color-secondary);
-  font-size: 11px;
   white-space: nowrap;
 }

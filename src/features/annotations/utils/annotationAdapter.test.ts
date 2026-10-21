@@ -81,7 +81,7 @@ describe('annotation style', () => {
 
   it('uses the class colour and emphasises the selection', () => {
     expect(style(parse(draft))).toMatchObject({ fill: '#ef4444', stroke: '#ef4444', fillOpacity: 0.25 });
-    expect(style(parse(draft), { selected: true })).toMatchObject({ fillOpacity: 0.4, strokeWidth: 3.5 });
+    expect(style(parse(draft), { selected: true })).toMatchObject({ fill: '#ef4444', stroke: '#ffd400', fillOpacity: 0.4 });
   });
 
   it('uses the pending colour for shapes without a class', () => {

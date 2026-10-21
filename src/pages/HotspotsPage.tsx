@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import ErrorMessage from '../components/ui/ErrorMessage';
-import SidebarSection from '../components/ui/SidebarSection';
 import Spinner from '../components/ui/Spinner';
 import HotspotActivityStrip from '../features/hotspots/components/HotspotActivityStrip';
 import HotspotBulkBar from '../features/hotspots/components/HotspotBulkBar';
@@ -9,6 +8,7 @@ import HotspotCard from '../features/hotspots/components/HotspotCard';
 import HotspotFilters from '../features/hotspots/components/HotspotFilters';
 import HotspotFolderList from '../features/hotspots/components/HotspotFolderList';
 import HotspotModeSwitch from '../features/hotspots/components/HotspotModeSwitch';
+import HotspotPreview from '../features/hotspots/components/HotspotPreview';
 import HotspotSortControl from '../features/hotspots/components/HotspotSortControl';
 import HotspotTable from '../features/hotspots/components/HotspotTable';
 import HotspotUploadButtons from '../features/hotspots/components/HotspotUploadButtons';
@@ -21,17 +21,17 @@ import {
   resolveFolderId,
   writeCatalogParams,
   type CatalogParams,
+  type HotspotMode,
 } from '../features/hotspots/utils/hotspotReview';
 import { sortOptionsFor } from '../features/hotspots/utils/hotspotSort';
 import type { HotspotFolder, HotspotListQuery } from '../types/hotspot';
 import { getErrorMessage } from '../utils/errors';
-import '../features/slides/components/SlideList.css';
 import './HotspotsPage.css';
-import './SlideViewerPage.css';
 
 /**
- * The hotspot catalog: the work mode and folders on the left, the listed hotspots on the right. The mode presets
- * the filters and order: browse everything, assess untagged hotspots, or reannotate tagged ones.
+ * The hotspot catalog: the folder tree on the left, the listed hotspots in the middle (and, when browsing, the
+ * selected one on the right). The mode presets the filters and order: browse everything, assess untagged hotspots,
+ * or reannotate tagged ones.
  */
 export default function HotspotsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -52,48 +52,39 @@ export default function HotspotsPage() {
     setSearchParams(writeCatalogParams({ ...params, ...changes }), { replace: true });
 
   return (
-    <div className="viewer-page">
-      <aside className="viewer-page__sidebar">
-        <SidebarSection title="Tryb pracy" compact>
-          <HotspotModeSwitch
-            mode={params.mode}
-            onChange={(mode) => setSearchParams(writeCatalogParams(catalogDefaults(mode)), { replace: true })}
-          />
-        </SidebarSection>
-        <SidebarSection title="Foldery hotspotów" grow>
-          {foldersQuery.isPending ? (
-            <Spinner label="Wczytywanie folderów…" />
-          ) : foldersQuery.isError ? (
-            <ErrorMessage message={getErrorMessage(foldersQuery.error, 'Nie udało się wczytać folderów.')} />
-          ) : (
-            <HotspotFolderList
-              folders={folders}
-              selectedId={folderId ?? ALL_FOLDERS}
-              onSelect={(id) => update({ folder: id })}
-            />
-          )}
-        </SidebarSection>
-      </aside>
-      <div className="hotspots-page">
-        <HotspotActivityStrip onSelectFolder={(id) => update({ folder: id })} />
-        {hasList ? (
-          <HotspotCatalogList
-            folder={folder}
-            folders={folders}
-            params={params}
-            query={{ folderId, sort: params.sort, order: params.order, status: params.status, tagIds: params.tagIds }}
-            linkSearch={search}
-            onChange={update}
-          />
+    <div className="hotspots-page">
+      <aside className="hotspots-page__folders">
+        {foldersQuery.isPending ? (
+          <Spinner label="Wczytywanie folderów…" />
+        ) : foldersQuery.isError ? (
+          <ErrorMessage message={getErrorMessage(foldersQuery.error, 'Nie udało się wczytać folderów.')} />
         ) : (
-          !foldersQuery.isPending && (
-            <p className="slide-list__empty">
-              Brak hotspotów. Utwórz folder po lewej i wgraj do niego obrazy PNG/JPG albo otwórz slajd, kliknij
-              „Hotspoty” na pasku przeglądarki i przeciągnij po obszarze, który ma zostać pocięty na hotspoty.
-            </p>
-          )
+          <HotspotFolderList
+            folders={folders}
+            selectedId={folderId ?? ALL_FOLDERS}
+            onSelect={(id) => update({ folder: id })}
+          />
         )}
-      </div>
+      </aside>
+      {hasList ? (
+        <HotspotCatalogList
+          folder={folder}
+          folders={folders}
+          params={params}
+          query={{ folderId, sort: params.sort, order: params.order, status: params.status, tagIds: params.tagIds }}
+          linkSearch={search}
+          onChange={update}
+          onModeChange={(mode) => setSearchParams(writeCatalogParams(catalogDefaults(mode)), { replace: true })}
+          onSelectFolder={(id) => update({ folder: id })}
+        />
+      ) : (
+        !foldersQuery.isPending && (
+          <p className="hotspots-page__empty">
+            Brak hotspotów. Utwórz folder po lewej i wgraj do niego obrazy PNG/JPG albo otwórz slajd, wybierz Siatkę
+            lub Pędzel i zaznacz obszar, który ma zostać pocięty na hotspoty.
+          </p>
+        )
+      )}
     </div>
   );
 }
@@ -106,11 +97,23 @@ interface HotspotCatalogListProps {
   query: HotspotListQuery;
   linkSearch: string;
   onChange: (changes: Partial<CatalogParams>) => void;
+  onModeChange: (mode: HotspotMode) => void;
+  onSelectFolder: (folderId: string) => void;
 }
 
-function HotspotCatalogList({ folder, folders, params, query, linkSearch, onChange }: HotspotCatalogListProps) {
+function HotspotCatalogList({
+  folder,
+  folders,
+  params,
+  query,
+  linkSearch,
+  onChange,
+  onModeChange,
+  onSelectFolder,
+}: HotspotCatalogListProps) {
   const { data, isPending, isError, error, isPlaceholderData } = useHotspots(query);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
+  const [previewId, setPreviewId] = useState<string | null>(null);
   // Only what is listed stays selected (filters and folders change what that is).
   const selected = (data ?? []).filter((hotspot) => selectedIds.has(hotspot.id)).map((hotspot) => hotspot.id);
   const allSelected = data !== undefined && data.length > 0 && selected.length === data.length;
@@ -118,6 +121,8 @@ function HotspotCatalogList({ folder, folders, params, query, linkSearch, onChan
   // Managing hotspots (upload, rename, move, delete) belongs to browsing; the review modes only work through them.
   const browsing = params.mode === 'browse';
   const mode = HOTSPOT_MODES.find((option) => option.value === params.mode);
+  // The preview pane shows the clicked row, or the first one.
+  const preview = data?.find((hotspot) => hotspot.id === previewId) ?? data?.[0];
 
   const toggle = (hotspotId: string) =>
     setSelectedIds((current) => {
@@ -127,87 +132,99 @@ function HotspotCatalogList({ folder, folders, params, query, linkSearch, onChan
     });
 
   return (
-    <div className="hotspots-page__inner">
-      <div className="hotspots-page__header">
-        <div className="hotspots-page__heading">
-          {/* The mode is the page's heading; the folder and what the mode is for come below it. */}
-          <h1 className="hotspots-page__title">{mode?.label}</h1>
-          <p className="hotspots-page__subtitle">
-            <span className="hotspots-page__folder">{folder?.name ?? 'Wszystkie foldery'}</span>
-            {' · '}
-            {mode?.description}
-          </p>
+    <>
+      <section className="hotspots-page__main" aria-label="Hotspoty">
+        <div className="page-strip">
+          <h1 className="page-strip__title" title={mode?.description}>
+            {folder?.name ?? 'Wszystkie foldery'}
+            {data !== undefined && <span className="page-strip__count">{data.length}</span>}
+          </h1>
+          <HotspotModeSwitch mode={params.mode} onChange={onModeChange} />
+          <span className="page-strip__spacer" />
+          {folder && browsing && <HotspotUploadButtons folderId={folder.id} folderName={folder.name} />}
         </div>
-        {folder && browsing && <HotspotUploadButtons folderId={folder.id} folderName={folder.name} />}
-      </div>
-      {!isEmpty && (
-        <div className="hotspots-page__toolbar">
-          {/* Assessing always lists the untagged hotspots: tags are not its focus. */}
-          {params.mode !== 'assess' && (
-            <HotspotFilters mode={params.mode} status={params.status} tagIds={params.tagIds} onChange={onChange} />
-          )}
-          <HotspotSortControl
-            options={sortOptionsFor(params.mode)}
-            sort={params.sort}
-            order={params.order}
-            onChange={(sort, order) => onChange({ sort, order })}
-          />
-        </div>
-      )}
-      {data !== undefined && data.length > 0 && (
-        <div className="hotspots-page__selection">
-          <label className="hotspots-page__select-all">
-            <input
-              type="checkbox"
-              checked={allSelected}
-              onChange={() => setSelectedIds(allSelected ? new Set() : new Set(data.map((hotspot) => hotspot.id)))}
+        {!isEmpty && (
+          <div className="page-strip hotspots-page__toolbar">
+            {/* Assessing always lists the untagged hotspots: tags are not its focus. */}
+            {params.mode !== 'assess' && (
+              <HotspotFilters mode={params.mode} status={params.status} tagIds={params.tagIds} onChange={onChange} />
+            )}
+            <HotspotSortControl
+              options={sortOptionsFor(params.mode)}
+              sort={params.sort}
+              order={params.order}
+              onChange={(sort, order) => onChange({ sort, order })}
             />
-            Zaznacz wszystkie ({data.length})
-          </label>
-          {selected.length > 0 && <HotspotBulkBar hotspotIds={selected} onClear={() => setSelectedIds(new Set())} />}
+            <span className="page-strip__spacer" />
+            {data !== undefined && data.length > 0 && (
+              <label className="hotspots-page__select-all">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={() => setSelectedIds(allSelected ? new Set() : new Set(data.map((hotspot) => hotspot.id)))}
+                />
+                Zaznacz wszystkie
+              </label>
+            )}
+          </div>
+        )}
+        {selected.length > 0 && <HotspotBulkBar hotspotIds={selected} onClear={() => setSelectedIds(new Set())} />}
+        <HotspotActivityStrip onSelectFolder={onSelectFolder} />
+        <div
+          className={`hotspots-page__scroll${isPlaceholderData ? ' hotspots-page__scroll--stale' : ''}`}
+          aria-busy={isPlaceholderData}
+        >
+          {isPending ? (
+            <Spinner label="Wczytywanie hotspotów…" />
+          ) : isError ? (
+            <ErrorMessage message={getErrorMessage(error, 'Nie udało się wczytać hotspotów.')} />
+          ) : data.length === 0 ? (
+            <p className="hotspots-page__empty">
+              {!isEmpty
+                ? 'Żaden hotspot nie spełnia wybranych filtrów.'
+                : !folder
+                  ? 'Żaden folder nie zawiera jeszcze hotspotów.'
+                  : browsing
+                    ? 'Folder jest pusty. Wgraj obrazy PNG/JPG przyciskami powyżej albo utwórz hotspoty ze slajdu narzędziem Siatka lub Pędzel.'
+                    : 'Folder jest pusty.'}
+            </p>
+          ) : browsing ? (
+            <HotspotTable
+              hotspots={data}
+              sort={params.sort}
+              linkSearch={linkSearch}
+              previewId={preview?.id ?? null}
+              onPreview={setPreviewId}
+              selectedIds={selectedIds}
+              onToggleSelect={toggle}
+            />
+          ) : (
+            <ul className="hotspot-sheet">
+              {data.map((hotspot) => (
+                <li key={hotspot.id}>
+                  <HotspotCard
+                    hotspot={hotspot}
+                    mode={params.mode}
+                    sort={params.sort}
+                    linkSearch={linkSearch}
+                    selected={selectedIds.has(hotspot.id)}
+                    onToggleSelect={() => toggle(hotspot.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
+      </section>
+      {browsing && (
+        <aside className="hotspots-page__preview" aria-label="Podgląd hotspotu">
+          {preview ? (
+            <HotspotPreview key={preview.id} hotspot={preview} folders={folders} linkSearch={linkSearch} />
+          ) : (
+            <p className="hotspots-page__empty">Wybierz hotspot z listy.</p>
+          )}
+        </aside>
       )}
-      {isPending ? (
-        <Spinner label="Wczytywanie hotspotów…" />
-      ) : isError ? (
-        <ErrorMessage message={getErrorMessage(error, 'Nie udało się wczytać hotspotów.')} />
-      ) : data.length === 0 ? (
-        <p className="slide-list__empty">
-          {!isEmpty
-            ? 'Żaden hotspot nie spełnia wybranych filtrów.'
-            : !folder
-              ? 'Żaden folder nie zawiera jeszcze hotspotów.'
-              : browsing
-                ? 'Folder jest pusty. Wgraj obrazy PNG/JPG przyciskami powyżej albo utwórz hotspoty ze slajdu przyciskiem „Hotspoty” w przeglądarce slajdów.'
-                : 'Folder jest pusty.'}
-        </p>
-      ) : browsing ? (
-        <div className={isPlaceholderData ? 'hotspots-page__list--stale' : undefined} aria-busy={isPlaceholderData}>
-          <HotspotTable
-            hotspots={data}
-            folders={folders}
-            sort={params.sort}
-            linkSearch={linkSearch}
-            selectedIds={selectedIds}
-            onToggleSelect={toggle}
-          />
-        </div>
-      ) : (
-        <ul className={`slide-list${isPlaceholderData ? ' hotspots-page__list--stale' : ''}`} aria-busy={isPlaceholderData}>
-          {data.map((hotspot) => (
-            <li key={hotspot.id}>
-              <HotspotCard
-                hotspot={hotspot}
-                mode={params.mode}
-                sort={params.sort}
-                linkSearch={linkSearch}
-                selected={selectedIds.has(hotspot.id)}
-                onToggleSelect={() => toggle(hotspot.id)}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    </>
   );
 }

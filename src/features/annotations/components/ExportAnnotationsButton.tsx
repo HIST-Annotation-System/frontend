@@ -1,10 +1,7 @@
-import { ImageDown } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import { useDownload } from '../../../hooks/useDownload';
 import { fetchAnnotationsGeoJson } from '../../../services/annotationsApi';
 import type { AnnotationOwner } from '../../../types/annotation';
-
-const EXPORT_LABEL = 'Eksport anotacji (GeoJSON, zgodny z QuPath)';
 
 interface ExportAnnotationsButtonProps {
   owner: AnnotationOwner;
@@ -18,9 +15,8 @@ export default function ExportAnnotationsButton({ owner, name, onError }: Export
 
   return (
     <Button
-      icon={<ImageDown size={16} />}
-      title={isDownloading ? 'Eksport…' : EXPORT_LABEL}
-      aria-label={EXPORT_LABEL}
+      small
+      title="Anotacje jako GeoJSON, zgodny z QuPath"
       disabled={isDownloading}
       onClick={() =>
         void download(
@@ -29,6 +25,8 @@ export default function ExportAnnotationsButton({ owner, name, onError }: Export
           'Nie udało się wyeksportować anotacji.',
         )
       }
-    />
+    >
+      {isDownloading ? 'Eksportowanie…' : 'Eksportuj GeoJSON'}
+    </Button>
   );
 }

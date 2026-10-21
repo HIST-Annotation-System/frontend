@@ -1,0 +1,125 @@
+.viewer-layout {
+  display: grid;
+  flex: 1;
+  grid-template-areas:
+    'tools stage inspector'
+    'status status status';
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) 26px;
+  min-height: 0;
+}
+
+.viewer-layout__tools {
+  grid-area: tools;
+  border-right: var(--border);
+  background: var(--color-surface-low);
+}
+
+.viewer-layout__stage {
+  position: relative;
+  grid-area: stage;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--canvas-bg);
+}
+
+.viewer-layout__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.viewer-layout__inspector {
+  display: flex;
+  grid-area: inspector;
+  flex-direction: column;
+  width: var(--sidebar-width);
+  min-height: 0;
+  overflow-y: auto;
+  border-left: var(--border);
+  background: var(--color-surface-low);
+}
+
+.viewer-layout__inspector[hidden] {
+  display: none;
+}
+
+.viewer-navigator {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--canvas-bg);
+}
+
+.viewer-navigator__element {
+  width: 100%;
+  height: 100%;
+}
+
+/* Bottom status bar: hint and cursor on the left, zoom on the right. */
+.viewer-layout__status {
+  display: flex;
+  grid-area: status;
+  align-items: center;
+  gap: var(--space-md);
+  min-width: 0;
+  padding: 0 var(--space-sm);
+  overflow: hidden;
+  border-top: var(--border);
+  background: var(--color-surface-low);
+  color: var(--color-secondary);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.viewer-status__hint {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewer-status__slot {
+  display: flex;
+  min-width: 0;
+}
+
+/* An empty hint takes no room, and neither does the separator after it. */
+.viewer-status__slot:empty,
+.viewer-status__slot:empty + .viewer-status__sep,
+.viewer-layout__status > .viewer-status__sep:first-child {
+  display: none;
+}
+
+.viewer-status__hint--error {
+  color: var(--color-error);
+}
+
+.viewer-status__sep {
+  flex-shrink: 0;
+  width: 1px;
+  height: 14px;
+  background: var(--color-border);
+}
+
+.viewer-status__spacer {
+  flex: 1;
+}
+
+.viewer-status__value {
+  color: var(--color-on-surface);
+}
+
+.viewer-layout__status .btn {
+  height: 20px;
+  padding: 0 6px;
+  font-size: var(--font-size-sm);
+}
+
+.viewer-layout__status .btn--icon-only {
+  width: 20px;
+  padding: 0;
+}
+
+.viewer-layout__status .btn-group {
+  flex-shrink: 0;
+}

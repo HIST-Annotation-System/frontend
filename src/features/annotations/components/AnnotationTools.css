@@ -1,110 +1,78 @@
-/* Top of the canvas tool strip, divided from undo/redo. */
-.tool-mode-toggle {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-  padding-bottom: var(--space-xs);
-  border-bottom: var(--border);
-}
-
 .annotation-list {
   display: flex;
   flex-direction: column;
+  max-height: 320px;
   margin: 0;
   padding: 0;
   overflow-y: auto;
   border: var(--border);
+  border-radius: var(--radius);
+  background: var(--color-surface-lowest);
   list-style: none;
 }
 
-.annotation-list__empty {
-  font-size: 16px;
-  color: var(--color-secondary);
-  text-align: center;
-  padding-top: var(--space-md);
-  margin: 0;
+.annotation-list li + li {
+  border-top: var(--border);
 }
 
 .annotation-item {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
-  background: var(--color-surface-lowest);
+  width: 100%;
+  height: 24px;
+  padding: 0 var(--space-sm);
+  border: none;
+  background: none;
+  color: var(--color-on-surface);
+  text-align: left;
+  cursor: pointer;
 }
 
-.annotation-item + .annotation-item {
-  border-top: var(--border);
+.annotation-item:hover {
+  background: var(--color-surface-low);
 }
 
-.annotation-item--selected {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+.annotation-item--selected,
+.annotation-item--selected:hover {
+  background: var(--color-selected);
+  color: var(--color-on-selected);
 }
 
 .annotation-item__swatch {
-  width: 12px;
-  height: 12px;
   flex-shrink: 0;
-  border: 1px solid var(--color-primary);
-}
-
-.annotation-item--selected .annotation-item__swatch {
-  border-color: var(--color-on-primary);
-}
-
-.annotation-item__main {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: 0;
-  border: none;
-  background: none;
-  color: inherit;
-  cursor: pointer;
-  text-align: left;
-}
-
-.annotation-item__meta {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  white-space: nowrap;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25);
 }
 
 .annotation-item__class {
   flex: 1;
   min-width: 0;
-  height: 28px;
-  padding: 0 var(--space-xs);
-  border: var(--border);
-  border-radius: 0;
-  background: var(--color-surface-lowest);
-  color: var(--color-on-surface);
-  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.annotation-item--selected .btn--ghost {
+.annotation-item__meta {
+  color: var(--color-outline);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.annotation-item--selected .annotation-item__meta {
   color: inherit;
 }
 
-.annotation-item--selected .btn--ghost:hover:not(:disabled) {
-  background: var(--color-surface-lowest);
-  color: var(--color-primary);
+.annotation-list__actions {
+  display: flex;
+  gap: var(--space-xs);
 }
 
-.drawing-hint {
-  position: absolute;
-  bottom: var(--space-sm);
-  left: 50%;
-  z-index: 80;
-  max-width: calc(100% - 32px);
-  margin: 0;
-  padding: var(--space-xs) var(--space-md);
-  border: var(--border);
-  background: var(--color-surface-lowest);
-  font-size: 12px;
-  white-space: nowrap;
-  transform: translateX(-50%);
-  pointer-events: none;
+.annotation-list__actions .field {
+  flex: 1;
+  height: 22px;
+  font-size: var(--font-size-sm);
 }

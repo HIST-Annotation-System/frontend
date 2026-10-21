@@ -18,12 +18,12 @@ export default function HotspotFilters({ mode, status, tagIds, onChange }: Hotsp
   return (
     <div className="hotspot-filters">
       <select
-        className="hotspot-sort__select"
-        aria-label="Status oceny"
+        className="field"
+        aria-label="Stan oceny"
         value={status ?? ''}
         onChange={(event) => onChange({ status: (event.target.value || null) as HotspotStatus | null })}
       >
-        <option value="">Każdy status</option>
+        <option value="">Każdy stan</option>
         {statuses.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

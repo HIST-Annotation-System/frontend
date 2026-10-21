@@ -1,4 +1,4 @@
-import { Download, File } from 'lucide-react';
+import { File } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Button from '../../../components/ui/Button';
@@ -48,14 +48,9 @@ export default function StorageBrowser() {
             </span>
             <span className="storage-item__meta mono-data">{formatBytes(object.size)}</span>
             <span className="storage-item__meta mono-data">{formatDateTime(object.last_modified)}</span>
-            <Button
-              variant="ghost"
-              icon={<Download size={14} />}
-              title="Pobierz plik"
-              aria-label="Pobierz plik"
-              disabled={downloadingKey === object.key}
-              onClick={() => void openObject(object.key)}
-            />
+            <Button small disabled={downloadingKey === object.key} onClick={() => void openObject(object.key)}>
+              Pobierz
+            </Button>
           </li>
         )}
       />

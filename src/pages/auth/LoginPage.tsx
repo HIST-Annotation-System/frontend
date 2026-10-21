@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import Button from '../../components/ui/Button';
+import ErrorMessage from '../../components/ui/ErrorMessage';
 import { useAuth } from '../../context/AuthContext';
-import { Microscope } from 'lucide-react';
 import './AuthPages.css';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const { login, error } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,50 +25,44 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <div className="auth-logo">
-            <Microscope size={48} />
-          </div>
-          <h1>Witaj ponownie</h1>
-          <p>Zaloguj się do platformy annotacji</p>
-        </div>
+    <main className="auth-page">
+      <div className="auth-page__inner">
+        {/* TODO: swap the text for the HistAno SVG wordmark. */}
+        <div className="auth-page__brand">HistAno</div>
+        <p className="auth-page__lead">Platforma anotacji histopatologicznej</p>
 
-        {error && <div className="auth-error">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="username">Nazwa użytkownika</label>
+        <form onSubmit={handleSubmit} className="form-stack">
+          <label className="form-field">
+            <span className="form-field__label">Login</span>
             <input
-              id="username"
+              className="field"
               type="text"
+              autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
+              autoFocus
               disabled={loading}
-              className="auth-input"
             />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Hasło</label>
+          </label>
+          <label className="form-field">
+            <span className="form-field__label">Hasło</span>
             <input
-              id="password"
+              className="field"
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
-              className="auth-input"
             />
-          </div>
-
-          <button type="submit" disabled={loading} className="auth-button">
-            {loading ? 'Logowanie...' : 'Zaloguj się'}
-          </button>
+          </label>
+          {error && <ErrorMessage message={error} />}
+          <Button type="submit" variant="primary" block disabled={loading}>
+            {loading ? 'Logowanie…' : 'Zaloguj'}
+          </Button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,4 +1,3 @@
-import { X } from 'lucide-react';
 import { useState } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -32,7 +31,7 @@ export default function HotspotBulkBar({ hotspotIds, onClear }: HotspotBulkBarPr
   const actionSelect = (label: string, options: Tag[], run: (tagId: number) => void) => (
     <select
       key={label}
-      className="hotspot-sort__select"
+      className="field"
       aria-label={label}
       value=""
       disabled={isBulkTagging || options.length === 0}
@@ -61,9 +60,7 @@ export default function HotspotBulkBar({ hotspotIds, onClear }: HotspotBulkBarPr
       )}
       {actionSelect('Dodaj tag', customTags(tags), (tagId) => void apply({ add: [tagId], remove: [] }))}
       {actionSelect('Usuń tag', tags, (tagId) => void apply({ add: [], remove: [tagId] }))}
-      <Button variant="ghost" icon={<X size={14} />} onClick={onClear}>
-        Odznacz
-      </Button>
+      <Button onClick={onClear}>Odznacz</Button>
       {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
     </div>
   );

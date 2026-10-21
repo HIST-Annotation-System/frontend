@@ -1,38 +1,26 @@
 import { useSelection } from '@annotorious/react';
-import { Redo2, Undo2 } from 'lucide-react';
+import { MousePointer2, Pencil, Pentagon, Redo2, Spline, Undo2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import Button from '../../../components/ui/Button';
-import FloatingToolbar from '../../../components/ui/FloatingToolbar';
+import ToolColumn, { ToolButton, ToolDivider } from '../../../components/ui/ToolColumn';
 import type { ToolMode } from '../../../types/annotation';
+import { isTextField } from '../../../utils/keyboard';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
-import ToolModeToggle from './ToolModeToggle';
-import './AnnotationTools.css';
 
 interface AnnotationToolbarProps {
   mode: ToolMode;
   onModeChange: (mode: ToolMode) => void;
-  canDraw: boolean;
 }
 
-const DRAWING_HINTS: Record<ToolMode, string | null> = {
-  navigate: null,
-  polygon: 'Klik dodaje punkt · dwuklik lub pierwszy punkt zamyka · Esc anuluje',
-  curve: 'Klik dodaje punkt krzywej · dwuklik lub pierwszy punkt zamyka i wygładza · Esc anuluje',
-  freehand: 'Przytrzymaj i rysuj · kółko przybliża · prawy przycisk przesuwa · Esc anuluje',
-};
+const TOOLS: { mode: ToolMode; key: string; label: string; icon: typeof Pentagon }[] = [
+  { mode: 'navigate', key: 'V', label: 'Nawigacja i edycja', icon: MousePointer2 },
+  { mode: 'polygon', key: 'P', label: 'Wielokąt (proste odcinki)', icon: Pentagon },
+  { mode: 'curve', key: 'C', label: 'Krzywa (gładka krzywa przez klikane punkty)', icon: Spline },
+  { mode: 'freehand', key: 'F', label: 'Odręcznie', icon: Pencil },
+];
 
-const EDITING_HINT = 'Klik w punkt: łuk / narożnik · Del usuwa zaznaczony punkt · Esc kończy edycję';
-
-const NO_CLASS_HINT = 'Wybierz typ komórki, aby rysować';
-
-const isTextField = (target: EventTarget | null): boolean =>
-  target instanceof HTMLElement &&
-  (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
-
-/** Tool strip on the canvas: tools, undo/redo (also Ctrl+Z / Ctrl+Y), hints; Esc cancels drawing or editing. */
-export default function AnnotationToolbar({ mode, onModeChange, canDraw }: AnnotationToolbarProps) {
+/** Tool column of the canvas: tools (V/P/C/F), undo/redo (also Ctrl+Z / Ctrl+Y); Esc cancels drawing or editing. */
+export default function AnnotationToolbar({ mode, onModeChange }: AnnotationToolbarProps) {
   const anno = useSlideAnnotator();
-  const { selected } = useSelection();
   const [history, setHistory] = useState({ canUndo: false, canRedo: false });
 
   useEffect(() => {
@@ -52,15 +40,20 @@ export default function AnnotationToolbar({ mode, onModeChange, canDraw }: Annot
   }, [anno]);
 
   useEffect(() => {
-    if (!anno) return undefined;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || isTextField(event.target)) return;
-      anno.cancelDrawing();
-      anno.cancelSelected();
+      if (isTextField(event.target)) return;
+      if (event.key === 'Escape') {
+        anno?.cancelDrawing();
+        anno?.cancelSelected();
+        return;
+      }
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const tool = TOOLS.find((item) => item.key === event.key.toUpperCase());
+      if (tool) onModeChange(tool.mode);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [anno]);
+  }, [anno, onModeChange]);
 
   // The path editor deletes the selected point on Delete/Backspace anywhere in the window, also in text fields.
   useEffect(() => {
@@ -71,33 +64,55 @@ export default function AnnotationToolbar({ mode, onModeChange, canDraw }: Annot
     return () => document.removeEventListener('keydown', shieldTextFields);
   }, []);
 
-  const drawingHint = DRAWING_HINTS[mode] && !canDraw ? NO_CLASS_HINT : DRAWING_HINTS[mode];
-  const hint = selected.length > 0 ? EDITING_HINT : drawingHint;
-
   return (
-    <>
-      {hint && (
-        <p className="drawing-hint" role="status">
-          {hint}
-        </p>
-      )}
-      <FloatingToolbar label="Narzędzia anotacji">
-        <ToolModeToggle mode={mode} onChange={onModeChange} />
-        <Button
-          icon={<Undo2 size={16} />}
-          title="Cofnij (Ctrl+Z)"
-          aria-label="Cofnij"
-          disabled={!history.canUndo}
-          onClick={() => anno?.undo()}
+    <ToolColumn label="Narzędzia anotacji">
+      {TOOLS.map(({ mode: toolMode, key, label, icon: Icon }) => (
+        <ToolButton
+          key={toolMode}
+          icon={<Icon size={16} />}
+          label={label}
+          shortcut={key}
+          active={mode === toolMode}
+          onClick={() => onModeChange(toolMode)}
         />
-        <Button
-          icon={<Redo2 size={16} />}
-          title="Ponów (Ctrl+Y)"
-          aria-label="Ponów"
-          disabled={!history.canRedo}
-          onClick={() => anno?.redo()}
-        />
-      </FloatingToolbar>
-    </>
+      ))}
+      <ToolDivider />
+      <ToolButton
+        icon={<Undo2 size={16} />}
+        label="Cofnij"
+        shortcut="Ctrl+Z"
+        disabled={!history.canUndo}
+        onClick={() => anno?.undo()}
+      />
+      <ToolButton
+        icon={<Redo2 size={16} />}
+        label="Ponów"
+        shortcut="Ctrl+Y"
+        disabled={!history.canRedo}
+        onClick={() => anno?.redo()}
+      />
+    </ToolColumn>
+  );
+}
+
+const DRAWING_HINTS: Record<ToolMode, string> = {
+  navigate: 'Nawigacja: przeciągnij, aby przesunąć; kliknij anotację, aby ją edytować',
+  polygon: 'Wielokąt: klik dodaje punkt; dwuklik lub pierwszy punkt zamyka; Esc anuluje',
+  curve: 'Krzywa: klik dodaje punkt; dwuklik lub pierwszy punkt zamyka i wygładza; Esc anuluje',
+  freehand: 'Odręcznie: przytrzymaj i rysuj; kółko przybliża; prawy przycisk przesuwa; Esc anuluje',
+};
+
+const EDITING_HINT = 'Edycja: klik w punkt przełącza łuk / narożnik; Del usuwa punkt; Esc kończy';
+
+/** What the active tool does, for the viewer's status bar. */
+export function AnnotationHint({ mode, canDraw }: { mode: ToolMode; canDraw: boolean }) {
+  const { selected } = useSelection();
+  let hint = DRAWING_HINTS[mode];
+  if (selected.length > 0) hint = EDITING_HINT;
+  else if (mode !== 'navigate' && !canDraw) hint = 'Wybierz typ komórki, aby rysować';
+  return (
+    <span className="viewer-status__hint" role="status">
+      {hint}
+    </span>
   );
 }

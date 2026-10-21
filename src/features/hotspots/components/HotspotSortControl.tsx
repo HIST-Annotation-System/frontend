@@ -1,4 +1,3 @@
-import { ArrowDownWideNarrow, ArrowUpNarrowWide } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import type { HotspotSort, SortOrder } from '../../../types/hotspot';
 import type { HotspotSortOption } from '../utils/hotspotSort';
@@ -20,7 +19,7 @@ export default function HotspotSortControl({ options, sort, order, onChange }: H
   return (
     <div className="hotspot-sort">
       <select
-        className="hotspot-sort__select"
+        className="field"
         aria-label="Sortuj według"
         title={selected?.description}
         value={sort}
@@ -33,11 +32,11 @@ export default function HotspotSortControl({ options, sort, order, onChange }: H
         ))}
       </select>
       <Button
-        icon={descending ? <ArrowDownWideNarrow size={16} /> : <ArrowUpNarrowWide size={16} />}
-        title={descending ? 'Malejąco' : 'Rosnąco'}
-        aria-label={descending ? 'Sortowanie malejące, zmień na rosnące' : 'Sortowanie rosnące, zmień na malejące'}
+        title={descending ? 'Sortowanie malejące, zmień na rosnące' : 'Sortowanie rosnące, zmień na malejące'}
         onClick={() => onChange(sort, descending ? 'asc' : 'desc')}
-      />
+      >
+        {descending ? 'Malejąco ↓' : 'Rosnąco ↑'}
+      </Button>
     </div>
   );
 }

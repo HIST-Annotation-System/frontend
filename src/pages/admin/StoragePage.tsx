@@ -1,13 +1,14 @@
 import StorageBrowser from '../../features/storage/components/StorageBrowser';
-import './StoragePage.css';
 
 export default function StoragePage() {
   return (
-    <div className="storage-page">
-      <div className="storage-page__inner">
-        <h1 className="storage-page__title">Zarządzanie plikami</h1>
+    <>
+      <div className="page-strip">
+        <h1 className="page-strip__title">Magazyn</h1>
+      </div>
+      <div className="admin-page__body admin-page__body--wide">
         <StorageBrowser />
       </div>
-    </div>
+    </>
   );
 }

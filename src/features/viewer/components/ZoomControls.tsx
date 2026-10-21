@@ -1,4 +1,4 @@
-import { ZoomIn, ZoomOut } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import { useOsdViewer } from '../hooks/useOsdViewer';
 import { zoomToImageZoom } from '../utils/viewport';
@@ -23,16 +23,17 @@ export default function ZoomControls({ onFocusTissue, showActualSize }: ZoomCont
 
   return (
     <>
-      <Button icon={<ZoomIn size={16} />} title="Przybliż" aria-label="Przybliż" onClick={() => zoomBy(ZOOM_STEP)} />
-      <Button icon={<ZoomOut size={16} />} title="Oddal" aria-label="Oddal" onClick={() => zoomBy(1 / ZOOM_STEP)} />
+      <Button icon={<Minus size={12} />} title="Oddal" aria-label="Oddal" onClick={() => zoomBy(1 / ZOOM_STEP)} />
+      <Button icon={<Plus size={12} />} title="Przybliż" aria-label="Przybliż" onClick={() => zoomBy(ZOOM_STEP)} />
       <Button
-        title={onFocusTissue ? 'Dopasuj widok do tkanki' : 'Dopasuj cały slajd do ekranu'}
+        title={onFocusTissue ? 'Dopasuj widok do tkanki' : 'Dopasuj cały obraz do okna'}
         onClick={() => (onFocusTissue ? onFocusTissue() : viewer?.viewport.goHome())}
       >
-        Wycentruj
+        Dopasuj
       </Button>
       {showActualSize && (
         <Button
+          className="mono-data"
           title="Pełna rozdzielczość (1 piksel ekranu = 1 piksel skanu)"
           onClick={() => viewer && zoomToImageZoom(viewer, 1)}
         >

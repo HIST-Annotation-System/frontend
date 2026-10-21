@@ -5,29 +5,23 @@
  */
 
 export const CELL_TYPE_PALETTE: readonly string[] = [
-  '#6366f1', // indigo
-  '#ec4899', // pink
-  '#14b8a6', // teal
-  '#f97316', // orange
-  '#84cc16', // lime
-  '#8b5cf6', // violet
-  '#06b6d4', // cyan
-  '#f43f5e', // rose
-  '#a3e635', // green-yellow
-  '#fb923c', // amber-orange
-  '#22d3ee', // sky
-  '#c084fc', // purple
-  '#4ade80', // green
-  '#fbbf24', // amber
-  '#f87171', // red
-  '#34d399', // emerald
-  '#60a5fa', // blue
-  '#a78bfa', // violet-light
-  '#fb7185', // rose-light
-  '#2dd4bf', // teal-light
+  // Hues that stay visible on pink/purple H&E tissue: no magenta or violet, and no pure yellow
+  // (yellow marks the selected shape).
+  '#3ddc97', // mint
+  '#22c3e6', // cyan
+  '#ff8c42', // orange
+  '#4d9de0', // blue
+  '#f2f2f2', // white
+  '#b5e655', // lime
+  '#2ec4b6', // teal
+  '#ff9f1c', // amber
+  '#6f8cff', // cornflower
+  '#00e0c6', // aqua
+  '#9be564', // green
+  '#7fd1ff', // sky
 ];
 
-export const FALLBACK_CELL_TYPE_COLOR = '#94a3b8';
+export const FALLBACK_CELL_TYPE_COLOR = '#9a9a9a';
 
 /**
  * Given the current map of cellTypeId → color and the full ordered list of cell type ids
@@ -49,7 +43,7 @@ export function assignCellTypeColors(
   return updated;
 }
 
-/** Return the color for a given cell type id, falling back to the slate swatch. */
+/** Return the color for a given cell type id, falling back to neutral grey. */
 export function getCellTypeColor(
   colorMap: ReadonlyMap<number, string>,
   cellTypeId: number | null | undefined,

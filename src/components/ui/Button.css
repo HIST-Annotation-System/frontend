@@ -2,56 +2,76 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-xs);
-  height: 32px;
-  padding: 0 var(--space-md);
-  border: var(--border);
+  gap: 6px;
+  height: var(--control-height);
+  padding: 0 10px;
+  border: var(--border-strong);
+  border-radius: var(--radius);
   background: var(--color-surface-lowest);
-  color: var(--color-primary);
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--color-on-surface);
   line-height: 1;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.1s, color 0.1s;
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+  background: var(--color-surface-high);
 }
 
 .btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  opacity: 0.45;
+  cursor: default;
 }
 
 .btn--icon-only {
-  width: 32px;
+  width: var(--control-height);
   padding: 0;
 }
 
 .btn--primary {
+  border-color: var(--color-primary);
   background: var(--color-primary);
   color: var(--color-on-primary);
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: var(--color-surface-lowest);
-  color: var(--color-primary);
+  background: var(--color-primary);
+  opacity: 0.86;
 }
 
 .btn--ghost {
   border-color: transparent;
   background: transparent;
+  color: var(--color-secondary);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  color: var(--color-on-surface);
+}
+
+.btn--danger {
+  color: var(--color-error);
+}
+
+.btn--small {
+  height: 22px;
+  padding: 0 6px;
+  font-size: var(--font-size-sm);
+}
+
+.btn--small.btn--icon-only {
+  width: 22px;
+}
+
+.btn--block {
+  width: 100%;
 }
 
 .btn--active,
 .btn--active:hover:not(:disabled) {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+  background: var(--color-selected);
+  color: var(--color-on-selected);
+  font-weight: 600;
 }
 
 /* Segmented control: adjacent buttons share one border. */
@@ -60,5 +80,19 @@
 }
 
 .btn-group > .btn + .btn {
-  border-left: 0;
+  margin-left: -1px;
+}
+
+.btn-group > .btn:not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.btn-group > .btn:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.btn-group > .btn--active {
+  position: relative;
 }

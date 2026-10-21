@@ -1,9 +1,10 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import './SidebarSection.css';
 
 interface SidebarSectionProps {
   title?: string;
+  /** Shown after the title in mono, e.g. a count. */
+  meta?: ReactNode;
   actions?: ReactNode;
   grow?: boolean;
   compact?: boolean;
@@ -14,8 +15,10 @@ interface SidebarSectionProps {
   children: ReactNode;
 }
 
+/** A docked panel with a plain header strip, stacked inside a side pane or inspector. */
 export default function SidebarSection({
   title,
+  meta,
   actions,
   grow = false,
   compact = false,
@@ -25,23 +28,29 @@ export default function SidebarSection({
 }: SidebarSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const isOpen = !collapsible || open;
+  const heading = (
+    <>
+      {collapsible && <span className="sidebar-section__caret">{open ? '▾' : '▸'}</span>}
+      {title}
+      {meta != null && <span className="sidebar-section__meta mono-data">{meta}</span>}
+    </>
+  );
 
   return (
-    <section className={`sidebar-section${grow ? ' sidebar-section--grow' : ''}`}>
+    <section className={`sidebar-section${grow && isOpen ? ' sidebar-section--grow' : ''}`}>
       {(title || actions) && (
         <header className="sidebar-section__header">
           {collapsible ? (
             <button
               type="button"
-              className="sidebar-section__toggle label-caps"
+              className="sidebar-section__toggle label"
               aria-expanded={open}
               onClick={() => setOpen(!open)}
             >
-              {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              {title}
+              {heading}
             </button>
           ) : (
-            title && <h3 className="label-caps">{title}</h3>
+            title && <h3 className="sidebar-section__title label">{heading}</h3>
           )}
           {actions}
         </header>

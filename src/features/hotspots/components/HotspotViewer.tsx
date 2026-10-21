@@ -2,19 +2,24 @@ import { OpenSeadragonViewer } from '@annotorious/react';
 import { useMemo, type ReactNode } from 'react';
 import { getHotspotImageUrl } from '../../../services/hotspotsApi';
 import type { Hotspot } from '../../../types/hotspot';
-import { formatZoomPercent } from '../../../utils/magnification';
-import ZoomControls from '../../viewer/components/ZoomControls';
-import { useMagnification } from '../../viewer/hooks/useMagnification';
+import ViewerLayout from '../../viewer/components/ViewerLayout';
+import ViewerStatusBar from '../../viewer/components/ViewerStatusBar';
 import { createViewerOptions } from '../../viewer/viewerOptions';
-import '../../viewer/components/SlideViewer.css';
 
 const HOTSPOT_MAX_ZOOM_PIXEL_RATIO = 10;
 
+/** Annotations live in hotspot image pixels, so the viewer and API coordinates coincide. */
+const NO_OFFSET = { x: 0, y: 0 };
+
 interface HotspotViewerProps {
   hotspot: Hotspot;
-  /** The catalog mode the hotspot was opened in, shown first in the status bar. */
-  modeLabel?: string;
-  /** Extra overlays rendered on top of the viewer canvas (e.g. annotation tools). */
+  tools?: ReactNode;
+  /** Inspector panels below the navigator. */
+  inspector?: ReactNode;
+  inspectorOpen: boolean;
+  /** Left end of the status bar. */
+  hint?: ReactNode;
+  /** Overlays drawn on the canvas. */
   children?: ReactNode;
 }
 
@@ -22,7 +27,7 @@ interface HotspotViewerProps {
  * The hotspot image in OpenSeadragon (one PNG/JPEG, no Deep Zoom pyramid), laid out like the slide viewer.
  * Must be rendered inside `<OpenSeadragonAnnotator>`, which owns the viewer shared with the annotation layer.
  */
-export default function HotspotViewer({ hotspot, modeLabel, children }: HotspotViewerProps) {
+export default function HotspotViewer({ hotspot, tools, inspector, inspectorOpen, hint, children }: HotspotViewerProps) {
   const options = useMemo(
     () =>
       createViewerOptions(
@@ -31,32 +36,16 @@ export default function HotspotViewer({ hotspot, modeLabel, children }: HotspotV
       ),
     [hotspot.id],
   );
-  const { imageZoom } = useMagnification(null);
 
   return (
-    <div className="slide-viewer">
-      <div className="slide-viewer__bar">
-        <div className="viewer-status label-caps">
-          {modeLabel && (
-            <span>
-              Tryb: <span className="viewer-status__value">{modeLabel}</span>
-            </span>
-          )}
-          <span className="viewer-status__file" title={hotspot.name}>
-            Hotspot: <span className="viewer-status__value">{hotspot.name}</span>
-          </span>
-          <span>Skala: {imageZoom === null ? '—' : formatZoomPercent(imageZoom)}</span>
-        </div>
-        <div className="slide-viewer__actions" role="toolbar" aria-label="Nawigacja">
-          <div className="btn-group">
-            <ZoomControls showActualSize />
-          </div>
-        </div>
-      </div>
-      <div className="slide-viewer__frame">
-        <OpenSeadragonViewer className="slide-viewer__canvas" options={options} />
-        {children}
-      </div>
-    </div>
+    <ViewerLayout
+      tools={tools}
+      inspector={inspector}
+      inspectorOpen={inspectorOpen}
+      status={<ViewerStatusBar hint={hint} offset={NO_OFFSET} nativeMagnification={null} mpp={hotspot.mpp} showActualSize />}
+    >
+      <OpenSeadragonViewer className="viewer-layout__canvas" options={options} />
+      {children}
+    </ViewerLayout>
   );
 }

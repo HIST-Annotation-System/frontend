@@ -1,5 +1,8 @@
-import { Check, Plus, Trash2, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import Spinner from '../../components/ui/Spinner';
 import { useTagMutations, useTags } from '../../features/hotspots/hooks/useTags';
 import {
   CUSTOM_TAG_DEFAULT_WEIGHT,
@@ -10,7 +13,6 @@ import {
 } from '../../features/hotspots/utils/hotspotTags';
 import type { Tag } from '../../types/tag';
 import { getErrorMessage } from '../../utils/errors';
-import './CellTypesPage.css';
 
 /** The shared hotspot tags: names, weights (a hotspot's score is the sum), and removal of custom tags. */
 export default function TagsPage() {
@@ -35,69 +37,69 @@ export default function TagsPage() {
   };
 
   return (
-    <div className="ct-page">
-      <div className="page-header">
-        <h1 className="page-title">Tagi</h1>
-        <p className="page-subtitle">
-          Wynik hotspotu to suma wag jego tagów; tryb REANNOTUJ sortuje według niego. Ważność i poprawność można
-          tylko przeważyć. Tagi własne muszą ważyć mniej niż najlżejsza niezerowa ocena
+    <>
+      <div className="page-strip">
+        <h1 className="page-strip__title">
+          Tagi hotspotów
+          <span className="page-strip__count">{tags.length}</span>
+        </h1>
+      </div>
+      <div className="admin-page__body">
+        <p className="admin-page__intro">
+          Wynik hotspotu to suma wag jego tagów; tryb Reannotuj sortuje według niego. Ważność i poprawność można tylko
+          przeważyć. Tagi własne muszą ważyć mniej niż najlżejsza niezerowa ocena
           {cap === null ? '' : ` (obecnie < ${cap})`}.
         </p>
-      </div>
-
-      {apiError && (
-        <div className="ct-api-error" role="alert">
-          <span>{apiError}</span>
-          <button type="button" className="ct-api-error__dismiss" onClick={() => setApiError(null)}>
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
-      <div className="ct-card">
-        <div className="ct-card__header">
-          <h2>Tagi</h2>
-          <span className="ct-badge">{tags.length}</span>
-        </div>
-
-        <form onSubmit={(event) => void create(event)} className="ct-add-form">
-          <input
-            type="text"
-            className="ct-input"
-            placeholder="Nazwa nowego tagu…"
-            maxLength={64}
-            value={newName}
-            onChange={(event) => setNewName(event.target.value)}
-            autoComplete="off"
-          />
-          <input
-            type="number"
-            className="ct-input tags-page__weight"
-            aria-label="Waga nowego tagu"
-            min={0}
-            max={maxCustomWeight(tags)}
-            value={newWeight}
-            onChange={(event) => setNewWeight(Number(event.target.value))}
-          />
-          <button type="submit" className="btn-primary btn-sm" disabled={isCreating || !newName.trim()}>
-            <Plus size={15} />
+        <form onSubmit={(event) => void create(event)} className="admin-page__add">
+          <label className="form-field">
+            <span className="form-field__label">Nowy tag</span>
+            <input
+              className="field"
+              type="text"
+              maxLength={64}
+              value={newName}
+              onChange={(event) => setNewName(event.target.value)}
+              autoComplete="off"
+            />
+          </label>
+          <label className="form-field form-field--narrow">
+            <span className="form-field__label">Waga</span>
+            <input
+              className="field"
+              type="number"
+              min={0}
+              max={maxCustomWeight(tags)}
+              value={newWeight}
+              onChange={(event) => setNewWeight(Number(event.target.value))}
+            />
+          </label>
+          <Button type="submit" disabled={isCreating || !newName.trim()}>
             Dodaj
-          </button>
+          </Button>
         </form>
+        {apiError && <ErrorMessage message={apiError} onDismiss={() => setApiError(null)} />}
 
-        <div className="ct-list-container">
-          {isLoading ? (
-            <div className="ct-loading">Ładowanie…</div>
-          ) : (
-            <ul className="ct-list" role="list">
+        {isLoading ? (
+          <Spinner />
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Rodzaj</th>
+                <th>Nazwa</th>
+                <th className="data-table__num">Waga</th>
+                <th aria-label="Akcje" />
+              </tr>
+            </thead>
+            <tbody>
               {tags.map((tag) => (
                 <TagRow key={`${tag.id}:${tag.name}:${tag.weight}`} tag={tag} onError={setApiError} />
               ))}
-            </ul>
-          )}
-        </div>
+            </tbody>
+          </table>
+        )}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -105,6 +107,7 @@ function TagRow({ tag, onError }: { tag: Tag; onError: (message: string | null) 
   const { updateTag, isUpdating, deleteTag, isDeleting } = useTagMutations();
   const [name, setName] = useState(tag.name);
   const [weight, setWeight] = useState(tag.weight);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const dimension = TAG_DIMENSIONS.find((item) => item.value === tag.dimension);
   const changed = name.trim() !== tag.name || weight !== tag.weight;
 
@@ -121,22 +124,23 @@ function TagRow({ tag, onError }: { tag: Tag; onError: (message: string | null) 
   };
 
   const remove = async () => {
-    if (!window.confirm(`Usunąć tag „${tag.name}”? Zniknie ze wszystkich hotspotów.`)) return;
     onError(null);
     try {
       await deleteTag(tag.id);
     } catch (requestError) {
       onError(getErrorMessage(requestError, 'Nie udało się usunąć tagu.'));
+    } finally {
+      setIsConfirmingDelete(false);
     }
   };
 
   return (
-    <li className="ct-item">
-      <div className="ct-item__edit-row">
-        {dimension && <span className="tags-page__dimension">{dimension.label}</span>}
+    <tr>
+      <td className="data-table__muted">{dimension ? dimension.label : 'własny'}</td>
+      <td>
         <input
           type="text"
-          className="ct-input ct-input--inline"
+          className="field admin-page__inline-input"
           aria-label="Nazwa tagu"
           maxLength={64}
           value={name}
@@ -144,9 +148,11 @@ function TagRow({ tag, onError }: { tag: Tag; onError: (message: string | null) 
           title={dimension ? 'Nazw ocen nie można zmieniać.' : undefined}
           onChange={(event) => setName(event.target.value)}
         />
+      </td>
+      <td className="data-table__num">
         <input
           type="number"
-          className="ct-input ct-input--inline tags-page__weight"
+          className="field admin-page__inline-input admin-page__weight"
           aria-label="Waga tagu"
           min={0}
           max={TAG_WEIGHT_MAX}
@@ -156,25 +162,31 @@ function TagRow({ tag, onError }: { tag: Tag; onError: (message: string | null) 
             if (event.key === 'Enter' && changed) void save();
           }}
         />
-        <button
-          type="button"
-          className="icon-button success"
-          title="Zapisz"
-          disabled={!changed || !name.trim() || isUpdating}
-          onClick={() => void save()}
-        >
-          <Check size={15} />
-        </button>
-        <button
-          type="button"
-          className="icon-button danger"
-          title={dimension ? 'Ocen nie można usuwać.' : 'Usuń'}
+      </td>
+      <td className="admin-page__row-actions">
+        <Button small disabled={!changed || !name.trim() || isUpdating} onClick={() => void save()}>
+          Zapisz
+        </Button>
+        <Button
+          small
+          variant="danger"
+          title={dimension ? 'Ocen nie można usuwać.' : undefined}
           disabled={dimension !== undefined || isDeleting}
-          onClick={() => void remove()}
+          onClick={() => setIsConfirmingDelete(true)}
         >
-          <Trash2 size={14} />
-        </button>
-      </div>
-    </li>
+          Usuń
+        </Button>
+        <ConfirmDialog
+          title="Usuń tag"
+          open={isConfirmingDelete}
+          confirmLabel="Usuń"
+          busy={isDeleting}
+          onConfirm={() => void remove()}
+          onCancel={() => setIsConfirmingDelete(false)}
+        >
+          Usunąć tag „{tag.name}”? Zniknie ze wszystkich hotspotów.
+        </ConfirmDialog>
+      </td>
+    </tr>
   );
 }

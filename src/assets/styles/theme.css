@@ -1,55 +1,79 @@
-/* Design tokens - "Clinical Precision" (see .agents/DESIGN.md): flat, black on white, square corners. */
+/* Design tokens - "desktop instrument": clean neutral greys, hairline separators, softly rounded controls, no shadows.
+   One muted sage green, used sparingly: --color-primary fills the primary button, --color-accent draws small marks
+   (active tab, focus, checkboxes, progress). Selected rows and items are a neutral grey highlight (--color-selected).
+   On the slide image the selection is --color-select.
+   The viewer canvas keeps one dark surround in both themes so the stained tissue is judged against the same grey. */
 :root {
   color-scheme: light;
 
-  --color-surface: #f9f9f9;
+  --color-surface: #ffffff;
   --color-surface-lowest: #ffffff;
-  --color-surface-low: #f3f3f3;
-  --color-surface-container: #eeeeee;
-  --color-surface-high: #e8e8e8;
-  --color-surface-highest: #e2e2e2;
-  --color-on-surface: #1b1b1b;
-  --color-on-surface-variant: #4c4546;
-  --color-secondary: #5d5f5f;
-  --color-outline: #7e7576;
-  --color-primary: #000000;
+  --color-surface-low: #f6f6f5;
+  --color-surface-container: #f0f0ef;
+  --color-surface-high: #eaeae9;
+  --color-surface-highest: #dcdcdb;
+  --color-on-surface: #1c1c1c;
+  --color-on-surface-variant: #474747;
+  --color-secondary: #666666;
+  --color-outline: #959595;
+  --color-border: #e3e3e2;
+  --color-border-strong: #cdcdcc;
+  --color-primary: #4f7a63;
   --color-on-primary: #ffffff;
-  --color-error: #ba1a1a;
-  --color-error-container: #ffdad6;
-  --color-on-error-container: #93000a;
+  --color-accent: #4f7a63;
+  --color-selected: #ebebea;
+  --color-on-selected: #1c1c1c;
+  --color-error: #c4231a;
+  --color-error-container: #fbeae8;
+  --color-on-error-container: #8f1a13;
+  --color-text: var(--color-on-surface);
 
-  --border: 1px solid var(--color-primary);
+  --color-select: #ffd400;
+  --canvas-bg: #1e1e1e;
+
+  --border: 1px solid var(--color-border);
+  --border-strong: 1px solid var(--color-border-strong);
+  --radius: 6px;
+  --radius-lg: 8px;
 
   --space-xs: 4px;
   --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
 
-  --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, 'JetBrains Mono', Consolas, monospace;
+  --font-sans: system-ui, 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  --font-mono: ui-monospace, Consolas, 'SF Mono', 'Cascadia Mono', monospace;
+  --font-size-sm: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 16px;
 
-  --header-height: 64px;
-  --sidebar-width: 320px;
+  --control-height: 28px;
+  --header-height: 40px;
+  --sidebar-width: 272px;
 }
 
-/* Dark mode: same flat, high-contrast language, inverted (paper-on-ink instead of ink-on-paper). */
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --color-surface: #121212;
-  --color-surface-lowest: #1a1a1a;
-  --color-surface-low: #202020;
-  --color-surface-container: #262626;
-  --color-surface-high: #2d2d2d;
-  --color-surface-highest: #363636;
-  --color-on-surface: #f0eeee;
-  --color-on-surface-variant: #cbc2c3;
-  --color-secondary: #a8a9a9;
-  --color-outline: #8f8586;
-  --color-primary: #ffffff;
-  --color-on-primary: #000000;
-  --color-error: #ffb4ab;
-  --color-error-container: #93000a;
-  --color-on-error-container: #ffdad6;
+  --color-surface: #171717;
+  --color-surface-lowest: #171717;
+  --color-surface-low: #1d1d1d;
+  --color-surface-container: #222222;
+  --color-surface-high: #292929;
+  --color-surface-highest: #343434;
+  --color-on-surface: #e8e8e8;
+  --color-on-surface-variant: #c4c4c4;
+  --color-secondary: #a0a0a0;
+  --color-outline: #737373;
+  --color-border: #2e2e2e;
+  --color-border-strong: #424242;
+  --color-primary: #34503f;
+  --color-on-primary: #e3ece6;
+  --color-accent: #7fa58f;
+  --color-selected: #2c2c2c;
+  --color-on-selected: #e8e8e8;
+  --color-error: #ff7a6e;
+  --color-error-container: #3a1c1a;
+  --color-on-error-container: #ffb4ab;
 }

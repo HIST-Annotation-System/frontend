@@ -1,32 +1,65 @@
-import { useState } from 'react';
-import { Microscope, Moon, Sun } from 'lucide-react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, Outlet, useMatch } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import Button from '../ui/Button';
 import { useTheme } from '../../context/ThemeProvider';
+import { HeaderSlotContext } from './headerSlotContext';
 import UploadStatusBar from './UploadStatusBar';
 import './AppLayout.css';
 
+function UserMenu() {
+  const { user, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: MouseEvent) => {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  if (!user) return null;
+
+  return (
+    <div className="app-header__menu" ref={ref}>
+      <button type="button" className="app-header__button" aria-expanded={open} onClick={() => setOpen(!open)}>
+        {user.username} ▾
+      </button>
+      {open && (
+        <div className="app-header__dropdown" role="menu">
+          <Link to="/profile" role="menuitem" className="app-header__item" onClick={() => setOpen(false)}>
+            Mój profil
+          </Link>
+          <button type="button" role="menuitem" className="app-header__item app-header__item--danger" onClick={logout}>
+            Wyloguj
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  const slideViewer = useMatch('/slides/:slideId');
+  const hotspotViewer = useMatch('/hotspots/:hotspotId');
+  const inViewer = Boolean(slideViewer || hotspotViewer);
 
   return (
     <div className="app-layout">
       <header className="app-header">
+        {/* TODO: swap the text for the HistAno SVG wordmark. */}
         <Link to="/" className="app-header__brand">
-          <span className="app-header__logo" aria-hidden="true">
-            <Microscope size={18} />
-          </span>
-          <span className="app-header__title"> PLATFORMA ANOTACJI HISTOPATOLOGICZNEJ</span>
+          HistAno
         </Link>
-        <div className="app-header__actions">
-          <nav className="app-header__nav label-caps">
+        {!inViewer && (
+          <nav className="app-header__nav" aria-label="Sekcje">
             <NavLink to="/" end className="app-header__tab">
-              Biblioteka slajdów
+              Slajdy
             </NavLink>
             <NavLink to="/hotspots" className="app-header__tab">
               Hotspoty
@@ -37,54 +70,17 @@ export default function AppLayout() {
               </NavLink>
             )}
           </nav>
-          <Button
-            variant="ghost"
-            icon={theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            title={theme === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'}
-            aria-label={theme === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'}
-            onClick={toggleTheme}
-          />
-          {user && (
-            <div className="user-menu-container">
-              <div className="user-menu-info">
-                <span className="user-menu-name">
-                  {user.profile?.first_name || user.profile?.last_name
-                    ? `${user.profile.first_name} ${user.profile.last_name}`
-                    : user.username}
-                </span>
-                <span className="user-menu-role">{user.role}</span>
-              </div>
-              <button
-                className="user-menu-avatar"
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                title="Rozwiń menu profilu"
-              >
-                {user.profile?.first_name
-                  ? `${user.profile.first_name.charAt(0)}${user.profile.last_name?.charAt(0) || ''}`.toUpperCase()
-                  : user.username.substring(0, 2).toUpperCase()}
-              </button>
-
-              {isUserMenuOpen && (
-                <div className="user-menu-dropdown">
-                  <Link to="/profile" className="user-menu-item" onClick={() => setIsUserMenuOpen(false)}>
-                    Mój Profil
-                  </Link>
-                  {user.role === 'ADMIN' && (
-                    <Link to="/admin" className="user-menu-item" onClick={() => setIsUserMenuOpen(false)}>
-                      Panel Administratora
-                    </Link>
-                  )}
-                  <button onClick={() => { logout(); setIsUserMenuOpen(false); }} className="user-menu-item text-danger">
-                    Wyloguj się
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        )}
+        <div className="app-header__slot" ref={setSlot} />
+        <button type="button" className="app-header__button" onClick={toggleTheme}>
+          {theme === 'dark' ? 'Jasny motyw' : 'Ciemny motyw'}
+        </button>
+        <UserMenu />
       </header>
       <main className="app-layout__content">
-        <Outlet />
+        <HeaderSlotContext.Provider value={slot}>
+          <Outlet />
+        </HeaderSlotContext.Provider>
       </main>
       <UploadStatusBar />
     </div>

@@ -1,4 +1,3 @@
-import { Check, PenTool, Plus, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
@@ -72,7 +71,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
       {TAG_DIMENSIONS.map((dimension) => (
         <div key={dimension.value} className="hotspot-tag-panel__row">
           <span className="hotspot-tag-panel__label">{dimension.label}</span>
-          <div className="btn-group">
+          <div className="btn-group hotspot-tag-panel__group">
             {dimensionTags(tags, dimension.value).map((tag) => (
               <Button
                 key={tag.id}
@@ -90,12 +89,11 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
       {mode === 'assess' && (
         <Button
           variant="primary"
-          icon={<PenTool size={14} />}
           disabled={!isTagged}
-          title={isTagged ? 'Otwórz hotspot w trybie REANNOTUJ' : 'Najpierw ustaw ważność i poprawność'}
+          title={isTagged ? 'Otwórz hotspot w trybie Reannotuj' : 'Najpierw ustaw ważność i poprawność'}
           onClick={onReannotate}
         >
-          Reannotuj obraz
+          Przekaż do reannotacji
         </Button>
       )}
 
@@ -105,21 +103,23 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
           {ownCustom.length === 0 && <span className="hotspot-tag-panel__empty">Brak</span>}
           {ownCustom.map((tag) => (
             <span key={tag.id} className="hotspot-tag-panel__chip">
-              <Badge>{tag.name}</Badge>
-              <Button
-                variant="ghost"
-                icon={<X size={12} />}
+              {tag.name}
+              <button
+                type="button"
                 aria-label={`Usuń tag ${tag.name}`}
+                title="Usuń tag"
                 disabled={isTagging}
                 onClick={() => void remove(tag.id)}
-              />
+              >
+                ×
+              </button>
             </span>
           ))}
         </div>
       </div>
       {otherCustom.length > 0 && (
         <select
-          className="hotspot-sort__select"
+          className="field"
           aria-label="Dodaj istniejący tag"
           value=""
           disabled={isTagging}
@@ -138,6 +138,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
       {isAdding ? (
         <form className="hotspot-tag-panel__new" onSubmit={create}>
           <input
+            className="field"
             value={newName}
             placeholder="Nowy tag…"
             aria-label="Nazwa nowego tagu"
@@ -147,7 +148,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
           />
           <input
             type="number"
-            className="hotspot-tag-panel__weight"
+            className="field hotspot-tag-panel__weight"
             value={newWeight}
             min={0}
             max={weightMax}
@@ -156,29 +157,21 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
             disabled={isCreating}
             onChange={(event) => setNewWeight(Number(event.target.value))}
           />
-          <Button
-            type="submit"
-            icon={<Plus size={16} />}
-            title="Utwórz tag i dodaj go do hotspotu"
-            aria-label="Utwórz tag"
-            disabled={isCreating || !newName.trim()}
-          />
-          <Button variant="ghost" icon={<X size={16} />} aria-label="Anuluj nowy tag" onClick={() => setIsAdding(false)} />
+          <Button type="submit" title="Utwórz tag i dodaj go do hotspotu" disabled={isCreating || !newName.trim()}>
+            Dodaj
+          </Button>
+          <Button variant="ghost" aria-label="Anuluj nowy tag" onClick={() => setIsAdding(false)}>
+            ×
+          </Button>
         </form>
       ) : (
-        <Button
-          variant="ghost"
-          className="hotspot-tag-panel__add"
-          icon={<Plus size={14} />}
-          onClick={() => setIsAdding(true)}
-        >
-          Nowy tag
+        <Button small className="hotspot-tag-panel__add" onClick={() => setIsAdding(true)}>
+          Nowy tag…
         </Button>
       )}
       {mode === 'reannotate' ? (
         <Button
           variant={hotspot.reannotated_at ? 'default' : 'primary'}
-          icon={<Check size={14} />}
           disabled={isUpdating}
           onClick={() =>
             void run(

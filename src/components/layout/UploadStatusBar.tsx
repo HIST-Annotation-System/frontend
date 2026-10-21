@@ -1,4 +1,3 @@
-import { X } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useUpload } from '../../context/UploadProvider';
 import { describeTransfer, progressPercent } from '../../features/upload/utils/uploadProgress';
@@ -6,9 +5,9 @@ import { summarizeQueue } from '../../features/upload/utils/uploadQueue';
 import Button from '../ui/Button';
 import './UploadStatusBar.css';
 
-/** Floating upload progress, visible from any page so leaving the library panel doesn't hide it.
+/** Upload progress docked under every page, so leaving the library doesn't hide a running upload.
  *
- * The library page (`/`) already shows the whole queue inline in `WsiUploader`, so this stays
+ * The library page (`/`) already shows the whole queue under the slide table, so this stays
  * hidden there to avoid showing the same uploads twice.
  */
 export default function UploadStatusBar() {
@@ -20,20 +19,12 @@ export default function UploadStatusBar() {
 
   return (
     <div className="upload-status-bar" role="status">
-      <div className="upload-status-bar__info">
-        <span className="upload-status-bar__name" title={active.file.name}>
-          {active.file.name}
-        </span>
-        <Button
-          variant="ghost"
-          icon={<X size={14} />}
-          title="Anuluj przesyłanie"
-          aria-label="Anuluj przesyłanie"
-          onClick={() => void cancel(active.id)}
-        />
-      </div>
+      <span className="upload-status-bar__label">Przesyłanie</span>
+      <span className="upload-status-bar__name" title={active.file.name}>
+        {active.file.name}
+      </span>
       <span className="mono-data upload-status-bar__details">
-        {active.status === 'finalizing' ? 'Finalizowanie…' : describeTransfer(active)}
+        {active.status === 'finalizing' ? 'finalizowanie…' : describeTransfer(active)}
         {queuedCount > 0 && ` · +${queuedCount} w kolejce`}
       </span>
       <progress
@@ -42,6 +33,9 @@ export default function UploadStatusBar() {
         max={100}
         aria-label="Postęp przesyłania"
       />
+      <Button small onClick={() => void cancel(active.id)}>
+        Anuluj
+      </Button>
     </div>
   );
 }

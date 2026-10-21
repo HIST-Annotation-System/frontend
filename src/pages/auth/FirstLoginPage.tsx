@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
+import Button from '../../components/ui/Button';
+import ErrorMessage from '../../components/ui/ErrorMessage';
+import { useAuth } from '../../context/AuthContext';
 import { dictionariesApi } from '../../services/dictionariesApi';
-import { Microscope } from 'lucide-react';
 import './AuthPages.css';
 
 export default function FirstLoginPage() {
@@ -13,7 +14,7 @@ export default function FirstLoginPage() {
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  
+
   const { setupProfile, error } = useAuth();
 
   const { data: categories } = useQuery({
@@ -22,7 +23,7 @@ export default function FirstLoginPage() {
   });
 
   const toggleCategory = (id: number) => {
-    setSelectedCategories(prev => 
+    setSelectedCategories(prev =>
       prev.includes(id) ? prev.filter(cId => cId !== id) : [...prev, id]
     );
   };
@@ -30,12 +31,12 @@ export default function FirstLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
-    
+
     if (password !== confirmPassword) {
       setLocalError("Hasła nie pasują do siebie.");
       return;
     }
-    
+
     if (password.length < 8) {
       setLocalError("Hasło musi mieć co najmniej 8 znaków.");
       return;
@@ -57,98 +58,49 @@ export default function FirstLoginPage() {
     }
   };
 
+  const text = (label: string, value: string, onChange: (value: string) => void, type = 'text') => (
+    <label className="form-field">
+      <span className="form-field__label">{label}</span>
+      <input className="field" type={type} value={value} onChange={(e) => onChange(e.target.value)} required disabled={loading} />
+    </label>
+  );
+
   return (
-    <div className="auth-container">
-      <div className="auth-card" style={{ maxWidth: '600px' }}>
-        <div className="auth-header">
-          <div className="auth-logo">
-            <Microscope size={48} />
-          </div>
-          <h1>Pierwsze logowanie</h1>
-          <p>Uzupełnij swój profil aby kontynuować</p>
-        </div>
+    <main className="auth-page">
+      <div className="auth-page__inner auth-page__inner--wide">
+        <div className="auth-page__brand">HistAno</div>
+        <p className="auth-page__lead">Pierwsze logowanie: uzupełnij profil i ustaw własne hasło.</p>
 
-        {(error || localError) && (
-          <div className="auth-error">{localError || error}</div>
-        )}
-
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="firstName">Imię</label>
-              <input
-                id="firstName"
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-                disabled={loading}
-                className="auth-input"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="lastName">Nazwisko</label>
-              <input
-                id="lastName"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-                disabled={loading}
-                className="auth-input"
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="form-stack">
+          <div className="auth-page__row">
+            {text('Imię', firstName, setFirstName)}
+            {text('Nazwisko', lastName, setLastName)}
           </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Nowe hasło</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              className="auth-input"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Potwierdź nowe hasło</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              disabled={loading}
-              className="auth-input"
-            />
-          </div>
+          {text('Nowe hasło (min. 8 znaków)', password, setPassword, 'password')}
+          {text('Powtórz hasło', confirmPassword, setConfirmPassword, 'password')}
 
           {categories && categories.length > 0 && (
-            <div className="form-group">
-              <label>Kategorie, którymi się zajmujesz</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.5rem' }}>
-                {categories.map(cat => (
-                  <label key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={selectedCategories.includes(cat.id)}
-                      onChange={() => toggleCategory(cat.id)}
-                    />
-                    {cat.name}
-                  </label>
-                ))}
-              </div>
-            </div>
+            <fieldset className="auth-page__categories">
+              <legend className="form-field__label">Kategorie, którymi się zajmujesz</legend>
+              {categories.map(cat => (
+                <label key={cat.id} className="form-check">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(cat.id)}
+                    onChange={() => toggleCategory(cat.id)}
+                  />
+                  {cat.name}
+                </label>
+              ))}
+            </fieldset>
           )}
 
-          <button type="submit" disabled={loading} className="auth-button" style={{ marginTop: '1rem' }}>
-            {loading ? 'Zapisywanie...' : 'Zapisz i kontynuuj'}
-          </button>
+          {(localError || error) && <ErrorMessage message={localError || error || ''} />}
+          <Button type="submit" variant="primary" block disabled={loading}>
+            {loading ? 'Zapisywanie…' : 'Zapisz i kontynuuj'}
+          </Button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

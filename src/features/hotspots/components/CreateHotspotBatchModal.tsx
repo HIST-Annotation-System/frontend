@@ -78,7 +78,7 @@ export default function CreateHotspotBatchModal({ slide, boxes, onClose, onCreat
           <img className="hotspot-form__preview" src={previewUrl} alt="Podgląd zaznaczonego obszaru" />
           <div className="hotspot-form__fields">
             <label className="hotspot-form__field">
-              <span className="label-caps">Przedrostek nazwy</span>
+              <span className="label">Przedrostek nazwy</span>
               <input
                 value={namePrefix}
                 required
@@ -88,7 +88,7 @@ export default function CreateHotspotBatchModal({ slide, boxes, onClose, onCreat
               />
             </label>
             <label className="hotspot-form__field">
-              <span className="label-caps">Folder</span>
+              <span className="label">Folder</span>
               <select
                 value={folderId ?? NEW_FOLDER}
                 disabled={isLoadingFolders}
@@ -104,7 +104,7 @@ export default function CreateHotspotBatchModal({ slide, boxes, onClose, onCreat
             </label>
             {folderId === NEW_FOLDER && (
               <label className="hotspot-form__field">
-                <span className="label-caps">Nazwa nowego folderu</span>
+                <span className="label">Nazwa nowego folderu</span>
                 <input
                   value={newFolderName}
                   required
