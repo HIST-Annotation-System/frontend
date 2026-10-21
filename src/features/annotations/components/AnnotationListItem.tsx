@@ -6,6 +6,8 @@ import { FALLBACK_ANNOTATION_COLOR } from '../utils/annotationStyle';
 
 interface AnnotationListItemProps {
   annotation: Annotation;
+  /** Position in the full list, shown as "#n" (also in the status bar). */
+  number: number;
   classes: AnnotationClass[];
   selected: boolean;
   readOnly: boolean;
@@ -16,6 +18,7 @@ interface AnnotationListItemProps {
 
 export default function AnnotationListItem({
   annotation,
+  number,
   classes,
   selected,
   readOnly,
@@ -25,17 +28,19 @@ export default function AnnotationListItem({
 }: AnnotationListItemProps) {
   const annotationClass = classes.find((item) => item.id === annotation.class_id);
   const color = annotationClass?.color ?? FALLBACK_ANNOTATION_COLOR;
+  // The ring is closed: its last vertex repeats the first.
+  const points = Math.max(0, (annotation.geometry.coordinates[0]?.length ?? 1) - 1);
 
   return (
     <li className={`annotation-item${selected ? ' annotation-item--selected' : ''}`}>
       <button
         type="button"
         className="annotation-item__main"
-        title="Pokaż anotację na obrazie"
+        title={`Pokaż anotację na obrazie · dodano ${formatDateTime(annotation.created_at)}`}
         onClick={() => onSelect(annotation.id)}
       >
         <span className="annotation-item__swatch" style={{ background: color }} aria-hidden="true" />
-        <span className="annotation-item__meta">{formatDateTime(annotation.created_at)}</span>
+        <span className="annotation-item__number">#{number}</span>
       </button>
       <select
         className="annotation-item__class"
@@ -50,11 +55,12 @@ export default function AnnotationListItem({
           </option>
         ))}
       </select>
+      <span className="annotation-item__points">{points} pkt</span>
       {!readOnly && (
         <Button
           variant="ghost"
           icon={<Trash2 size={14} />}
-          title="Usuń anotację"
+          title="Usuń obrys"
           aria-label="Usuń anotację"
           onClick={() => onDelete(annotation.id)}
         />

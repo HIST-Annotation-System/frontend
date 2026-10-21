@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, LayoutGrid } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { Hotspot, HotspotListQuery } from '../../../types/hotspot';
@@ -13,7 +13,7 @@ interface HotspotQueueNavProps {
   search: string;
 }
 
-/** Previous/next hotspot of the catalog's filtered and sorted list, and the way back to it. */
+/** Previous/next hotspot of the catalog's filtered and sorted list, with the position in it. */
 export default function HotspotQueueNav({ hotspot, query, search }: HotspotQueueNavProps) {
   const { data = [], isPending } = useHotspots(query);
   const found = data.findIndex((item) => item.id === hotspot.id);
@@ -27,32 +27,39 @@ export default function HotspotQueueNav({ hotspot, query, search }: HotspotQueue
 
   return (
     <nav className="hotspot-queue" aria-label="Kolejka hotspotów">
-      <Link className="btn btn--ghost btn--icon-only" to={`/hotspots${search}`} title="Wróć do listy" aria-label="Wróć do listy">
-        <LayoutGrid size={16} />
-      </Link>
-      <QueueLink target={previous} search={search}>
+      <QueueLink target={previous} search={search} label="Poprzedni hotspot z listy">
         <ChevronLeft size={16} />
-        Poprzedni
       </QueueLink>
-      <span className="hotspot-queue__position mono-data">{position}</span>
-      <QueueLink target={next} search={search}>
-        Następny
+      <span className="hotspot-queue__position">{position}</span>
+      <QueueLink target={next} search={search} label="Następny hotspot z listy">
         <ChevronRight size={16} />
       </QueueLink>
     </nav>
   );
 }
 
-function QueueLink({ target, search, children }: { target: Hotspot | undefined; search: string; children: ReactNode }) {
+interface QueueLinkProps {
+  target: Hotspot | undefined;
+  search: string;
+  label: string;
+  children: ReactNode;
+}
+
+function QueueLink({ target, search, label, children }: QueueLinkProps) {
   if (!target) {
     return (
-      <span className="btn btn--default hotspot-queue__disabled" aria-disabled="true">
+      <span className="hotspot-queue__step hotspot-queue__step--disabled" aria-disabled="true" aria-label={label}>
         {children}
       </span>
     );
   }
   return (
-    <Link className="btn btn--default" to={`/hotspots/${target.id}${search}`} title={target.name}>
+    <Link
+      className="hotspot-queue__step"
+      to={`/hotspots/${target.id}${search}`}
+      title={`${label}: ${target.name}`}
+      aria-label={label}
+    >
       {children}
     </Link>
   );

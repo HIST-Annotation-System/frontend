@@ -1,53 +1,161 @@
 .upload-status-bar {
-  position: fixed;
-  right: var(--space-lg);
-  bottom: var(--space-lg);
-  z-index: 200;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-  width: 280px;
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-surface);
-  border: var(--border);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-4);
+  height: 48px;
+  padding: 0 12px 0 20px;
+  border-top: var(--border-width) solid var(--c-border);
+  background: var(--c-surface);
+  box-shadow: 0 -4px 16px rgba(15, 27, 42, 0.06);
 }
 
-.upload-status-bar__info {
+:root[data-theme='dark'] .upload-status-bar {
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.upload-status-bar__icon {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: var(--c-accent-soft);
+  color: var(--c-accent-text);
+}
+
+.upload-status-bar__title {
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .upload-status-bar__name {
+  max-width: 260px;
   overflow: hidden;
-  font-weight: 600;
+  color: var(--c-text-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.upload-status-bar__progress {
-  width: 100%;
+.upload-status-bar__track {
+  position: relative;
+  flex: 1;
+  min-width: 120px;
   height: 6px;
-  border: var(--border);
-  background: var(--color-surface-highest);
-  appearance: none;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--c-track);
 }
 
-.upload-status-bar__progress::-webkit-progress-bar {
-  background: var(--color-surface-highest);
+.upload-status-bar__fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--c-primary);
+  transition: width 0.25s linear;
 }
 
-.upload-status-bar__progress::-webkit-progress-value {
-  background: var(--color-primary);
+:root[data-theme='dark'] .upload-status-bar__fill {
+  background: var(--c-accent);
 }
 
-.upload-status-bar__progress::-moz-progress-bar {
-  background: var(--color-primary);
+.upload-status-bar__track--indeterminate .upload-status-bar__fill {
+  width: 40%;
+  background: var(--c-accent);
+  animation: upload-indeterminate 1.2s var(--easing) infinite;
 }
 
-.upload-status-bar__details {
+@keyframes upload-indeterminate {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(260%);
+  }
+}
+
+.upload-status-bar__percent {
+  width: 44px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+}
+
+.upload-status-bar__speed,
+.upload-status-bar__queue {
+  color: var(--c-text-2);
+  font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--color-secondary);
+  white-space: nowrap;
+}
+
+.upload-status-bar__speed {
+  min-width: 150px;
+}
+
+.upload-status-bar__cancel {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-danger-text);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.upload-status-bar__cancel:hover {
+  background: var(--c-danger-soft);
+}
+
+.upload-pill {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 12px;
+  border: var(--border-width) solid var(--c-border);
+  border-radius: 18px;
+  background: var(--c-surface);
+  box-shadow: var(--shadow-md);
+  font-size: 13px;
+}
+
+.upload-pill__icon {
+  color: var(--c-accent-text);
+}
+
+.upload-pill__track {
+  display: block;
+  width: 80px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--c-track);
+}
+
+.upload-pill__fill {
+  display: block;
+  height: 100%;
+  background: var(--c-accent);
+}
+
+.upload-pill__percent,
+.upload-pill__queue {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.upload-pill__queue {
+  color: var(--c-text-3);
 }

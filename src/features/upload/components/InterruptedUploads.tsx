@@ -1,3 +1,4 @@
+import { CirclePause, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -28,27 +29,33 @@ export default function InterruptedUploads() {
 
   return (
     <section className="upload-queue" aria-label="Przerwane przesyłanie">
-      <ul className="upload-queue__list">
+      <h3 className="label-caps">Przerwane przesyłania</h3>
+      <p className="upload-queue__note">
+        Aby dokończyć przesyłanie, wybierz ponownie ten sam plik - przesyłanie zacznie się od miejsca przerwania.
+      </p>
+      <ul className="upload-queue__cards">
         {interrupted.map((upload) => (
-          <li key={upload.slideId} className="upload-queue__item upload-queue__item--error">
+          <li key={upload.slideId} className="upload-queue__item upload-queue__item--interrupted">
             <div className="upload-queue__row">
+              <CirclePause size={16} className="upload-queue__status-icon" aria-hidden="true" />
               <span className="upload-queue__name" title={upload.fileName}>
                 {upload.fileName}
               </span>
               <span className="mono-data upload-queue__size">{formatBytes(upload.fileSize)}</span>
               <span className="upload-queue__actions">
-                <Button variant="ghost" onClick={() => pickFileFor(upload)}>
+                <Button className="btn-sm upload-queue__resume" onClick={() => pickFileFor(upload)}>
                   Wznów
                 </Button>
-                <Button variant="ghost" onClick={() => void discardInterrupted(upload)}>
-                  Odrzuć
-                </Button>
+                <Button
+                  variant="ghost"
+                  icon={<X size={14} />}
+                  title="Odrzuć"
+                  aria-label={`Odrzuć przerwane przesyłanie pliku ${upload.fileName}`}
+                  onClick={() => void discardInterrupted(upload)}
+                />
               </span>
             </div>
-            <p className="upload-queue__message">
-              Przesyłanie rozpoczęte {formatDateTime(upload.startedAt)} zostało przerwane. Aby je dokończyć, wybierz
-              ponownie ten sam plik.
-            </p>
+            <p className="upload-queue__message">przerwano · rozpoczęte {formatDateTime(upload.startedAt)}</p>
           </li>
         ))}
       </ul>

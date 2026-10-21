@@ -1,9 +1,10 @@
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Tags } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import type { Tag } from '../../../types/tag';
 import { useTags } from '../hooks/useTags';
-import { customTags, dimensionTags, TAG_DIMENSIONS } from '../utils/hotspotTags';
+import { customTags, dimensionTags, TAG_DIMENSIONS, tagTone } from '../utils/hotspotTags';
 import './Hotspots.css';
 
 interface HotspotTagFilterProps {
@@ -53,13 +54,16 @@ export default function HotspotTagFilter({ tagIds, onChange }: HotspotTagFilterP
   return (
     <div className="hotspot-tag-filter" ref={root}>
       <Button
+        className="hotspot-tag-filter__toggle"
         active={tagIds.length > 0}
         aria-expanded={open}
         aria-haspopup="true"
         onClick={() => setOpen(!open)}
       >
-        Tagi{tagIds.length > 0 && ` (${tagIds.length})`}
-        <ChevronDown size={14} />
+        <Tags size={14} className="hotspot-tag-filter__icon" aria-hidden="true" />
+        Filtr tagów
+        {tagIds.length > 0 && <span className="hotspot-tag-filter__count">{tagIds.length}</span>}
+        <ChevronDown size={14} className="hotspot-tag-filter__icon" aria-hidden="true" />
       </Button>
       {open && (
         <div className="hotspot-tag-filter__menu" role="group" aria-label="Filtr tagów">
@@ -69,13 +73,20 @@ export default function HotspotTagFilter({ tagIds, onChange }: HotspotTagFilterP
               {group.tags.map((tag) => (
                 <label key={tag.id} className="hotspot-tag-filter__option">
                   <input type="checkbox" checked={tagIds.includes(tag.id)} onChange={() => toggle(tag)} />
-                  {tag.name}
+                  <span className="hotspot-pills">
+                    <Badge tone={tagTone(tag, tags)}>{tag.name}</Badge>
+                  </span>
                 </label>
               ))}
             </fieldset>
           ))}
-          <Button variant="ghost" disabled={tagIds.length === 0} onClick={() => onChange([])}>
-            Wyczyść
+          <Button
+            variant="ghost"
+            className="hotspot-tag-filter__clear"
+            disabled={tagIds.length === 0}
+            onClick={() => onChange([])}
+          >
+            Wyczyść filtr
           </Button>
         </div>
       )}

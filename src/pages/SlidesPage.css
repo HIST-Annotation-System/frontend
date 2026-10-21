@@ -1,21 +1,102 @@
+/* Library: scrolling main column + the upload panel docked on the right (admins). */
 .slides-page {
+  position: relative;
+  display: flex;
   flex: 1;
-  overflow-y: auto;
-  padding: var(--space-lg) var(--space-lg) var(--space-xl);
+  min-height: 0;
+  background: var(--c-page);
 }
 
-.slides-page__inner {
+.slides-page__main {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: var(--space-md);
-  max-width: 1200px;
-  margin: 0 auto;
+  gap: var(--space-4);
+  min-width: 0;
+  overflow-y: auto;
+  padding: var(--space-6) 28px var(--space-10);
+}
+
+.slides-page__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: var(--control-md);
 }
 
 .slides-page__title {
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.slides-page__count {
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.slides-page__upload {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 420px;
+  min-height: 0;
+  border-left: var(--border-width) solid var(--c-border);
+  background: var(--c-surface);
+}
+
+.slides-page__upload[hidden] {
+  display: none;
+}
+
+.slides-page__upload-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 var(--space-3) 0 var(--space-5);
+  border-bottom: var(--border-width) solid var(--c-border);
+}
+
+.slides-page__upload-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.slides-page__upload-header .btn--ghost {
+  width: var(--control-sm);
+  height: var(--control-sm);
+  color: var(--c-text-2);
+}
+
+.slides-page__upload-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-5);
+}
+
+/* Narrow windows: the panel floats over the grid instead of squeezing it. */
+@media (max-width: 960px) {
+  .slides-page__upload {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    width: min(420px, 100%);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.slides-page__main > .slide-list__empty {
+  flex: 1;
+  min-height: 360px;
 }

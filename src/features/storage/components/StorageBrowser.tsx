@@ -7,6 +7,7 @@ import { getStorageDownloadUrl } from '../../../services/storageApi';
 import { getErrorMessage } from '../../../utils/errors';
 import { formatBytes, formatDateTime } from '../../../utils/format';
 import StorageExplorer from './StorageExplorer';
+import { fileKind } from './storageLabels';
 import './StorageBrowser.css';
 
 const PATH_PARAM = 'path';
@@ -43,19 +44,22 @@ export default function StorageBrowser() {
         renderFile={(object, name) => (
           <li key={object.key} className="storage-item">
             <span className="storage-item__main storage-item__main--file">
-              <File size={16} aria-hidden="true" />
+              <File size={16} className="storage-item__icon" aria-hidden="true" />
               <span className="storage-item__name">{name}</span>
             </span>
-            <span className="storage-item__meta mono-data">{formatBytes(object.size)}</span>
-            <span className="storage-item__meta mono-data">{formatDateTime(object.last_modified)}</span>
-            <Button
-              variant="ghost"
-              icon={<Download size={14} />}
-              title="Pobierz plik"
-              aria-label="Pobierz plik"
-              disabled={downloadingKey === object.key}
-              onClick={() => void openObject(object.key)}
-            />
+            <span className="storage-item__meta storage-item__size">{formatBytes(object.size)}</span>
+            <span className="storage-item__meta">{formatDateTime(object.last_modified)}</span>
+            <span className="storage-item__kind">{fileKind(name)}</span>
+            <span className="storage-item__action">
+              <Button
+                variant="ghost"
+                icon={<Download size={14} />}
+                title="Pobierz plik"
+                aria-label="Pobierz plik"
+                disabled={downloadingKey === object.key}
+                onClick={() => void openObject(object.key)}
+              />
+            </span>
           </li>
         )}
       />

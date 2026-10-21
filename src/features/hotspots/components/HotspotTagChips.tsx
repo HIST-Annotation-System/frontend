@@ -4,19 +4,18 @@ import { useTags } from '../hooks/useTags';
 import { tagLabel, tagTone } from '../utils/hotspotTags';
 import './Hotspots.css';
 
-/** The hotspot's tags, and whether it has been reannotated. */
+/** The hotspot's tags as compact pills (whether it was reannotated is shown on the card's thumbnail). */
 export default function HotspotTagChips({ hotspot }: { hotspot: Hotspot }) {
   const { data: allTags = [] } = useTags();
-  if (hotspot.tags.length === 0 && !hotspot.reannotated_at) return null;
+  if (hotspot.tags.length === 0) return null;
 
   return (
-    <div className="hotspot-tags">
+    <div className="hotspot-pills">
       {hotspot.tags.map((tag) => (
-        <Badge key={tag.id} tone={tagTone(tag, allTags)}>
-          {tagLabel(tag)}
-        </Badge>
+        <span key={tag.id} title={tagLabel(tag)}>
+          <Badge tone={tagTone(tag, allTags)}>{tag.name}</Badge>
+        </span>
       ))}
-      {hotspot.reannotated_at && <Badge tone="success">Poprawione</Badge>}
     </div>
   );
 }

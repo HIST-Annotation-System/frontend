@@ -23,7 +23,7 @@ export default function HotspotFilters({ mode, status, tagIds, onChange }: Hotsp
         value={status ?? ''}
         onChange={(event) => onChange({ status: (event.target.value || null) as HotspotStatus | null })}
       >
-        <option value="">Każdy status</option>
+        <option value="">Wszystkie statusy</option>
         {statuses.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

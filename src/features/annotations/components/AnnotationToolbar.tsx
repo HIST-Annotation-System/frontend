@@ -2,16 +2,18 @@ import { useSelection } from '@annotorious/react';
 import { Redo2, Undo2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Button from '../../../components/ui/Button';
-import FloatingToolbar from '../../../components/ui/FloatingToolbar';
-import type { ToolMode } from '../../../types/annotation';
+import type { AnnotationClass, ToolMode } from '../../../types/annotation';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
 import ToolModeToggle from './ToolModeToggle';
+import { TOOL_MODES } from './toolModes';
 import './AnnotationTools.css';
 
 interface AnnotationToolbarProps {
   mode: ToolMode;
   onModeChange: (mode: ToolMode) => void;
   canDraw: boolean;
+  /** The cell type new outlines get, shown in the hint chip. */
+  activeClass?: AnnotationClass | null;
 }
 
 const DRAWING_HINTS: Record<ToolMode, string | null> = {
@@ -30,7 +32,7 @@ const isTextField = (target: EventTarget | null): boolean =>
   (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 
 /** Tool strip on the canvas: tools, undo/redo (also Ctrl+Z / Ctrl+Y), hints; Esc cancels drawing or editing. */
-export default function AnnotationToolbar({ mode, onModeChange, canDraw }: AnnotationToolbarProps) {
+export default function AnnotationToolbar({ mode, onModeChange, canDraw, activeClass }: AnnotationToolbarProps) {
   const anno = useSlideAnnotator();
   const { selected } = useSelection();
   const [history, setHistory] = useState({ canUndo: false, canRedo: false });
@@ -73,31 +75,50 @@ export default function AnnotationToolbar({ mode, onModeChange, canDraw }: Annot
 
   const drawingHint = DRAWING_HINTS[mode] && !canDraw ? NO_CLASS_HINT : DRAWING_HINTS[mode];
   const hint = selected.length > 0 ? EDITING_HINT : drawingHint;
+  const tool = TOOL_MODES.find((item) => item.mode === mode);
 
   return (
     <>
-      {hint && (
-        <p className="drawing-hint" role="status">
-          {hint}
-        </p>
-      )}
-      <FloatingToolbar label="Narzędzia anotacji">
+      <div className="annotation-tools" role="toolbar" aria-label="Narzędzia anotacji" aria-orientation="vertical">
+        <span className="annotation-tools__label" aria-hidden="true">
+          Narz.
+        </span>
         <ToolModeToggle mode={mode} onChange={onModeChange} />
+        <span className="annotation-tools__divider" aria-hidden="true" />
         <Button
-          icon={<Undo2 size={16} />}
+          icon={<Undo2 size={17} />}
           title="Cofnij (Ctrl+Z)"
           aria-label="Cofnij"
           disabled={!history.canUndo}
           onClick={() => anno?.undo()}
         />
         <Button
-          icon={<Redo2 size={16} />}
+          icon={<Redo2 size={17} />}
           title="Ponów (Ctrl+Y)"
           aria-label="Ponów"
           disabled={!history.canRedo}
           onClick={() => anno?.redo()}
         />
-      </FloatingToolbar>
+      </div>
+      {/* Dark chip beside the strip: the tool, the cell type it draws, and how to use it. */}
+      <div className="drawing-hint" role="status">
+        {tool && (
+          <span className="drawing-hint__tool">
+            <tool.Icon size={13} aria-hidden="true" />
+            {tool.label}
+          </span>
+        )}
+        {activeClass && mode !== 'navigate' && (
+          <>
+            <span className="drawing-hint__class">
+              <span className="drawing-hint__swatch" style={{ background: activeClass.color }} aria-hidden="true" />
+              {activeClass.name}
+            </span>
+            {hint && <span className="drawing-hint__dot">·</span>}
+          </>
+        )}
+        {hint && <span className="drawing-hint__text">{hint}</span>}
+      </div>
     </>
   );
 }

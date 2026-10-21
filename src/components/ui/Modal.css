@@ -1,24 +1,27 @@
 /* A <dialog> is display:none until [open] (via showModal()); only set display on the open state,
-   since an unconditional `display` here would override that native default. */
+   since an unconditional display here would override that native default. */
 .modal[open] {
   display: flex;
   flex-direction: column;
+  animation: modal-in var(--motion-base) var(--easing);
 }
 
 .modal {
   /* A modal dialog makes the rest of the page inert, so it must stay clickable even when rendered
      inside a click-through overlay (pointer-events is inherited). */
   pointer-events: auto;
-  width: min(640px, calc(100vw - 32px));
-  max-height: min(80vh, 720px);
+  width: min(520px, calc(100vw - 32px));
+  max-height: min(84vh, 760px);
   padding: 0;
-  border: var(--border);
-  background: var(--color-surface-lowest);
-  color: var(--color-on-surface);
+  border: var(--border-width) solid var(--c-border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  color: var(--c-text);
+  box-shadow: var(--shadow-lg);
 }
 
 .modal::backdrop {
-  background: rgb(0 0 0 / 0.5);
+  background: var(--c-scrim);
 }
 
 .modal__header {
@@ -26,20 +29,26 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-md);
-  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
-  border-bottom: var(--border);
+  gap: var(--space-4);
+  padding: 14px 12px 12px 20px;
+  border-bottom: var(--border-width) solid var(--c-border);
 }
 
 .modal__title {
   font-size: 16px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
+  font-weight: 600;
+  line-height: 22px;
 }
 
 .modal__body {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-md);
+  padding: var(--space-5);
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.99);
+  }
 }

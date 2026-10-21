@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { Microscope } from 'lucide-react';
+import BrandLogo from '../../components/layout/BrandLogo';
+import AuthAppearance from './AuthAppearance';
+import LoginBackground from './LoginBackground';
 import './AuthPages.css';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  
+  const [showPassword, setShowPassword] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
   const { login, error } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,48 +30,73 @@ export default function LoginPage() {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <div className="auth-logo">
-            <Microscope size={48} />
-          </div>
-          <h1>Witaj ponownie</h1>
-          <p>Zaloguj się do platformy annotacji</p>
-        </div>
-
-        {error && <div className="auth-error">{error}</div>}
+      <LoginBackground avoidRef={cardRef} />
+      <AuthAppearance />
+      <div ref={cardRef} className="auth-card">
+        <BrandLogo height={30} className="auth-logo" />
 
         <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="username">Nazwa użytkownika</label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              disabled={loading}
-              className="auth-input"
-            />
+          <div className="auth-header">
+            <h1>Witaj ponownie</h1>
+            <p>Zaloguj się do platformy anotacji</p>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Hasło</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              className="auth-input"
-            />
+          {error && (
+            <div className="auth-error" role="alert">
+              <AlertCircle size={16} aria-hidden="true" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div className="auth-fields">
+            <div className="form-group">
+              <label htmlFor="username">Nazwa użytkownika</label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                disabled={loading}
+                autoComplete="username"
+                placeholder="np. m.nowak"
+                className={`auth-input${error ? ' auth-input--invalid' : ''}`}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password">Hasło</label>
+              <div className="auth-password">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  autoComplete="current-password"
+                  className={`auth-input${error ? ' auth-input--invalid' : ''}`}
+                />
+                <button
+                  type="button"
+                  className="auth-password__toggle"
+                  onClick={() => setShowPassword((shown) => !shown)}
+                  title={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
+                  aria-label={showPassword ? 'Ukryj hasło' : 'Pokaż hasło'}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
           </div>
 
           <button type="submit" disabled={loading} className="auth-button">
+            {loading && <span className="auth-button__spinner" aria-hidden="true" />}
             {loading ? 'Logowanie...' : 'Zaloguj się'}
           </button>
         </form>
+
+        <div className="auth-footer">Nie masz konta? Skontaktuj się z administratorem.</div>
       </div>
     </div>
   );

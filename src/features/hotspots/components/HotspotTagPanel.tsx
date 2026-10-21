@@ -1,6 +1,5 @@
-import { Check, PenTool, Plus, X } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
-import Badge from '../../../components/ui/Badge';
+import { CheckCheck, PenTool, Plus, Undo2, X } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import type { Hotspot } from '../../../types/hotspot';
@@ -14,6 +13,7 @@ import {
   dimensionTags,
   maxCustomWeight,
   TAG_DIMENSIONS,
+  tagTone,
 } from '../utils/hotspotTags';
 import './Hotspots.css';
 
@@ -31,7 +31,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
   const { addTag, removeTag, isTagging } = useHotspotTagMutations();
   const { createTag, isCreating } = useTagMutations();
   const { updateHotspot, isUpdating } = useHotspotMutations();
-  const [isAdding, setIsAdding] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newWeight, setNewWeight] = useState(CUSTOM_TAG_DEFAULT_WEIGHT);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +40,15 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
   const otherCustom = customTags(tags).filter((tag) => !ownIds.has(tag.id));
   const weightMax = maxCustomWeight(tags);
   const isTagged = TAG_DIMENSIONS.every(({ value }) => hotspot.tags.some((tag) => tag.dimension === value));
+
+  useEffect(() => {
+    if (!isMenuOpen) return undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isMenuOpen]);
 
   const run = async (action: () => Promise<unknown>, failure: string) => {
     setError(null);
@@ -62,136 +71,178 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
     void run(async () => {
       const tag = await createTag({ name, weight: newWeight });
       setNewName('');
-      setIsAdding(false);
+      setIsMenuOpen(false);
       await addTag({ hotspotId: hotspot.id, tagId: tag.id });
     }, 'Nie udało się utworzyć tagu.');
   };
 
   return (
     <div className="hotspot-tag-panel">
-      {TAG_DIMENSIONS.map((dimension) => (
-        <div key={dimension.value} className="hotspot-tag-panel__row">
-          <span className="hotspot-tag-panel__label">{dimension.label}</span>
-          <div className="btn-group">
-            {dimensionTags(tags, dimension.value).map((tag) => (
-              <Button
-                key={tag.id}
-                active={ownIds.has(tag.id)}
-                disabled={isTagging}
-                title={ownIds.has(tag.id) ? 'Kliknij ponownie, aby usunąć ocenę' : `Waga: ${tag.weight}`}
-                onClick={() => void (ownIds.has(tag.id) ? remove(tag.id) : add(tag.id))}
+      <div className="hotspot-verdict">
+        {TAG_DIMENSIONS.map((dimension) => {
+          const options = dimensionTags(tags, dimension.value);
+          return (
+            <div key={dimension.value} className="hotspot-verdict__row">
+              <span className="hotspot-tag-panel__label">{dimension.label}</span>
+              <div
+                className="hotspot-verdict__options"
+                role="group"
+                aria-label={dimension.label}
+                style={{ gridTemplateColumns: `repeat(${Math.max(options.length, 1)}, minmax(0, 1fr))` }}
               >
-                {tag.name}
-              </Button>
-            ))}
+                {options.map((tag) => (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    className={`hotspot-verdict__option hotspot-verdict__option--${tagTone(tag, tags)}`}
+                    aria-pressed={ownIds.has(tag.id)}
+                    disabled={isTagging}
+                    title={ownIds.has(tag.id) ? 'Kliknij ponownie, aby usunąć ocenę' : `Waga: ${tag.weight}`}
+                    onClick={() => void (ownIds.has(tag.id) ? remove(tag.id) : add(tag.id))}
+                  >
+                    {tag.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hotspot-tag-panel__row">
+        <div className="hotspot-tag-panel__row-head">
+          <span className="hotspot-tag-panel__label">Tagi</span>
+          <span className="hotspot-tag-panel__score">wynik {hotspot.score}</span>
+        </div>
+        <div className="hotspot-tag-panel__chips">
+          {ownCustom.map((tag) => (
+            <span key={tag.id} className="hotspot-tag-panel__chip">
+              {tag.name}
+              <span className="hotspot-tag-panel__weight-label">·{tag.weight}</span>
+              <button
+                type="button"
+                className="hotspot-tag-panel__chip-remove"
+                title="Usuń tag"
+                aria-label={`Usuń tag ${tag.name}`}
+                disabled={isTagging}
+                onClick={() => void remove(tag.id)}
+              >
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+          <div className="hotspot-tag-panel__add-wrap">
+            <button
+              type="button"
+              className="hotspot-tag-panel__add"
+              aria-expanded={isMenuOpen}
+              aria-haspopup="dialog"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              <Plus size={12} aria-hidden="true" />
+              Dodaj tag
+            </button>
+            {isMenuOpen && (
+              <>
+                <div className="hotspot-tag-panel__backdrop" onClick={() => setIsMenuOpen(false)} />
+                <div className="hotspot-tag-panel__menu" role="dialog" aria-label="Dodaj tag">
+                  {otherCustom.map((tag) => (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      className="hotspot-tag-panel__choice"
+                      disabled={isTagging}
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        void add(tag.id);
+                      }}
+                    >
+                      <span className="hotspot-tag-panel__choice-name">{tag.name}</span>
+                      <span className="hotspot-tag-panel__weight-label">waga {tag.weight}</span>
+                    </button>
+                  ))}
+                  {otherCustom.length > 0 && <span className="hotspot-tag-panel__menu-divider" aria-hidden="true" />}
+                  <form className="hotspot-tag-panel__new" onSubmit={create}>
+                    <input
+                      value={newName}
+                      placeholder="Nowy tag…"
+                      aria-label="Nazwa nowego tagu"
+                      maxLength={64}
+                      disabled={isCreating}
+                      autoFocus
+                      onChange={(event) => setNewName(event.target.value)}
+                    />
+                    <input
+                      type="number"
+                      className="hotspot-tag-panel__weight"
+                      value={newWeight}
+                      min={0}
+                      max={weightMax}
+                      aria-label="Waga nowego tagu"
+                      title={`Waga od 0 do ${weightMax}: tagi własne ważą mniej niż ważność i poprawność.`}
+                      disabled={isCreating}
+                      onChange={(event) => setNewWeight(Number(event.target.value))}
+                    />
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      icon={<Plus size={14} />}
+                      title="Utwórz tag i dodaj go do hotspotu"
+                      aria-label="Utwórz tag"
+                      disabled={isCreating || !newName.trim()}
+                    />
+                  </form>
+                </div>
+              </>
+            )}
           </div>
         </div>
-      ))}
+      </div>
+
       {mode === 'assess' && (
         <Button
           variant="primary"
-          icon={<PenTool size={14} />}
+          className="hotspot-tag-panel__action"
+          icon={<PenTool size={15} />}
           disabled={!isTagged}
-          title={isTagged ? 'Otwórz hotspot w trybie REANNOTUJ' : 'Najpierw ustaw ważność i poprawność'}
+          title={isTagged ? 'Otwórz hotspot w trybie „Reannotuj”' : 'Najpierw ustaw ważność i poprawność'}
           onClick={onReannotate}
         >
           Reannotuj obraz
         </Button>
       )}
-
-      <div className="hotspot-tag-panel__row">
-        <span className="hotspot-tag-panel__label">Tagi</span>
-        <div className="hotspot-tags">
-          {ownCustom.length === 0 && <span className="hotspot-tag-panel__empty">Brak</span>}
-          {ownCustom.map((tag) => (
-            <span key={tag.id} className="hotspot-tag-panel__chip">
-              <Badge>{tag.name}</Badge>
-              <Button
-                variant="ghost"
-                icon={<X size={12} />}
-                aria-label={`Usuń tag ${tag.name}`}
-                disabled={isTagging}
-                onClick={() => void remove(tag.id)}
-              />
-            </span>
-          ))}
-        </div>
-      </div>
-      {otherCustom.length > 0 && (
-        <select
-          className="hotspot-sort__select"
-          aria-label="Dodaj istniejący tag"
-          value=""
-          disabled={isTagging}
-          onChange={(event) => void add(Number(event.target.value))}
-        >
-          <option value="" disabled>
-            Dodaj istniejący tag…
-          </option>
-          {otherCustom.map((tag) => (
-            <option key={tag.id} value={tag.id}>
-              {tag.name} (waga {tag.weight})
-            </option>
-          ))}
-        </select>
-      )}
-      {isAdding ? (
-        <form className="hotspot-tag-panel__new" onSubmit={create}>
-          <input
-            value={newName}
-            placeholder="Nowy tag…"
-            aria-label="Nazwa nowego tagu"
-            maxLength={64}
-            disabled={isCreating}
-            onChange={(event) => setNewName(event.target.value)}
-          />
-          <input
-            type="number"
-            className="hotspot-tag-panel__weight"
-            value={newWeight}
-            min={0}
-            max={weightMax}
-            aria-label="Waga nowego tagu"
-            title={`Waga od 0 do ${weightMax}: tagi własne ważą mniej niż ważność i poprawność.`}
-            disabled={isCreating}
-            onChange={(event) => setNewWeight(Number(event.target.value))}
-          />
+      {mode === 'reannotate' &&
+        (hotspot.reannotated_at ? (
           <Button
-            type="submit"
-            icon={<Plus size={16} />}
-            title="Utwórz tag i dodaj go do hotspotu"
-            aria-label="Utwórz tag"
-            disabled={isCreating || !newName.trim()}
-          />
-          <Button variant="ghost" icon={<X size={16} />} aria-label="Anuluj nowy tag" onClick={() => setIsAdding(false)} />
-        </form>
-      ) : (
-        <Button
-          variant="ghost"
-          className="hotspot-tag-panel__add"
-          icon={<Plus size={14} />}
-          onClick={() => setIsAdding(true)}
-        >
-          Nowy tag
-        </Button>
-      )}
-      {mode === 'reannotate' ? (
-        <Button
-          variant={hotspot.reannotated_at ? 'default' : 'primary'}
-          icon={<Check size={14} />}
-          disabled={isUpdating}
-          onClick={() =>
-            void run(
-              () => updateHotspot({ hotspotId: hotspot.id, changes: { reannotated: !hotspot.reannotated_at } }),
-              'Nie udało się zmienić oznaczenia.',
-            )
-          }
-        >
-          {hotspot.reannotated_at ? 'Cofnij „poprawione”' : 'Oznacz jako poprawione'}
-        </Button>
-      ) : (
-        hotspot.reannotated_at && <Badge tone="success">Poprawione</Badge>
-      )}
+            variant="ghost"
+            className="hotspot-tag-panel__undo"
+            icon={<Undo2 size={13} />}
+            disabled={isUpdating}
+            onClick={() =>
+              void run(
+                () => updateHotspot({ hotspotId: hotspot.id, changes: { reannotated: false } }),
+                'Nie udało się zmienić oznaczenia.',
+              )
+            }
+          >
+            Cofnij „poprawione”
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            className="hotspot-tag-panel__action"
+            icon={<CheckCheck size={15} />}
+            disabled={isUpdating}
+            onClick={() =>
+              void run(
+                () => updateHotspot({ hotspotId: hotspot.id, changes: { reannotated: true } }),
+                'Nie udało się zmienić oznaczenia.',
+              )
+            }
+          >
+            Oznacz jako poprawione
+          </Button>
+        ))}
       {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
     </div>
   );

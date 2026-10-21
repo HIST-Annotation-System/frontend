@@ -3,9 +3,11 @@ import { useAuth } from '../../context/AuthContext';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { usersApi } from '../../services/usersApi';
 import { dictionariesApi } from '../../services/dictionariesApi';
-import type { ProfileUpdate } from '../../types/user';
-import { Edit2, Check, X } from 'lucide-react';
+import type { ProfileUpdate, Role } from '../../types/user';
+import { Pencil, Check, Lock, Info, CircleAlert, CircleCheck, X } from 'lucide-react';
 import './ProfilePage.css';
+
+const ROLE_LABELS: Record<Role, string> = { ADMIN: 'Administrator', ANNOTATOR: 'Anotator' };
 
 interface InlineFieldProps {
   label: string;
@@ -14,9 +16,10 @@ interface InlineFieldProps {
   onSave: (val: string) => void;
   type?: string;
   disabled?: boolean;
+  mono?: boolean;
 }
 
-function InlineField({ label, value, displayValue, onSave, type = 'text', disabled = false }: InlineFieldProps) {
+function InlineField({ label, value, displayValue, onSave, type = 'text', disabled = false, mono = false }: InlineFieldProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
 
@@ -35,42 +38,49 @@ function InlineField({ label, value, displayValue, onSave, type = 'text', disabl
   };
 
   return (
-    <div className="profile-item">
-      <div className="profile-item-label">{label}</div>
-      <div className="profile-item-content">
-        {!isEditing ? (
-          <>
-            <span className="profile-item-value">
-              {type === 'password' ? '••••••••' : (displayValue || value || <span className="text-muted">Brak</span>)}
-            </span>
-            {!disabled && (
-              <button onClick={() => setIsEditing(true)} className="icon-button" title="Edytuj">
-                <Edit2 size={16} />
-              </button>
-            )}
-          </>
+    <div className="profile-row">
+      <div className="profile-row__label">{label}</div>
+      {!isEditing ? (
+        <div className={`profile-row__value${mono ? ' profile-row__value--mono' : ''}`}>
+          {type === 'password' ? '••••••••' : (displayValue || value || <span className="profile-muted">Brak</span>)}
+        </div>
+      ) : (
+        <div className="profile-row__edit">
+          <input
+            type={type}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            className={`profile-input${mono ? ' profile-input--mono' : ''}`}
+            placeholder={type === 'password' ? 'Nowe hasło' : undefined}
+            autoComplete={type === 'password' ? 'new-password' : undefined}
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSave();
+              if (e.key === 'Escape') handleCancel();
+            }}
+          />
+          <div className="profile-row__edit-actions">
+            <button onClick={handleSave} className="btn-primary btn-sm" title="Zapisz">
+              <Check size={14} />
+              Zapisz
+            </button>
+            <button onClick={handleCancel} className="btn-secondary btn-sm" title="Anuluj">
+              Anuluj
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="profile-row__trailing">
+        {disabled ? (
+          <span className="profile-lock" title="Tego pola nie można zmienić">
+            <Lock size={14} aria-hidden="true" />
+          </span>
         ) : (
-          <>
-            <input
-              type={type}
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              className="profile-input"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSave();
-                if (e.key === 'Escape') handleCancel();
-              }}
-            />
-            <div className="profile-item-edit-actions">
-              <button onClick={handleSave} className="icon-button success" title="Zapisz">
-                <Check size={18} />
-              </button>
-              <button onClick={handleCancel} className="icon-button danger" title="Anuluj">
-                <X size={18} />
-              </button>
-            </div>
-          </>
+          !isEditing && (
+            <button onClick={() => setIsEditing(true)} className="profile-icon-btn" title="Edytuj">
+              <Pencil size={15} />
+            </button>
+          )
         )}
       </div>
     </div>
@@ -121,7 +131,7 @@ export default function ProfilePage() {
   };
 
   const toggleCategory = (id: number) => {
-    setSelectedCategories(prev => 
+    setSelectedCategories(prev =>
       prev.includes(id) ? prev.filter(cId => cId !== id) : [...prev, id]
     );
   };
@@ -139,100 +149,137 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
+  const initials = (
+    `${user.profile?.first_name?.trim().charAt(0) ?? ''}${user.profile?.last_name?.trim().charAt(0) ?? ''}` ||
+    user.username.slice(0, 2)
+  ).toUpperCase();
+
   return (
     <div className="profile-page">
-      <div className="profile-card">
-        <h1 className="profile-title">Mój Profil</h1>
-        <p className="profile-subtitle">Przeglądaj i aktualizuj swoje dane.</p>
+      <div className="profile-content">
+        <div className="profile-header">
+          <span className="profile-avatar" aria-hidden="true">{initials}</span>
+          <div className="profile-header__text">
+            <h1 className="page-title">Mój profil</h1>
+            <p className="page-subtitle">Przeglądaj i aktualizuj swoje dane.</p>
+          </div>
+        </div>
 
-        {localError && <div className="profile-alert profile-alert-error">{localError}</div>}
-        {successMessage && <div className="profile-alert profile-alert-success">{successMessage}</div>}
+        {localError && (
+          <div className="profile-alert profile-alert--error" role="alert">
+            <CircleAlert size={16} aria-hidden="true" />
+            <span>{localError}</span>
+            <button type="button" className="profile-alert__close" title="Zamknij" onClick={() => setLocalError(null)}>
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        {successMessage && (
+          <div className="profile-alert profile-alert--success" role="status">
+            <CircleCheck size={16} aria-hidden="true" />
+            <span>{successMessage}</span>
+            <button type="button" className="profile-alert__close" title="Zamknij" onClick={() => setSuccessMessage(null)}>
+              <X size={14} />
+            </button>
+          </div>
+        )}
 
-        <div className="profile-list">
-          <InlineField 
-            label="Login" 
-            value={user.username} 
-            onSave={() => {}} 
-            disabled 
+        <div className="profile-card">
+          <InlineField
+            label="Imię"
+            value={user.profile?.first_name || ''}
+            onSave={(val) => handleUpdate('first_name', val)}
           />
-          <InlineField 
-            label="Imię" 
-            value={user.profile?.first_name || ''} 
-            onSave={(val) => handleUpdate('first_name', val)} 
+          <InlineField
+            label="Nazwisko"
+            value={user.profile?.last_name || ''}
+            onSave={(val) => handleUpdate('last_name', val)}
           />
-          <InlineField 
-            label="Nazwisko" 
-            value={user.profile?.last_name || ''} 
-            onSave={(val) => handleUpdate('last_name', val)} 
+          <InlineField
+            label="Login"
+            value={user.username}
+            onSave={() => {}}
+            disabled
+            mono
           />
-          <InlineField 
-            label="Hasło" 
-            value="" 
+          <InlineField
+            label="Rola"
+            value={user.role}
+            displayValue={ROLE_LABELS[user.role]}
+            onSave={() => {}}
+            disabled
+          />
+          <InlineField
+            label="Grupa anotatorów"
+            value={user.profile?.group?.name || 'Brak'}
+            onSave={() => {}}
+            disabled
+          />
+          <InlineField
+            label="Hasło"
+            value=""
             type="password"
-            onSave={(val) => handleUpdate('password', val)} 
+            onSave={(val) => handleUpdate('password', val)}
           />
-          <InlineField 
-            label="Rola" 
-            value={user.role} 
-            onSave={() => {}} 
-            disabled 
-          />
-          <InlineField 
-            label="Grupa Annotatorska" 
-            value={user.profile?.group?.name || 'Brak'} 
-            onSave={() => {}} 
-            disabled 
-          />
-          
+
           {categories && categories.length > 0 && (
-            <div className="profile-item" style={{ alignItems: 'flex-start' }}>
-              <div className="profile-item-label" style={{ paddingTop: '0.5rem' }}>Kategorie</div>
-              <div className="profile-item-content">
-                {!isEditingCategories ? (
-                  <>
-                    <div className="profile-item-value" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                      {user.profile?.categories && user.profile.categories.length > 0 ? (
-                        user.profile.categories.map(c => (
-                          <span key={c.id} style={{ background: 'var(--color-surface-lowest)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.875rem' }}>
-                            {c.name}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-muted">Brak powiązanych kategorii</span>
-                      )}
-                    </div>
-                    <button onClick={() => setIsEditingCategories(true)} className="icon-button" title="Edytuj">
-                      <Edit2 size={16} />
-                    </button>
-                  </>
-                ) : (
-                  <div style={{ width: '100%' }}>
-                    <div className="profile-categories-grid">
-                      {categories.map(cat => (
-                        <label key={cat.id} className="profile-checkbox-label">
-                          <input
-                            type="checkbox"
-                            checked={selectedCategories.includes(cat.id)}
-                            onChange={() => toggleCategory(cat.id)}
-                          />
-                          {cat.name}
-                        </label>
-                      ))}
-                    </div>
-                    <div className="profile-item-edit-actions" style={{ marginTop: '1rem', justifyContent: 'flex-end' }}>
-                      <button onClick={saveCategories} className="icon-button success" title="Zapisz">
-                        <Check size={18} />
-                      </button>
-                      <button onClick={cancelCategories} className="icon-button danger" title="Anuluj">
-                        <X size={18} />
-                      </button>
-                    </div>
+            <div className="profile-row">
+              <div className="profile-row__label">Kategorie</div>
+              {!isEditingCategories ? (
+                <div className="profile-row__value profile-chips">
+                  {user.profile?.categories && user.profile.categories.length > 0 ? (
+                    user.profile.categories.map(c => (
+                      <span key={c.id} className="profile-chip">
+                        {c.name}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="profile-muted">Brak powiązanych kategorii</span>
+                  )}
+                </div>
+              ) : (
+                <div className="profile-row__edit">
+                  <div className="profile-chips">
+                    {categories.map(cat => (
+                      <label
+                        key={cat.id}
+                        className={`profile-chip-toggle${selectedCategories.includes(cat.id) ? ' is-on' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes(cat.id)}
+                          onChange={() => toggleCategory(cat.id)}
+                        />
+                        {cat.name}
+                      </label>
+                    ))}
                   </div>
+                  <div className="profile-row__edit-actions">
+                    <button onClick={saveCategories} className="btn-primary btn-sm" title="Zapisz">
+                      <Check size={14} />
+                      Zapisz
+                    </button>
+                    <button onClick={cancelCategories} className="btn-secondary btn-sm" title="Anuluj">
+                      Anuluj
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="profile-row__trailing">
+                {!isEditingCategories && (
+                  <button onClick={() => setIsEditingCategories(true)} className="profile-icon-btn" title="Edytuj">
+                    <Pencil size={15} />
+                  </button>
                 )}
               </div>
             </div>
           )}
         </div>
+
+        <p className="profile-note">
+          <Info size={13} aria-hidden="true" />
+          Rolę i grupę anotatorów może zmienić tylko administrator.
+        </p>
       </div>
     </div>
   );

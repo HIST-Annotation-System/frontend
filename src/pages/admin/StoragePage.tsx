@@ -3,11 +3,14 @@ import './StoragePage.css';
 
 export default function StoragePage() {
   return (
-    <div className="storage-page">
-      <div className="storage-page__inner">
-        <h1 className="storage-page__title">Zarządzanie plikami</h1>
-        <StorageBrowser />
+    <div className="admin-page storage-page">
+      <div className="admin-page-header">
+        <div className="admin-page-header__text">
+          <h1 className="page-title">Zarządzanie plikami</h1>
+          <p className="page-subtitle">Pliki w magazynie w chmurze.</p>
+        </div>
       </div>
+      <StorageBrowser />
     </div>
   );
 }

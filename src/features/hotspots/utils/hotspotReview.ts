@@ -33,10 +33,10 @@ const MODE_DEFAULTS: Record<HotspotMode, ModeDefaults> = {
 
 export const HOTSPOT_MODES: { value: HotspotMode; label: string; description: string }[] = [
   { value: 'browse', label: 'Przeglądaj', description: 'Cały katalog: wgrywanie, zmiana nazw, przenoszenie.' },
-  { value: 'assess', label: 'OCENIAJ', description: 'Nieocenione hotspoty: ustaw ważność, poprawność i tagi.' },
+  { value: 'assess', label: 'Oceniaj', description: 'Nieocenione hotspoty: ustaw ważność, poprawność i tagi.' },
   {
     value: 'reannotate',
-    label: 'REANNOTUJ',
+    label: 'Reannotuj',
     description: 'Ocenione hotspoty od najwyższego wyniku tagów: popraw anotacje i oznacz jako poprawione.',
   },
 ];

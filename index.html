@@ -6,13 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
-    <title>Przeglądarka WSI</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+    <title>HistAno</title>
     <script>
       (function () {
-        var stored = localStorage.getItem('wsi-theme');
+        var stored = null;
+        var palette = null;
+        try {
+          stored = localStorage.getItem('wsi-theme');
+          palette = localStorage.getItem('wsi-palette');
+        } catch (e) {}
         var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
         document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        var palettes = ['histano', 'szkielko', 'szwajcarski', 'muzeum', 'papier-dab', 'hematoksylina', 'trichrom', 'kobalt', 'riso', 'tablica', 'brutal', 'fosfor'];
+        document.documentElement.dataset.palette = palettes.indexOf(palette) >= 0 ? palette : 'papier-dab';
       })();
     </script>
   </head>

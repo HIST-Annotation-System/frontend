@@ -1,3 +1,4 @@
+import { Check, Image as ImageIcon, PencilLine, PenTool, Scissors, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getHotspotThumbnailUrl } from '../../../services/hotspotsApi';
 import type { Hotspot, HotspotSort } from '../../../types/hotspot';
@@ -5,7 +6,6 @@ import type { HotspotMode } from '../utils/hotspotReview';
 import HotspotSource from './HotspotSource';
 import HotspotStats from './HotspotStats';
 import HotspotTagChips from './HotspotTagChips';
-import '../../slides/components/SlideList.css';
 import './Hotspots.css';
 
 interface HotspotCardProps {
@@ -23,43 +23,64 @@ interface HotspotCardProps {
 /** A hotspot of the assess/reannotate queues; managing hotspots happens in the browse table. */
 export default function HotspotCard({ hotspot, mode, sort, linkSearch, selected, onToggleSelect }: HotspotCardProps) {
   const reannotating = mode === 'reannotate';
+  const link = `/hotspots/${hotspot.id}${linkSearch}`;
 
   return (
-    <div className={`slide-card${selected ? ' hotspot-card--selected' : ''}`}>
-      <Link to={`/hotspots/${hotspot.id}${linkSearch}`} className="slide-card__thumbnail" aria-label={`Otwórz hotspot ${hotspot.name}`}>
+    <div className={`hotspot-card${selected ? ' hotspot-card--selected' : ''}`}>
+      <Link to={link} className="hotspot-card__thumb" aria-label={`Otwórz hotspot ${hotspot.name}`} title="Otwórz do anotacji">
         <img src={getHotspotThumbnailUrl(hotspot.id)} alt="" loading="lazy" />
-      </Link>
-      <div className="slide-card__body">
-        <div className="slide-card__title-row">
-          <input
-            type="checkbox"
-            className="hotspot-card__select"
-            checked={selected}
-            aria-label={`Zaznacz hotspot ${hotspot.name}`}
-            onChange={onToggleSelect}
-          />
-          <span className="slide-card__name" title={hotspot.name}>
-            {hotspot.name}
-          </span>
-          {reannotating && (
-            <span className="hotspot-card__score mono-data" title="Wynik tagów (suma wag)">
-              {hotspot.score}
-            </span>
-          )}
-        </div>
-        <span className="slide-card__meta" title={hotspot.slide_name ?? undefined}>
-          <HotspotSource hotspot={hotspot} />
+        <span className="hotspot-card__overlay hotspot-card__overlay--count" title="Anotacje">
+          <PenTool size={11} aria-hidden="true" />
+          {hotspot.annotation_count}
         </span>
+        {hotspot.reannotated_at && (
+          <span className="hotspot-card__corrected">
+            <Check size={12} aria-hidden="true" />
+            Poprawione
+          </span>
+        )}
+        {reannotating && (
+          <span className="hotspot-card__overlay hotspot-card__overlay--score" title="Wynik tagów (suma wag)">
+            wynik {hotspot.score}
+          </span>
+        )}
+      </Link>
+      <label className="hotspot-card__select" title="Zaznacz">
+        <input
+          type="checkbox"
+          checked={selected}
+          aria-label={`Zaznacz hotspot ${hotspot.name}`}
+          onChange={onToggleSelect}
+        />
+        <span className="hotspot-card__select-box" aria-hidden="true">
+          {selected && <Check size={14} />}
+        </span>
+      </label>
+      <div className="hotspot-card__body">
+        <span className="hotspot-card__name" title={hotspot.name}>
+          {hotspot.name}
+        </span>
+        <span className="hotspot-card__source" title={hotspot.slide_name ?? undefined}>
+          {hotspot.slide_name === null ? (
+            <ImageIcon size={13} aria-hidden="true" />
+          ) : (
+            <Scissors size={13} aria-hidden="true" />
+          )}
+          <span className="hotspot-card__source-text">
+            <HotspotSource hotspot={hotspot} />
+          </span>
+        </span>
+        <HotspotStats hotspot={hotspot} sort={sort} />
         {reannotating && (
           <>
             <HotspotTagChips hotspot={hotspot} />
-            {hotspot.assessed_by && <span className="slide-card__meta">Ocenił: {hotspot.assessed_by}</span>}
+            {hotspot.assessed_by && <span className="hotspot-card__assessor">Ocenił: {hotspot.assessed_by}</span>}
           </>
         )}
-        <HotspotStats hotspot={hotspot} sort={sort} />
-        <span className="slide-card__meta">
-          Anotacje: <span className="mono-data">{hotspot.annotation_count}</span>
-        </span>
+        <Link to={link} className="hotspot-card__action">
+          {reannotating ? <PencilLine size={14} aria-hidden="true" /> : <Star size={14} aria-hidden="true" />}
+          {reannotating ? 'Reannotuj' : 'Oceń'}
+        </Link>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Check, X } from 'lucide-react';
+import { Brush, Check, Grid3x3, SquareDashedMousePointer, Trash2 } from 'lucide-react';
 import OpenSeadragon from 'openseadragon';
 import { useEffect, useRef, useState } from 'react';
 import Button from '../../../components/ui/Button';
@@ -52,6 +52,14 @@ interface ActiveDrag {
 }
 
 const RIGHT_BUTTON = 2;
+
+/** "1 pole", "3 pola", "5 pól". */
+function fieldCount(count: number): string {
+  if (count === 1) return '1 pole';
+  const tens = count % 100;
+  const few = count % 10 >= 2 && count % 10 <= 4 && (tens < 12 || tens > 14);
+  return `${count} ${few ? 'pola' : 'pól'}`;
+}
 
 interface HotspotSelectionOverlayProps {
   slide: SlideDetail;
@@ -328,7 +336,7 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
   const count = chosen.size;
   let status: string;
   if (isOverLimit || tooManyInDrag) status = `Za dużo pól - najwyżej ${MAX_BATCH_BOXES} naraz`;
-  else if (!tool) status = `Wybrane pola: ${count} · wybierz siatkę lub pędzel po lewej, aby je zmienić`;
+  else if (!tool) status = `Wybrane pola: ${count} · wybierz pędzel lub siatkę, aby je zmienić`;
   else if (count === 0)
     status = `${tool === 'grid' ? 'Przeciągnij' : 'Maluj'} po slajdzie, aby zaznaczyć pola ${formatSquareSize(HOTSPOT_BOX_SIZE, slide.mpp_x)}`;
   else status = `Wybrane pola: ${count} · lewy przycisk dodaje, prawy usuwa · Esc: przesuwanie slajdu`;
@@ -369,26 +377,70 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
             />
           </g>
         </svg>
-        {(tool || count > 0) && (
-          <div className="hotspot-grid__panel" role="group" aria-label="Wybór hotspotów">
-            <span className={`hotspot-grid__status${isOverLimit || tooManyInDrag ? ' hotspot-grid__status--error' : ''}`}>
-              {status}
-            </span>
+        {!tool && count === 0 ? (
+          <button
+            type="button"
+            className="hotspot-mark-start"
+            title={`Zaznacz na slajdzie pola ${formatSquareSize(HOTSPOT_BOX_SIZE, slide.mpp_x)}, z których powstaną hotspoty`}
+            onClick={() => onToolChange('brush')}
+          >
+            <SquareDashedMousePointer size={16} aria-hidden="true" />
+            Zaznacz hotspoty
+          </button>
+        ) : (
+          <div
+            className={`hotspot-mark${tool ? ' hotspot-mark--active' : ''}`}
+            role="toolbar"
+            aria-label="Zaznaczanie hotspotów"
+          >
+            <span className="hotspot-mark__title">Zaznaczanie hotspotów</span>
+            {/* Clicking the active tool again goes back to panning; switching tools keeps the chosen boxes. */}
+            <div className="btn-group">
+              <Button
+                icon={<Brush size={14} />}
+                active={tool === 'brush'}
+                title="Pędzel: maluj po slajdzie, aby swobodnie stawiać pola 1024 × 1024 px (Esc kończy)"
+                onClick={() => onToolChange(tool === 'brush' ? null : 'brush')}
+              >
+                Pędzel
+              </Button>
+              <Button
+                icon={<Grid3x3 size={14} />}
+                active={tool === 'grid'}
+                title="Siatka: przeciągnij po slajdzie, aby zaznaczyć pola 1024 × 1024 px równo z poprzednimi (Esc kończy)"
+                onClick={() => onToolChange(tool === 'grid' ? null : 'grid')}
+              >
+                Siatka
+              </Button>
+            </div>
+            <span className="hotspot-mark__count">{fieldCount(count)}</span>
+            <span className="hotspot-mark__size">{formatSquareSize(HOTSPOT_BOX_SIZE, null)}</span>
+            <span className="hotspot-mark__divider" aria-hidden="true" />
             <Button
-              variant="primary"
-              icon={<Check size={16} />}
-              disabled={count === 0}
-              onClick={() => setPendingBoxes([...chosen.values()])}
-            >
-              Utwórz hotspoty
-            </Button>
-            <Button
-              icon={<X size={16} />}
+              variant="ghost"
+              icon={<Trash2 size={16} />}
               title="Wyczyść zaznaczenie (następne przeciągnięcie siatką zacznie nową siatkę)"
               aria-label="Wyczyść zaznaczenie"
               disabled={count === 0}
               onClick={clear}
             />
+            {count > 0 ? (
+              <Button variant="primary" icon={<Check size={16} />} onClick={() => setPendingBoxes([...chosen.values()])}>
+                Utwórz hotspoty
+              </Button>
+            ) : (
+              <Button variant="primary" title="Zakończ zaznaczanie (Esc)" onClick={() => onToolChange(null)}>
+                Zakończ
+              </Button>
+            )}
+          </div>
+        )}
+        {(tool || count > 0) && (
+          <div
+            className={`hotspot-mark__hint${isOverLimit || tooManyInDrag ? ' hotspot-mark__hint--error' : ''}`}
+            role="status"
+          >
+            {status}
           </div>
         )}
       </div>

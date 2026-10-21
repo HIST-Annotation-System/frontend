@@ -1,47 +1,86 @@
-/* Full-width row under the upload bar's picker. */
-.format-guide {
-  flex-basis: 100%;
+.format-guide summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-1) 0;
+  color: var(--c-text-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
 }
 
-.format-guide summary {
-  padding: var(--space-xs) 0;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  cursor: pointer;
+.format-guide summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Disclosure chevron drawn in CSS (rotates when open). */
+.format-guide summary::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentcolor;
+  border-bottom: 1.5px solid currentcolor;
+  transform: rotate(-45deg);
+  transition: transform var(--motion-fast) var(--easing);
+}
+
+.format-guide[open] summary::before {
+  transform: rotate(45deg);
+}
+
+.format-guide summary:hover {
+  color: var(--c-text);
 }
 
 .format-guide__table-wrap {
-  margin-top: var(--space-sm);
+  margin-top: var(--space-2);
   overflow-x: auto;
+  border: var(--border-width) solid var(--c-border);
+  border-radius: var(--radius-md);
 }
 
 .format-guide__table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 18px;
 }
 
 .format-guide__table th,
 .format-guide__table td {
-  padding: var(--space-xs) var(--space-sm);
-  border: var(--border);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width) solid var(--c-border);
   text-align: left;
   vertical-align: top;
 }
 
+.format-guide__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .format-guide__table th {
-  background: var(--color-surface-highest);
-  font-weight: 700;
+  background: var(--c-surface-2);
+  color: var(--c-text-3);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.format-guide__table td.mono-data {
+  color: var(--c-text-2);
+  font-size: 12px;
 }
 
 .format-guide__row--archive td:last-child {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .format-guide__note {
-  margin: var(--space-sm) 0 0;
+  margin: var(--space-2) 0 0;
+  color: var(--c-text-2);
   font-size: 12px;
-  color: var(--color-secondary);
+  line-height: 16px;
 }

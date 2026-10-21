@@ -17,8 +17,8 @@ interface SlideViewerProps {
 }
 
 /**
- * Deep Zoom viewer for one slide: an action bar above the canvas. Must be rendered inside
- * `<OpenSeadragonAnnotator>`, which owns the OpenSeadragon viewer instance.
+ * Deep Zoom viewer for one slide: a floating navigation panel over the canvas and a status bar below it. Must be
+ * rendered inside `<OpenSeadragonAnnotator>`, which owns the OpenSeadragon viewer instance.
  */
 export default function SlideViewer({ slide, children }: SlideViewerProps) {
   const options = useMemo(() => createViewerOptions(getDziUrl(slide.id)), [slide.id]);
@@ -29,21 +29,25 @@ export default function SlideViewer({ slide, children }: SlideViewerProps) {
 
   return (
     <div className="slide-viewer">
-      <div className="slide-viewer__bar">
-        <ViewerStatusBar slide={slide} nativeMagnification={nativeMagnification} />
-        <div className="slide-viewer__actions" role="toolbar" aria-label="Nawigacja">
-          <MagnificationPresets nativeMagnification={nativeMagnification} />
-          <div className="btn-group">
-            <ZoomControls
-              onFocusTissue={hasTissue ? () => focusTissue() : undefined}
-              showActualSize={showActualSize}
-            />
-          </div>
-        </div>
-      </div>
       <div className="slide-viewer__frame">
         <OpenSeadragonViewer className="slide-viewer__canvas" options={options} />
+        <div
+          className="viewer-nav viewer-nav--vertical"
+          role="toolbar"
+          aria-label="Nawigacja"
+          aria-orientation="vertical"
+        >
+          <ZoomControls
+            onFocusTissue={hasTissue ? () => focusTissue() : undefined}
+            showActualSize={showActualSize}
+          />
+          <span className="viewer-nav__divider" aria-hidden="true" />
+          <MagnificationPresets nativeMagnification={nativeMagnification} />
+        </div>
         {children}
+      </div>
+      <div className="slide-viewer__bar">
+        <ViewerStatusBar slide={slide} nativeMagnification={nativeMagnification} />
       </div>
     </div>
   );

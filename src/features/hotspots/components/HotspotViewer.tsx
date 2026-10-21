@@ -12,17 +12,18 @@ const HOTSPOT_MAX_ZOOM_PIXEL_RATIO = 10;
 
 interface HotspotViewerProps {
   hotspot: Hotspot;
-  /** The catalog mode the hotspot was opened in, shown first in the status bar. */
-  modeLabel?: string;
+  /** Extra status bar items after the zoom (e.g. the annotation count and selection). */
+  status?: ReactNode;
   /** Extra overlays rendered on top of the viewer canvas (e.g. annotation tools). */
   children?: ReactNode;
 }
 
 /**
- * The hotspot image in OpenSeadragon (one PNG/JPEG, no Deep Zoom pyramid), laid out like the slide viewer.
+ * The hotspot image in OpenSeadragon (one PNG/JPEG, no Deep Zoom pyramid), laid out like the slide viewer
+ * (navigation floats top-right, the status bar sits below the canvas).
  * Must be rendered inside `<OpenSeadragonAnnotator>`, which owns the viewer shared with the annotation layer.
  */
-export default function HotspotViewer({ hotspot, modeLabel, children }: HotspotViewerProps) {
+export default function HotspotViewer({ hotspot, status, children }: HotspotViewerProps) {
   const options = useMemo(
     () =>
       createViewerOptions(
@@ -32,30 +33,26 @@ export default function HotspotViewer({ hotspot, modeLabel, children }: HotspotV
     [hotspot.id],
   );
   const { imageZoom } = useMagnification(null);
+  const zoom = imageZoom === null ? '—' : formatZoomPercent(imageZoom);
 
   return (
     <div className="slide-viewer">
-      <div className="slide-viewer__bar">
-        <div className="viewer-status label-caps">
-          {modeLabel && (
-            <span>
-              Tryb: <span className="viewer-status__value">{modeLabel}</span>
-            </span>
-          )}
-          <span className="viewer-status__file" title={hotspot.name}>
-            Hotspot: <span className="viewer-status__value">{hotspot.name}</span>
-          </span>
-          <span>Skala: {imageZoom === null ? '—' : formatZoomPercent(imageZoom)}</span>
-        </div>
-        <div className="slide-viewer__actions" role="toolbar" aria-label="Nawigacja">
-          <div className="btn-group">
-            <ZoomControls showActualSize />
-          </div>
-        </div>
-      </div>
       <div className="slide-viewer__frame">
         <OpenSeadragonViewer className="slide-viewer__canvas" options={options} />
+        <div className="viewer-nav" role="toolbar" aria-label="Nawigacja">
+          <ZoomControls showActualSize zoomLabel={<span className="viewer-nav__zoom">{zoom}</span>} />
+        </div>
         {children}
+      </div>
+      <div className="slide-viewer__bar">
+        <div className="viewer-status">
+          <span className="viewer-status__item">
+            <span className="viewer-status__label">Powiększenie</span>
+            <span className="viewer-status__value viewer-status__value--strong">{zoom}</span>
+          </span>
+          {status}
+          <span className="viewer-status__hint">Kółko — przybliż / oddal</span>
+        </div>
       </div>
     </div>
   );

@@ -2,9 +2,37 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '../../services/usersApi';
 import { dictionariesApi } from '../../services/dictionariesApi';
-import { UserPlus, Trash2, Edit } from 'lucide-react';
+import { UserPlus, Trash2, Pencil, X, CircleCheck, Minus, Search } from 'lucide-react';
+import Badge from '../../components/ui/Badge';
+import Button from '../../components/ui/Button';
 import './UsersPage.css';
-import type { AccountCreate, AccountResponse, ProfileUpdate } from '../../types/user';
+import type { AccountCreate, AccountResponse, ProfileUpdate, Role } from '../../types/user';
+
+const ROLE_LABELS: Record<Role, string> = { ADMIN: 'Administrator', ANNOTATOR: 'Anotator' };
+
+/** Two-letter avatar text: first + last name initials, falling back to the login. */
+function initialsOf(user: AccountResponse): string {
+  const first = user.profile?.first_name?.trim() ?? '';
+  const last = user.profile?.last_name?.trim() ?? '';
+  const fromName = `${first.charAt(0)}${last.charAt(0)}`;
+  return (fromName || user.username.slice(0, 2)).toUpperCase();
+}
+
+type RoleFilter = 'all' | Role;
+
+const ROLE_FILTERS: { id: RoleFilter; label: string }[] = [
+  { id: 'all', label: 'Wszyscy' },
+  { id: 'ADMIN', label: 'Administratorzy' },
+  { id: 'ANNOTATOR', label: 'Anotatorzy' },
+];
+
+/** Client-side list filter: name or login substring plus role. */
+function matchesFilter(user: AccountResponse, query: string, role: RoleFilter): boolean {
+  if (role !== 'all' && user.role !== role) return false;
+  if (!query) return true;
+  const fullName = `${user.profile?.first_name ?? ''} ${user.profile?.last_name ?? ''}`.toLowerCase();
+  return fullName.includes(query) || user.username.toLowerCase().includes(query);
+}
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -22,6 +50,9 @@ export default function UsersPage() {
   const [editPassword, setEditPassword] = useState('');
   const [editCanUpload, setEditCanUpload] = useState(false);
   const [editGroupId, setEditGroupId] = useState<number | ''>('');
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
 
   const { data: users, isLoading } = useQuery({
     queryKey: ['users'],
@@ -102,12 +133,17 @@ export default function UsersPage() {
     updateMutation.mutate({ id: editingUser.id, data: updateData });
   };
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const visibleUsers = users?.filter((user) => matchesFilter(user, normalizedQuery, roleFilter));
+  const roleCount = (role: RoleFilter) =>
+    role === 'all' ? (users?.length ?? 0) : (users?.filter((user) => user.role === role).length ?? 0);
+
   return (
-    <div className="users-page">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Zarządzanie Użytkownikami</h1>
-          <p className="page-subtitle">Lista wszystkich kont annotatorów i administratorów.</p>
+    <div className="admin-page users-page">
+      <div className="admin-page-header">
+        <div className="admin-page-header__text">
+          <h1 className="page-title">Użytkownicy</h1>
+          <p className="page-subtitle">Lista wszystkich kont anotatorów i administratorów.</p>
         </div>
         <button onClick={() => setIsModalOpen(true)} className="btn-primary">
           <UserPlus size={16} />
@@ -115,62 +151,87 @@ export default function UsersPage() {
         </button>
       </div>
 
+      <div className="users-toolbar">
+        <div className="users-search">
+          <Search size={16} className="users-search__icon" aria-hidden="true" />
+          <input
+            type="search"
+            className="users-search__input"
+            placeholder="Szukaj po imieniu lub loginie"
+            aria-label="Szukaj użytkowników"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="btn-group users-role-filter" role="group" aria-label="Filtr roli">
+          {ROLE_FILTERS.map((filter) => (
+            <Button key={filter.id} active={roleFilter === filter.id} onClick={() => setRoleFilter(filter.id)}>
+              {filter.label}
+              <span className="users-role-filter__count">{roleCount(filter.id)}</span>
+            </Button>
+          ))}
+        </div>
+      </div>
+
       {isLoading ? (
-        <div className="loading-state">Ładowanie użytkowników...</div>
+        <div className="admin-loading">Ładowanie użytkowników…</div>
       ) : (
-        <div className="table-container">
+        <div className="users-table-wrap">
           <table className="users-table">
             <thead>
               <tr>
-                <th>Nazwa Użytkownika</th>
+                <th>Imię i nazwisko</th>
+                <th>Nazwa użytkownika</th>
                 <th>Rola</th>
-                <th>Imię i Nazwisko</th>
                 <th>Grupa</th>
                 <th>Upload</th>
                 <th>Status</th>
-                <th>Akcje</th>
+                <th className="users-table__actions-head">Akcje</th>
               </tr>
             </thead>
             <tbody>
-              {users?.map((user) => (
+              {visibleUsers?.map((user) => (
                 <tr key={user.id}>
-                  <td>{user.username}</td>
                   <td>
-                    <span className={`role-badge role-${user.role.toLowerCase()}`}>
-                      {user.role}
+                    <span className="users-person">
+                      <span className="users-avatar" aria-hidden="true">{initialsOf(user)}</span>
+                      {user.profile ? (
+                        user.profile.first_name || user.profile.last_name
+                        ? <span className="users-person__name">{`${user.profile.first_name} ${user.profile.last_name}`}</span>
+                        : <span className="users-muted">Profil ukryty</span>
+                      ) : <span className="users-muted">Brak profilu</span>}
                     </span>
                   </td>
+                  <td className="users-login">{user.username}</td>
                   <td>
-                    {user.profile ? (
-                      user.profile.first_name || user.profile.last_name 
-                      ? `${user.profile.first_name} ${user.profile.last_name}` 
-                      : <span className="text-muted">Profil ukryty</span>
-                    ) : <span className="text-muted">Brak profilu</span>}
+                    <span className={`users-role users-role--${user.role.toLowerCase()}`}>
+                      {ROLE_LABELS[user.role] ?? user.role}
+                    </span>
                   </td>
-                  <td>
-                    {user.profile?.group?.name || <span className="text-muted">-</span>}
+                  <td className="users-group">
+                    {user.profile?.group?.name || <span className="users-muted">—</span>}
                   </td>
                   <td>
                     {user.profile?.can_upload ? (
-                      <span className="status-yes">Tak</span>
+                      <span className="users-upload users-upload--yes"><CircleCheck size={15} />Tak</span>
                     ) : (
-                      <span className="status-no">Nie</span>
+                      <span className="users-upload"><Minus size={15} />Nie</span>
                     )}
                   </td>
                   <td>
                     {user.is_first_login ? (
-                      <span className="status-badge warning">Oczekuje na setup</span>
+                      <Badge tone="warn">Oczekuje na pierwsze logowanie</Badge>
                     ) : (
-                      <span className="status-badge success">Aktywny</span>
+                      <Badge tone="success">Aktywny</Badge>
                     )}
                   </td>
                   <td>
-                    <div className="actions-cell">
-                      <button onClick={() => openEditModal(user)} className="icon-button" title="Edytuj">
-                        <Edit size={16} />
+                    <div className="users-actions">
+                      <button onClick={() => openEditModal(user)} className="admin-icon-btn" title="Edytuj">
+                        <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDeleteUser(user.id)} className="icon-button danger" title="Usuń">
-                        <Trash2 size={16} />
+                      <button onClick={() => handleDeleteUser(user.id)} className="admin-icon-btn admin-icon-btn--danger" title="Usuń">
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>
@@ -178,7 +239,12 @@ export default function UsersPage() {
               ))}
               {users?.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="empty-state">Brak użytkowników.</td>
+                  <td colSpan={7} className="users-table__empty">Brak użytkowników.</td>
+                </tr>
+              )}
+              {users && users.length > 0 && visibleUsers?.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="users-table__empty">Brak użytkowników pasujących do wyszukiwania.</td>
                 </tr>
               )}
             </tbody>
@@ -187,56 +253,67 @@ export default function UsersPage() {
       )}
 
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Dodaj Nowego Annotatora</h2>
+        <div className="users-modal-scrim">
+          <div className="users-modal" role="dialog" aria-modal="true" aria-labelledby="users-modal-create-title">
+            <div className="users-modal__header">
+              <h2 id="users-modal-create-title" className="users-modal__title">Dodaj anotatora</h2>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="admin-icon-btn" title="Zamknij">
+                <X size={16} />
+              </button>
+            </div>
             <form onSubmit={handleCreateUser}>
-              <div className="form-group">
-                <label>Nazwa Użytkownika</label>
-                <input 
-                  type="text" 
-                  value={newUsername} 
-                  onChange={(e) => setNewUsername(e.target.value)} 
-                  required 
-                  className="modal-input"
-                />
+              <div className="users-modal__grid">
+                <div className="users-field">
+                  <label htmlFor="new_username">Nazwa użytkownika</label>
+                  <input
+                    id="new_username"
+                    type="text"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="users-field">
+                  <label htmlFor="new_password">Hasło tymczasowe</label>
+                  <input
+                    id="new_password"
+                    type="text"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    className="users-field__mono"
+                  />
+                </div>
+                <div className="users-field users-field--wide">
+                  <label htmlFor="new_group">Grupa anotatorów</label>
+                  <select
+                    id="new_group"
+                    value={newGroupId}
+                    onChange={(e) => setNewGroupId(e.target.value ? Number(e.target.value) : '')}
+                  >
+                    <option value="">Brak grupy</option>
+                    {groups?.map(g => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <label htmlFor="new_can_upload" className="users-toggle">
+                  <input
+                    type="checkbox"
+                    id="new_can_upload"
+                    checked={newCanUpload}
+                    onChange={(e) => setNewCanUpload(e.target.checked)}
+                  />
+                  <span className="users-toggle__text">
+                    <span className="users-toggle__title">Uprawnienia do wgrywania plików</span>
+                    <span className="users-toggle__hint">Może wgrywać slajdy do biblioteki.</span>
+                  </span>
+                </label>
               </div>
-              <div className="form-group">
-                <label>Hasło Tymczasowe</label>
-                <input 
-                  type="text" 
-                  value={newPassword} 
-                  onChange={(e) => setNewPassword(e.target.value)} 
-                  required 
-                  className="modal-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>Grupa Annotatorska</label>
-                <select 
-                  value={newGroupId} 
-                  onChange={(e) => setNewGroupId(e.target.value ? Number(e.target.value) : '')}
-                  className="modal-input"
-                >
-                  <option value="">Brak grupy</option>
-                  {groups?.map(g => (
-                    <option key={g.id} value={g.id}>{g.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
-                <input 
-                  type="checkbox" 
-                  id="new_can_upload"
-                  checked={newCanUpload} 
-                  onChange={(e) => setNewCanUpload(e.target.checked)} 
-                />
-                <label htmlFor="new_can_upload">Uprawnienia do uploadu plików</label>
-              </div>
-              <div className="modal-actions">
+              <div className="users-modal__actions">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary">Anuluj</button>
                 <button type="submit" disabled={createMutation.isPending} className="btn-primary">
-                  {createMutation.isPending ? 'Tworzenie...' : 'Utwórz konto'}
+                  {createMutation.isPending ? 'Tworzenie…' : 'Utwórz konto'}
                 </button>
               </div>
             </form>
@@ -245,63 +322,76 @@ export default function UsersPage() {
       )}
 
       {isEditModalOpen && editingUser && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Edytuj Użytkownika: {editingUser.username}</h2>
+        <div className="users-modal-scrim">
+          <div className="users-modal" role="dialog" aria-modal="true" aria-labelledby="users-modal-edit-title">
+            <div className="users-modal__header">
+              <h2 id="users-modal-edit-title" className="users-modal__title">
+                Edytuj użytkownika: <span className="users-modal__login">{editingUser.username}</span>
+              </h2>
+              <button type="button" onClick={() => setIsEditModalOpen(false)} className="admin-icon-btn" title="Zamknij">
+                <X size={16} />
+              </button>
+            </div>
             <form onSubmit={handleEditUser}>
-              <div className="form-group">
-                <label>Imię</label>
-                <input 
-                  type="text" 
-                  value={editFirstName} 
-                  onChange={(e) => setEditFirstName(e.target.value)} 
-                  className="modal-input"
-                />
+              <div className="users-modal__grid">
+                <div className="users-field">
+                  <label htmlFor="edit_first_name">Imię</label>
+                  <input
+                    id="edit_first_name"
+                    type="text"
+                    value={editFirstName}
+                    onChange={(e) => setEditFirstName(e.target.value)}
+                  />
+                </div>
+                <div className="users-field">
+                  <label htmlFor="edit_last_name">Nazwisko</label>
+                  <input
+                    id="edit_last_name"
+                    type="text"
+                    value={editLastName}
+                    onChange={(e) => setEditLastName(e.target.value)}
+                  />
+                </div>
+                <div className="users-field">
+                  <label htmlFor="edit_password">Nowe hasło</label>
+                  <input
+                    id="edit_password"
+                    type="password"
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                  />
+                  <span className="users-field__hint">Pozostaw puste, by nie zmieniać.</span>
+                </div>
+                <div className="users-field">
+                  <label htmlFor="edit_group">Grupa anotatorów</label>
+                  <select
+                    id="edit_group"
+                    value={editGroupId}
+                    onChange={(e) => setEditGroupId(e.target.value ? Number(e.target.value) : '')}
+                  >
+                    <option value="">Brak grupy</option>
+                    {groups?.map(g => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <label htmlFor="can_upload" className="users-toggle">
+                  <input
+                    type="checkbox"
+                    id="can_upload"
+                    checked={editCanUpload}
+                    onChange={(e) => setEditCanUpload(e.target.checked)}
+                  />
+                  <span className="users-toggle__text">
+                    <span className="users-toggle__title">Uprawnienia do wgrywania plików</span>
+                    <span className="users-toggle__hint">Może wgrywać slajdy do biblioteki.</span>
+                  </span>
+                </label>
               </div>
-              <div className="form-group">
-                <label>Nazwisko</label>
-                <input 
-                  type="text" 
-                  value={editLastName} 
-                  onChange={(e) => setEditLastName(e.target.value)} 
-                  className="modal-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>Nowe Hasło (pozostaw puste, by nie zmieniać)</label>
-                <input 
-                  type="password" 
-                  value={editPassword} 
-                  onChange={(e) => setEditPassword(e.target.value)} 
-                  className="modal-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>Grupa Annotatorska</label>
-                <select 
-                  value={editGroupId} 
-                  onChange={(e) => setEditGroupId(e.target.value ? Number(e.target.value) : '')}
-                  className="modal-input"
-                >
-                  <option value="">Brak grupy</option>
-                  {groups?.map(g => (
-                    <option key={g.id} value={g.id}>{g.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
-                <input 
-                  type="checkbox" 
-                  id="can_upload"
-                  checked={editCanUpload} 
-                  onChange={(e) => setEditCanUpload(e.target.checked)} 
-                />
-                <label htmlFor="can_upload">Uprawnienia do uploadu plików</label>
-              </div>
-              <div className="modal-actions">
+              <div className="users-modal__actions">
                 <button type="button" onClick={() => setIsEditModalOpen(false)} className="btn-secondary">Anuluj</button>
                 <button type="submit" disabled={updateMutation.isPending} className="btn-primary">
-                  {updateMutation.isPending ? 'Zapisywanie...' : 'Zapisz zmiany'}
+                  {updateMutation.isPending ? 'Zapisywanie…' : 'Zapisz zmiany'}
                 </button>
               </div>
             </form>

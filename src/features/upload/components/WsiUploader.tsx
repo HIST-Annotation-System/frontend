@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { Cloud, FolderOpen, Upload } from 'lucide-react';
 import { useRef, useState, type DragEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -67,26 +68,31 @@ export default function WsiUploader() {
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
     >
-      <div className="wsi-uploader__pick">
-        <p className="wsi-uploader__prompt">
-          Przeciągnij pliki lub
-          <Button onClick={() => inputRef.current?.click()}>Wybierz pliki</Button>
-          lub
-          <Button disabled={isImporting} onClick={() => setIsPickerOpen(true)}>
-            {isImporting ? 'Importowanie…' : 'Wybierz z magazynu'}
-          </Button>
-        </p>
+      <div className="wsi-uploader__dropzone">
+        <span className="wsi-uploader__icon" aria-hidden="true">
+          <Upload size={20} />
+        </span>
+        <p className="wsi-uploader__prompt">Przeciągnij pliki tutaj</p>
+        <p className="wsi-uploader__extensions">{ACCEPTED_UPLOAD_EXTENSIONS.join(' ')}</p>
         <p className="wsi-uploader__hint">
           Można wybrać kilka plików naraz - trafią do kolejki. Formaty wieloplikowe jako archiwum .zip, szczegóły
           poniżej.
         </p>
-        {importError && <ErrorMessage message={importError} onDismiss={() => setImportError(null)} />}
-        {importNotice && <p className="wsi-uploader__message">{importNotice}</p>}
-        {queueNotice && <p className="wsi-uploader__message">{queueNotice}</p>}
+        <div className="wsi-uploader__buttons">
+          <Button variant="primary" icon={<FolderOpen size={16} />} onClick={() => inputRef.current?.click()}>
+            Wybierz pliki
+          </Button>
+          <Button icon={<Cloud size={16} />} disabled={isImporting} onClick={() => setIsPickerOpen(true)}>
+            {isImporting ? 'Importowanie…' : 'Wybierz z magazynu'}
+          </Button>
+        </div>
       </div>
+      {importError && <ErrorMessage message={importError} onDismiss={() => setImportError(null)} />}
+      {importNotice && <p className="wsi-uploader__message">{importNotice}</p>}
+      {queueNotice && <p className="wsi-uploader__message">{queueNotice}</p>}
 
-      <InterruptedUploads />
       <UploadQueueList />
+      <InterruptedUploads />
 
       <SlideFormatGuide />
 

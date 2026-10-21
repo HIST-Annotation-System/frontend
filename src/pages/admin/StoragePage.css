@@ -1,21 +1,4 @@
+/* Layout comes from the shared .admin-page primitives in AdminLayout.css. */
 .storage-page {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--space-lg) var(--space-lg) var(--space-xl);
-}
-
-.storage-page__inner {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.storage-page__title {
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
+  min-width: 0;
 }

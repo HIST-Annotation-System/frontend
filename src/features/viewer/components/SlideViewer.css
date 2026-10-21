@@ -2,35 +2,16 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 0;
   min-height: 0;
 }
 
-.slide-viewer__bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  padding: var(--space-sm);
-  border: var(--border);
-  background: var(--color-surface-lowest);
-}
-
-.slide-viewer__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
+/* Full-bleed canvas; floating panels sit on top of it. */
 .slide-viewer__frame {
   position: relative;
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  border: var(--border);
-  background: var(--color-surface-high);
+  background: var(--c-viewer);
 }
 
 .slide-viewer__canvas {
@@ -38,30 +19,169 @@
   inset: 0;
 }
 
-.viewer-status {
+/* Status bar under the canvas. */
+.slide-viewer__bar {
   display: flex;
+  flex: none;
   align-items: center;
-  min-width: 0;
-  color: var(--color-secondary);
+  height: 28px;
+  padding: 0 var(--space-3);
+  border-top: var(--border-width) solid var(--c-border);
+  background: var(--c-surface);
+  overflow: hidden;
 }
 
-.viewer-status > span {
-  padding: 0 var(--space-sm);
+.viewer-status {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-5);
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--c-text-2);
   white-space: nowrap;
 }
 
-.viewer-status > span + span {
-  border-left: var(--border);
+.viewer-status__item {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
 }
 
-.viewer-status__file {
-  max-width: 260px;
+.viewer-status__label {
+  flex-shrink: 0;
+  color: var(--c-text-3);
+}
+
+.viewer-status__value {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* User data keeps its case. */
-.viewer-status__value {
-  color: var(--color-primary);
-  text-transform: none;
+.viewer-status__value--strong {
+  min-width: 52px;
+  color: var(--c-text);
+  font-weight: 500;
+}
+
+/* Mouse hint at the far end of the bar. */
+.viewer-status__hint {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  color: var(--c-text-3);
+  text-overflow: ellipsis;
+}
+
+/* Floating navigation panel (zoom, fit, magnification presets). */
+.viewer-nav {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: var(--border-width) solid var(--c-border);
+  border-radius: var(--radius-md);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.viewer-nav--vertical {
+  right: auto;
+  left: var(--space-3);
+  flex-direction: column;
+}
+
+.viewer-nav > .btn,
+.viewer-nav .btn-group > .btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-color: transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text-2);
+  box-shadow: none;
+}
+
+.viewer-nav > .btn:hover:not(:disabled),
+.viewer-nav .btn-group > .btn:hover:not(:disabled) {
+  background: var(--c-hover);
+  color: var(--c-text);
+}
+
+.viewer-nav__actual-size,
+.viewer-nav .btn-group > .btn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.viewer-nav--vertical .viewer-nav__actual-size,
+.viewer-nav--vertical .btn-group > .btn {
+  width: 36px;
+}
+
+.viewer-nav__divider {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--c-border);
+}
+
+.viewer-nav--vertical .viewer-nav__divider {
+  width: 20px;
+  height: 1px;
+  margin: 4px 0;
+}
+
+/* Current zoom between "-" and "+" (horizontal panel). */
+.viewer-nav__zoom {
+  width: 44px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--c-text);
+  text-align: center;
+}
+
+/* Presets render nothing when the magnification is unknown. */
+.viewer-nav__divider:last-child {
+  display: none;
+}
+
+/* Magnification presets: a plain column instead of the segmented tray. */
+.viewer-nav .btn-group {
+  flex-direction: inherit;
+  gap: 2px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.viewer-nav .btn-group > .btn--active,
+.viewer-nav .btn-group > .btn--active:hover:not(:disabled) {
+  background: var(--c-accent-soft);
+  color: var(--c-accent-text);
+}
+
+/* OpenSeadragon navigator (minimap): colours only - OpenSeadragon sizes it with its own 2px borders.
+   Its inline styles need !important. */
+.slide-viewer__frame .navigator {
+  border-color: var(--c-border) !important;
+  background-color: var(--c-viewer) !important;
+  box-shadow: var(--shadow-md);
+}
+
+.slide-viewer__frame .navigator .displayregion {
+  border-color: var(--c-accent) !important;
 }

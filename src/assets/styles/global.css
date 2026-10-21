@@ -14,9 +14,9 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   font-size: 14px;
-  line-height: 1.5;
-  background: var(--color-surface);
-  color: var(--color-on-surface);
+  line-height: 20px;
+  background: var(--c-page);
+  color: var(--c-text);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -29,29 +29,174 @@ p {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
 a {
-  color: var(--color-primary);
+  color: var(--c-accent-text);
+}
+
+a:hover {
+  color: var(--c-primary);
+}
+
+:root[data-theme='dark'] a:hover {
+  color: var(--c-text);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline: 1px solid var(--c-focus-outline);
+  outline-offset: 0;
+  box-shadow: 0 0 0 3px var(--c-focus-ring);
+}
+
+::selection {
+  background: var(--c-accent-soft);
+}
+
+/* Shared form controls: every page gets the same field look without per-page rules. */
+input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file']),
+select,
+textarea {
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--c-input);
+  color: var(--c-text);
+  transition:
+    border-color var(--motion-fast) var(--easing),
+    box-shadow var(--motion-fast) var(--easing);
+}
+
+input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file']):focus,
+select:focus,
+textarea:focus {
+  border-color: var(--c-focus-outline);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-focus-ring);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--c-text-3);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background: var(--c-disabled-bg);
+  color: var(--c-disabled-fg);
+  cursor: not-allowed;
+}
+
+input[type='checkbox'],
+input[type='radio'],
+input[type='range'] {
+  accent-color: var(--c-primary);
+}
+
+:root[data-theme='dark'] input[type='checkbox'],
+:root[data-theme='dark'] input[type='radio'],
+:root[data-theme='dark'] input[type='range'] {
+  accent-color: var(--c-accent);
+}
+
+/* Thin, quiet scrollbars. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-border-strong) transparent;
 }
 
 .label-caps {
   font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.05em;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--c-text-3);
+}
+
+/* Numbers line up in tables and data readouts. */
+td,
+th,
+.mono-data,
+[class*='__count'],
+[class*='__meta'] {
+  font-variant-numeric: tabular-nums;
 }
 
 .mono-data {
   font-family: var(--font-mono);
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 18px;
+}
+
+/* Keyboard key hint, e.g. a shortcut next to a tool. */
+kbd,
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+/* Shared progress bar look (native <progress>). */
+progress {
+  width: 100%;
+  height: 6px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--c-track);
+  overflow: hidden;
+  appearance: none;
+}
+
+progress::-webkit-progress-bar {
+  background: var(--c-track);
+  border-radius: 3px;
+}
+
+progress::-webkit-progress-value {
+  background: var(--c-accent);
+  border-radius: 3px;
+  transition: width 0.25s linear;
+}
+
+progress::-moz-progress-bar {
+  background: var(--c-accent);
+  border-radius: 3px;
+}
+
+/* Page heading block shared by library-style screens. */
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: -0.01em;
+}
+
+.page-subtitle {
+  color: var(--c-text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

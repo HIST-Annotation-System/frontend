@@ -16,62 +16,61 @@ interface HotspotInfoPanelProps {
   onError: (message: string) => void;
 }
 
-/**
- * The viewer's bottom-left corner: the annotation export, and the hotspot's parameters (unrolling upwards, like the
- * slide viewer's).
- */
+/** Bottom of the hotspot viewer's panel: the hotspot's parameters (rolled up by default) and the annotation export. */
 export default function HotspotInfoPanel({ hotspot, folderName, onError }: HotspotInfoPanelProps) {
   const [open, setOpen] = useState(false);
   const owner: AnnotationOwner = { type: 'hotspots', id: hotspot.id };
   const rows: [label: string, value: string][] = [
+    ['Wymiary', `${formatDimensions(hotspot.image_width, hotspot.image_height)} · ${hotspot.image_type.toUpperCase()}`],
     ...(hotspot.x !== null && hotspot.y !== null && hotspot.size !== null
       ? ([
-          ['Pozycja (L0)', `${hotspot.x.toLocaleString('pl-PL')}, ${hotspot.y.toLocaleString('pl-PL')}`],
+          ['Pozycja (L0)', `x ${hotspot.x.toLocaleString('pl-PL')} · y ${hotspot.y.toLocaleString('pl-PL')}`],
           ['Obszar (L0)', formatSquareSize(hotspot.size, null)],
         ] satisfies [string, string][])
       : []),
-    ['Obraz', `${formatDimensions(hotspot.image_width, hotspot.image_height)} · ${hotspot.image_type.toUpperCase()}`],
     ['Rozdzielczość', hotspot.mpp ? `${hotspot.mpp.toFixed(4)} µm/px` : '—'],
     ['Utworzono', formatDateTime(hotspot.created_at)],
   ];
 
   return (
-    <div className="hotspot-corner">
-      <ExportAnnotationsButton owner={owner} name={hotspot.name} onError={onError} />
-      <div className="slide-info slide-info--floating">
-        {open && (
-          <dl id="hotspot-info-list" className="slide-info__list">
-            <div className="slide-info__row">
-              <dt>Folder</dt>
-              <dd title={folderName}>
-                <Link to={`/hotspots?folder=${hotspot.folder_id}`}>{folderName ?? '—'}</Link>
-              </dd>
+    <section className="hotspot-info">
+      <button
+        type="button"
+        className="hotspot-info__toggle"
+        aria-expanded={open}
+        aria-controls="hotspot-info-list"
+        onClick={() => setOpen(!open)}
+      >
+        <span className="label-caps">Hotspot</span>
+        {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      </button>
+      {open && (
+        <dl id="hotspot-info-list" className="slide-info__list hotspot-info__list">
+          <div className="slide-info__row">
+            <dt>Nazwa</dt>
+            <dd title={hotspot.name}>{hotspot.name}</dd>
+          </div>
+          <div className="slide-info__row">
+            <dt>Folder</dt>
+            <dd className="slide-info__text" title={folderName}>
+              <Link to={`/hotspots?folder=${hotspot.folder_id}`}>{folderName ?? '—'}</Link>
+            </dd>
+          </div>
+          <div className="slide-info__row">
+            <dt>Źródło</dt>
+            <dd className="slide-info__text" title={hotspot.slide_name ?? undefined}>
+              <HotspotSource hotspot={hotspot} />
+            </dd>
+          </div>
+          {rows.map(([label, value]) => (
+            <div key={label} className="slide-info__row">
+              <dt>{label}</dt>
+              <dd title={value}>{value}</dd>
             </div>
-            <div className="slide-info__row">
-              <dt>Źródło</dt>
-              <dd title={hotspot.slide_name ?? undefined}>
-                <HotspotSource hotspot={hotspot} />
-              </dd>
-            </div>
-            {rows.map(([label, value]) => (
-              <div key={label} className="slide-info__row">
-                <dt>{label}</dt>
-                <dd title={value}>{value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-        <button
-          type="button"
-          className="slide-info__toggle"
-          aria-expanded={open}
-          aria-controls="hotspot-info-list"
-          onClick={() => setOpen(!open)}
-        >
-          Parametry hotspotu
-          {open ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
-        </button>
-      </div>
-    </div>
+          ))}
+        </dl>
+      )}
+      <ExportAnnotationsButton owner={owner} name={hotspot.name} onError={onError} label="Eksportuj anotacje (zgodny z QuPath)" />
+    </section>
   );
 }

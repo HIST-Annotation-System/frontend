@@ -104,8 +104,8 @@ function Progress({ done, total }: { done: number; total: number }) {
       <span className="mono-data">
         {done} / {total}
       </span>
-      <div className="slide-card__progress">
-        <div className="slide-card__progress-bar" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
+      <div className="hotspot-activity__progress">
+        <div className="hotspot-activity__progress-bar" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
       </div>
     </>
   );

@@ -1,19 +1,29 @@
-import { RotateCw, X } from 'lucide-react';
+import { CircleAlert, CircleCheck, Clock, LoaderCircle, RotateCw, X, type LucideIcon } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import { useUpload } from '../../../context/UploadProvider';
 import { formatBytes } from '../../../utils/format';
 import { describeTransfer, progressPercent } from '../utils/uploadProgress';
-import { isActive, type UploadItem } from '../utils/uploadQueue';
+import { isActive, type UploadItem, type UploadItemStatus } from '../utils/uploadQueue';
 import './UploadQueueList.css';
+
+const STATUS_ICONS: Record<UploadItemStatus, LucideIcon> = {
+  queued: Clock,
+  uploading: LoaderCircle,
+  finalizing: LoaderCircle,
+  completed: CircleCheck,
+  error: CircleAlert,
+};
 
 function UploadQueueRow({ item }: { item: UploadItem }) {
   const { cancel, retry, remove, uploadAnyway } = useUpload();
   const active = isActive(item);
   const canResume = item.status === 'error' && item.resume !== null;
+  const StatusIcon = STATUS_ICONS[item.status];
 
   return (
     <li className={`upload-queue__item upload-queue__item--${item.status}`}>
       <div className="upload-queue__row">
+        <StatusIcon size={16} className="upload-queue__status-icon" aria-hidden="true" />
         <span className="upload-queue__name" title={item.file.name}>
           {item.file.name}
         </span>
@@ -66,16 +76,28 @@ function UploadQueueRow({ item }: { item: UploadItem }) {
 
 export default function UploadQueueList() {
   const { items, clearFinished } = useUpload();
-  if (items.length === 0) return null;
   const hasFinished = items.some((item) => item.status === 'completed' || item.status === 'error');
+  const totalBytes = items.reduce((sum, item) => sum + item.file.size, 0);
 
   return (
     <section className="upload-queue" aria-label="Kolejka przesyłania">
-      <ul className="upload-queue__list">
-        {items.map((item) => (
-          <UploadQueueRow key={item.id} item={item} />
-        ))}
-      </ul>
+      <div className="upload-queue__header">
+        <h3 className="label-caps">Kolejka</h3>
+        {items.length > 0 && (
+          <span className="mono-data upload-queue__summary">
+            {items.length} · {formatBytes(totalBytes)}
+          </span>
+        )}
+      </div>
+      {items.length === 0 ? (
+        <p className="upload-queue__empty">Nie wybrano jeszcze plików.</p>
+      ) : (
+        <ul className="upload-queue__list">
+          {items.map((item) => (
+            <UploadQueueRow key={item.id} item={item} />
+          ))}
+        </ul>
+      )}
       {hasFinished && (
         <Button variant="ghost" className="upload-queue__clear" onClick={clearFinished}>
           Wyczyść zakończone

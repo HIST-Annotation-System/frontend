@@ -1,55 +1,143 @@
-/* Design tokens - "Clinical Precision" (see .agents/DESIGN.md): flat, black on white, square corners. */
+/* HistAno design tokens. A palette (palettes.css, data-palette on <html>) sets only the core values below;
+   everything else is derived from them at the end of this file. Light on :root, dark on [data-theme='dark']. */
 :root {
   color-scheme: light;
 
-  --color-surface: #f9f9f9;
-  --color-surface-lowest: #ffffff;
-  --color-surface-low: #f3f3f3;
-  --color-surface-container: #eeeeee;
-  --color-surface-high: #e8e8e8;
-  --color-surface-highest: #e2e2e2;
-  --color-on-surface: #1b1b1b;
-  --color-on-surface-variant: #4c4546;
-  --color-secondary: #5d5f5f;
-  --color-outline: #7e7576;
-  --color-primary: #000000;
-  --color-on-primary: #ffffff;
-  --color-error: #ba1a1a;
-  --color-error-container: #ffdad6;
-  --color-on-error-container: #93000a;
+  /* Core palette values (default palette "HistAno"). */
+  --c-page: #f4f5f7;
+  --c-surface: #ffffff;
+  --c-surface-2: #f6f7f9;
+  --c-input: #ffffff;
+  --c-border: #dde1e7;
+  --c-border-strong: #c5cbd4;
+  --c-text: #0f1b2a;
+  --c-text-2: #4a5566;
+  --c-text-3: #6b7585;
+  --c-primary: #183556;
+  --c-primary-hover: #0f2742;
+  --c-on-primary: #ffffff;
+  --c-accent: #2c9497;
+  --c-accent-text: #22797c;
+  --c-accent-soft: #e3f2f2;
+  --c-focus: rgba(44, 148, 151, 0.25);
+  --c-focus-ring: rgba(44, 148, 151, 0.25);
+  --c-focus-outline: #2c9497;
+  --c-danger: #c53030;
+  --c-danger-text: #9b2c2c;
+  --c-danger-soft: #fceded;
+  --c-success: #2f855a;
+  --c-success-text: #22643f;
+  --c-success-soft: #e6f4ec;
+  --c-warn: #b7791f;
+  --c-warn-text: #7f5413;
+  --c-warn-soft: #fbf1de;
+  --c-info: #2f5b8a;
+  --c-info-text: #183556;
+  --c-info-soft: #eef3f8;
+  --c-viewer: #2a2a2a;
+  --login-bg-from: #e9edf2;
+  --login-bg-to: #f4f5f7;
+  --login-line: 24, 53, 86;
+  --login-highlight: #1b6f72;
 
-  --border: 1px solid var(--color-primary);
+  /* Per-palette shape and type (theme independent). */
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --border-width: 1px;
 
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
+  --shadow-sm: 0 1px 2px rgba(15, 27, 42, 0.08);
+  --shadow-md: 0 4px 12px rgba(15, 27, 42, 0.1), 0 1px 2px rgba(15, 27, 42, 0.06);
+  --shadow-lg: 0 16px 40px rgba(15, 27, 42, 0.18), 0 2px 6px rgba(15, 27, 42, 0.08);
 
-  --font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, 'JetBrains Mono', Consolas, monospace;
+  --radius-xs: min(4px, var(--radius-sm));
+  --radius-pill: 999px;
 
-  --header-height: 64px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  --control-sm: 28px;
+  --control-md: 32px;
+  --control-lg: 40px;
+  --field-height: 36px;
+
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --easing: cubic-bezier(0.2, 0, 0, 1);
+
+  --header-height: 48px;
+  --header-compact: 40px;
   --sidebar-width: 320px;
 }
 
-/* Dark mode: same flat, high-contrast language, inverted (paper-on-ink instead of ink-on-paper). */
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --color-surface: #121212;
-  --color-surface-lowest: #1a1a1a;
-  --color-surface-low: #202020;
-  --color-surface-container: #262626;
-  --color-surface-high: #2d2d2d;
-  --color-surface-highest: #363636;
-  --color-on-surface: #f0eeee;
-  --color-on-surface-variant: #cbc2c3;
-  --color-secondary: #a8a9a9;
-  --color-outline: #8f8586;
-  --color-primary: #ffffff;
-  --color-on-primary: #000000;
-  --color-error: #ffb4ab;
-  --color-error-container: #93000a;
-  --color-on-error-container: #ffdad6;
+  --c-page: #0e1219;
+  --c-surface: #151b24;
+  --c-surface-2: #1b222d;
+  --c-input: #0f141c;
+  --c-border: #29323f;
+  --c-border-strong: #3a4555;
+  --c-text: #e6eaf0;
+  --c-text-2: #a9b2bf;
+  --c-text-3: #7d8796;
+  --c-primary: #2f5b8a;
+  --c-primary-hover: #3a6a9e;
+  --c-on-primary: #ffffff;
+  --c-accent: #3bb3b6;
+  --c-accent-text: #5cc8ca;
+  --c-accent-soft: rgba(59, 179, 182, 0.16);
+  --c-focus: rgba(59, 179, 182, 0.3);
+  --c-focus-ring: rgba(59, 179, 182, 0.3);
+  --c-focus-outline: #3bb3b6;
+  --c-danger: #c9413a;
+  --c-danger-text: #f08a84;
+  --c-danger-soft: rgba(229, 83, 75, 0.14);
+  --c-success: #48bb78;
+  --c-success-text: #7ad3a0;
+  --c-success-soft: rgba(72, 187, 120, 0.15);
+  --c-warn: #e3a23b;
+  --c-warn-text: #edbe6e;
+  --c-warn-soft: rgba(227, 162, 59, 0.14);
+  --c-info: #6f9bd0;
+  --c-info-text: #a9c4e6;
+  --c-info-soft: rgba(111, 155, 208, 0.16);
+  --c-viewer: #161616;
+  --login-bg-from: #0e1a2c;
+  --login-bg-to: #0b1422;
+  --login-line: 120, 150, 184;
+  --login-highlight: #7fe0e2;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* Derived tokens: computed from the core values of whichever palette and theme is active. */
+:root {
+  --c-hover: color-mix(in srgb, var(--c-surface), var(--c-text) 6%);
+  --c-hover-2: color-mix(in srgb, var(--c-surface), var(--c-text) 12%);
+  --c-skeleton: color-mix(in srgb, var(--c-surface), var(--c-text) 8%);
+  --c-track: color-mix(in srgb, var(--c-surface), var(--c-text) 10%);
+  --c-danger-hover: color-mix(in srgb, var(--c-danger), var(--c-text) 18%);
+  --c-danger-border: color-mix(in srgb, var(--c-danger) 40%, var(--c-surface));
+  --c-success-border: color-mix(in srgb, var(--c-success) 40%, var(--c-surface));
+  --c-warn-border: color-mix(in srgb, var(--c-warn) 40%, var(--c-surface));
+  --c-info-border: color-mix(in srgb, var(--c-info) 40%, var(--c-surface));
+  --c-disabled-bg: color-mix(in srgb, var(--c-surface), var(--c-text) 10%);
+  --c-disabled-fg: color-mix(in srgb, var(--c-text) 40%, var(--c-surface));
+  --c-scrim: color-mix(in srgb, color-mix(in srgb, var(--c-text), black 70%) 50%, transparent);
+  --c-tooltip-bg: var(--c-text);
+  --c-tooltip-fg: var(--c-surface);
+  --c-stripe: color-mix(in srgb, var(--c-text) 4%, transparent);
+  --border: var(--border-width) solid var(--c-border);
 }

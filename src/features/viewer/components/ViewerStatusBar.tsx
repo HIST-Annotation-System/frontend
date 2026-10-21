@@ -1,25 +1,32 @@
 import type { Slide } from '../../../types/slide';
 import { formatMagnification, formatZoomPercent } from '../../../utils/magnification';
+import { useSlideHotspots } from '../../hotspots/hooks/useHotspots';
 import { useMagnification } from '../hooks/useMagnification';
 
 interface ViewerStatusBarProps {
-  slide: Pick<Slide, 'original_filename'>;
+  slide: Pick<Slide, 'id'>;
   nativeMagnification: number | null;
 }
 
 export default function ViewerStatusBar({ slide, nativeMagnification }: ViewerStatusBarProps) {
   const { imageZoom, magnification } = useMagnification(nativeMagnification);
+  const { data: hotspots } = useSlideHotspots(slide.id);
 
   let scale = '—';
   if (magnification !== null) scale = formatMagnification(magnification);
   else if (imageZoom !== null) scale = formatZoomPercent(imageZoom);
 
   return (
-    <div className="viewer-status label-caps">
-      <span className="viewer-status__file" title={slide.original_filename}>
-        Slajd: <span className="viewer-status__value">{slide.original_filename}</span>
+    <div className="viewer-status">
+      <span className="viewer-status__item">
+        <span className="viewer-status__label">Powiększenie</span>
+        <span className="viewer-status__value viewer-status__value--strong">{scale}</span>
       </span>
-      <span>Skala: {scale}</span>
+      <span className="viewer-status__item">
+        <span className="viewer-status__label">Hotspoty</span>
+        <span className="viewer-status__value">{hotspots ? hotspots.length : '—'}</span>
+      </span>
+      <span className="viewer-status__hint">Kółko — powiększ · przeciągnij — przesuń</span>
     </div>
   );
 }

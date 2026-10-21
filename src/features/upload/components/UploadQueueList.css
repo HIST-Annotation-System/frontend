@@ -1,9 +1,47 @@
 .upload-queue {
   display: flex;
-  flex: 1 1 100%;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: var(--space-2);
   min-width: 0;
+}
+
+.upload-queue__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.upload-queue__summary {
+  color: var(--c-text-3);
+  font-size: 12px;
+}
+
+.upload-queue__empty {
+  padding: var(--space-2) 0;
+  color: var(--c-text-3);
+  font-size: 13px;
+}
+
+.upload-queue__note {
+  color: var(--c-text-2);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* Interrupted uploads: one bordered card per file. */
+.upload-queue__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.upload-queue__cards > .upload-queue__item {
+  border: var(--border-width) solid var(--c-border);
+  border-radius: var(--radius-md);
 }
 
 .upload-queue__list {
@@ -11,15 +49,19 @@
   flex-direction: column;
   margin: 0;
   padding: 0;
+  overflow: hidden;
+  border: var(--border-width) solid var(--c-border);
+  border-radius: var(--radius-md);
+  background: var(--c-surface);
   list-style: none;
 }
 
 .upload-queue__item {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
-  padding: var(--space-xs) 0;
-  border-top: 1px solid var(--color-surface-highest);
+  gap: 6px;
+  padding: 10px var(--space-3);
+  border-top: var(--border-width) solid var(--c-border);
 }
 
 .upload-queue__item:first-child {
@@ -29,63 +71,124 @@
 .upload-queue__row {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 10px;
   min-width: 0;
+}
+
+.upload-queue__status-icon {
+  flex-shrink: 0;
+  color: var(--c-text-3);
+}
+
+.upload-queue__item--uploading .upload-queue__status-icon,
+.upload-queue__item--finalizing .upload-queue__status-icon {
+  color: var(--c-accent);
+  animation: upload-queue-spin 1s linear infinite;
+}
+
+.upload-queue__item--completed .upload-queue__status-icon {
+  color: var(--c-success);
+}
+
+.upload-queue__item--error .upload-queue__status-icon {
+  color: var(--c-danger);
+}
+
+.upload-queue__item--interrupted .upload-queue__status-icon {
+  color: var(--c-warn);
+}
+
+@keyframes upload-queue-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-queue__status-icon {
+    animation: none !important;
+  }
 }
 
 .upload-queue__name {
   overflow: hidden;
   flex: 1;
   min-width: 0;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .upload-queue__size {
   flex-shrink: 0;
+  color: var(--c-text-3);
   font-size: 12px;
-  color: var(--color-secondary);
 }
 
 .upload-queue__actions {
   display: flex;
   flex-shrink: 0;
+  align-items: center;
   gap: 2px;
 }
 
+.upload-queue__actions .btn--icon-only {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-xs);
+  color: var(--c-text-3);
+}
+
+.upload-queue__actions .upload-queue__resume {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.upload-queue__actions .btn--ghost:not(.btn--icon-only) {
+  height: var(--control-sm);
+  padding: 0 10px;
+  font-size: 13px;
+}
+
 .upload-queue__progress {
-  width: 100%;
-  height: 6px;
-  border: var(--border);
-  background: var(--color-surface-highest);
-  appearance: none;
+  width: calc(100% - 26px);
+  margin-left: 26px;
 }
 
-.upload-queue__progress::-webkit-progress-bar {
-  background: var(--color-surface-highest);
+.upload-queue__item--completed .upload-queue__progress::-webkit-progress-value {
+  background: var(--c-success);
 }
 
-.upload-queue__progress::-webkit-progress-value {
-  background: var(--color-primary);
-}
-
-.upload-queue__progress::-moz-progress-bar {
-  background: var(--color-primary);
+.upload-queue__item--completed .upload-queue__progress::-moz-progress-bar {
+  background: var(--c-success);
 }
 
 .upload-queue__message {
+  padding-left: 26px;
+  color: var(--c-text-2);
   font-size: 12px;
-  color: var(--color-on-surface-variant);
+  line-height: 16px;
+}
+
+.upload-queue__item--error {
+  background: var(--c-danger-soft);
 }
 
 .upload-queue__item--error .upload-queue__message {
-  color: var(--color-error);
+  color: var(--c-danger-text);
+}
+
+.upload-queue__item--interrupted .upload-queue__message {
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
 }
 
 .upload-queue__item--queued .upload-queue__name {
-  font-weight: 400;
-  color: var(--color-secondary);
+  color: var(--c-text-2);
 }
 
 .upload-queue__clear {

@@ -1,4 +1,5 @@
-import { ZoomIn, ZoomOut } from 'lucide-react';
+import { Maximize, Minus, Plus } from 'lucide-react';
+import type { ReactNode } from 'react';
 import Button from '../../../components/ui/Button';
 import { useOsdViewer } from '../hooks/useOsdViewer';
 import { zoomToImageZoom } from '../utils/viewport';
@@ -10,9 +11,11 @@ interface ZoomControlsProps {
   onFocusTissue?: () => void;
   /** Offer a full-resolution jump; redundant when a magnification preset already reaches it. */
   showActualSize: boolean;
+  /** Shown between "-" and "+" (e.g. the current zoom). */
+  zoomLabel?: ReactNode;
 }
 
-export default function ZoomControls({ onFocusTissue, showActualSize }: ZoomControlsProps) {
+export default function ZoomControls({ onFocusTissue, showActualSize, zoomLabel }: ZoomControlsProps) {
   const viewer = useOsdViewer();
 
   const zoomBy = (factor: number) => {
@@ -23,16 +26,18 @@ export default function ZoomControls({ onFocusTissue, showActualSize }: ZoomCont
 
   return (
     <>
-      <Button icon={<ZoomIn size={16} />} title="Przybliż" aria-label="Przybliż" onClick={() => zoomBy(ZOOM_STEP)} />
-      <Button icon={<ZoomOut size={16} />} title="Oddal" aria-label="Oddal" onClick={() => zoomBy(1 / ZOOM_STEP)} />
+      <Button icon={<Minus size={16} />} title="Oddal" aria-label="Oddal" onClick={() => zoomBy(1 / ZOOM_STEP)} />
+      {zoomLabel}
+      <Button icon={<Plus size={16} />} title="Przybliż" aria-label="Przybliż" onClick={() => zoomBy(ZOOM_STEP)} />
       <Button
-        title={onFocusTissue ? 'Dopasuj widok do tkanki' : 'Dopasuj cały slajd do ekranu'}
+        icon={<Maximize size={16} />}
+        title={onFocusTissue ? 'Wycentruj: dopasuj widok do tkanki' : 'Wycentruj: dopasuj cały slajd do ekranu'}
+        aria-label="Wycentruj"
         onClick={() => (onFocusTissue ? onFocusTissue() : viewer?.viewport.goHome())}
-      >
-        Wycentruj
-      </Button>
+      />
       {showActualSize && (
         <Button
+          className="viewer-nav__actual-size"
           title="Pełna rozdzielczość (1 piksel ekranu = 1 piksel skanu)"
           onClick={() => viewer && zoomToImageZoom(viewer, 1)}
         >

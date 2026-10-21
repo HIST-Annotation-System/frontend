@@ -1,33 +1,23 @@
 /**
- * Deterministic, perceptually-distinct color palette for dynamic cell-type coloring.
+ * Deterministic, high-contrast (on H&E tissue) color palette for dynamic cell-type coloring.
  * Colors are assigned in order of first use within a viewer session; the mapping is
  * held in a Map<cellTypeId, color> that lives in the component's state.
  */
 
 export const CELL_TYPE_PALETTE: readonly string[] = [
-  '#6366f1', // indigo
-  '#ec4899', // pink
-  '#14b8a6', // teal
-  '#f97316', // orange
-  '#84cc16', // lime
-  '#8b5cf6', // violet
-  '#06b6d4', // cyan
-  '#f43f5e', // rose
-  '#a3e635', // green-yellow
-  '#fb923c', // amber-orange
-  '#22d3ee', // sky
-  '#c084fc', // purple
-  '#4ade80', // green
-  '#fbbf24', // amber
-  '#f87171', // red
-  '#34d399', // emerald
-  '#60a5fa', // blue
-  '#a78bfa', // violet-light
-  '#fb7185', // rose-light
-  '#2dd4bf', // teal-light
+  '#FFD60A', // yellow
+  '#00E5FF', // cyan
+  '#A6F000', // lime
+  '#FFFFFF', // white
+  '#FF8A00', // orange
+  '#00C26E', // green
+  '#2E6BFF', // blue
+  '#FF3030', // red
+  '#101010', // black
+  '#A3A3A3', // grey
 ];
 
-export const FALLBACK_CELL_TYPE_COLOR = '#94a3b8';
+export const FALLBACK_CELL_TYPE_COLOR = '#A3A3A3';
 
 /**
  * Given the current map of cellTypeId → color and the full ordered list of cell type ids
@@ -49,7 +39,7 @@ export function assignCellTypeColors(
   return updated;
 }
 
-/** Return the color for a given cell type id, falling back to the slate swatch. */
+/** Return the color for a given cell type id, falling back to the grey swatch. */
 export function getCellTypeColor(
   colorMap: ReadonlyMap<number, string>,
   cellTypeId: number | null | undefined,

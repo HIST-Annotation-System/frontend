@@ -2,17 +2,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
-  padding: var(--space-lg);
-  color: var(--color-secondary);
+  gap: var(--space-2);
+  padding: var(--space-6);
+  color: var(--c-text-2);
+  font-size: 13px;
 }
 
 .spinner__circle {
   width: 16px;
   height: 16px;
-  border: 2px solid var(--color-surface-highest);
-  border-top-color: var(--color-primary);
-  animation: spinner-rotate 0.8s linear infinite;
+  border: 2px solid var(--c-track);
+  border-top-color: var(--c-accent);
+  border-radius: 50%;
+  animation: spinner-rotate 700ms linear infinite;
 }
 
 @keyframes spinner-rotate {

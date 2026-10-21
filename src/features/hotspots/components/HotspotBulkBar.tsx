@@ -10,11 +10,14 @@ import './Hotspots.css';
 
 interface HotspotBulkBarProps {
   hotspotIds: string[];
+  /** How many hotspots are listed; offers selecting all of them while fewer are selected. */
+  visibleCount?: number;
+  onSelectVisible?: () => void;
   onClear: () => void;
 }
 
 /** Tags every selected hotspot at once. */
-export default function HotspotBulkBar({ hotspotIds, onClear }: HotspotBulkBarProps) {
+export default function HotspotBulkBar({ hotspotIds, visibleCount, onSelectVisible, onClear }: HotspotBulkBarProps) {
   const { data: tags = [] } = useTags();
   const { bulkTag, isBulkTagging } = useHotspotTagMutations();
   const [error, setError] = useState<string | null>(null);
@@ -52,8 +55,14 @@ export default function HotspotBulkBar({ hotspotIds, onClear }: HotspotBulkBarPr
   return (
     <div className="hotspot-bulk" role="region" aria-label="Zaznaczone hotspoty">
       <span className="hotspot-bulk__count">
-        Zaznaczono: <span className="mono-data">{hotspotIds.length}</span>
+        Zaznaczono <span className="mono-data">{hotspotIds.length}</span>
       </span>
+      {onSelectVisible && visibleCount !== undefined && visibleCount > hotspotIds.length && (
+        <button type="button" className="hotspot-bulk__select-all" onClick={onSelectVisible}>
+          Zaznacz widoczne ({visibleCount})
+        </button>
+      )}
+      <span className="hotspot-bulk__divider" aria-hidden="true" />
       {TAG_DIMENSIONS.map((dimension) =>
         actionSelect(`Ustaw: ${dimension.label.toLowerCase()}`, dimensionTags(tags, dimension.value), (tagId) =>
           void apply({ add: [tagId], remove: [] }),
@@ -64,7 +73,11 @@ export default function HotspotBulkBar({ hotspotIds, onClear }: HotspotBulkBarPr
       <Button variant="ghost" icon={<X size={14} />} onClick={onClear}>
         Odznacz
       </Button>
-      {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
+      {error && (
+        <div className="hotspot-bulk__error">
+          <ErrorMessage message={error} onDismiss={() => setError(null)} />
+        </div>
+      )}
     </div>
   );
 }

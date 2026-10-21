@@ -1,4 +1,4 @@
-import { Check, Folder, FolderPlus, Folders, Pencil, Trash2, X } from 'lucide-react';
+import { Check, CornerDownLeft, Folder, FolderOpen, FolderPlus, Folders, FolderX, Pencil, Trash2, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -71,96 +71,121 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
 
   return (
     <div className="hotspot-folders">
-      <form className="hotspot-folders__new" onSubmit={(event) => void add(event)}>
-        <input
-          value={newName}
-          placeholder="Nowy folder…"
-          aria-label="Nazwa nowego folderu"
-          maxLength={255}
-          disabled={isCreatingFolder}
-          onChange={(event) => setNewName(event.target.value)}
-        />
-        <Button
-          type="submit"
-          icon={<FolderPlus size={16} />}
-          title="Utwórz folder"
-          aria-label="Utwórz folder"
-          disabled={isCreatingFolder || !newName.trim()}
-        />
-      </form>
-      {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
-
-      {folders.length === 0 ? (
-        <p className="hotspot-folders__empty">Brak folderów</p>
-      ) : (
-        <ul className="hotspot-folders__list">
-          <li
-            className={`hotspot-folders__item${selectedId === ALL_FOLDERS ? ' hotspot-folders__item--selected' : ''}`}
-          >
-            <button type="button" className="hotspot-folders__select" onClick={() => onSelect(ALL_FOLDERS)}>
-              <Folders size={14} aria-hidden="true" />
-              <span className="hotspot-folders__name">Wszystkie foldery</span>
-              <span className="hotspot-folders__count mono-data">
-                {folders.reduce((total, folder) => total + folder.hotspot_count, 0)}
-              </span>
-            </button>
-          </li>
-          {folders.map((folder) => (
+      <div className="hotspot-folders__scroll">
+        {folders.length === 0 ? (
+          <div className="hotspot-folders__empty">
+            <FolderX size={20} aria-hidden="true" />
+            <span className="hotspot-folders__empty-title">Brak folderów</span>
+            <span>Utwórz folder poniżej albo zaznacz hotspoty na slajdzie.</span>
+          </div>
+        ) : (
+          <ul className="hotspot-folders__list">
             <li
-              key={folder.id}
-              className={`hotspot-folders__item${folder.id === selectedId ? ' hotspot-folders__item--selected' : ''}`}
+              className={`hotspot-folders__item hotspot-folders__item--all${selectedId === ALL_FOLDERS ? ' hotspot-folders__item--selected' : ''}`}
             >
-              {editing?.id === folder.id ? (
-                <>
-                  <input
-                    className="hotspot-folders__name-input"
-                    value={editing.name}
-                    autoFocus
-                    maxLength={255}
-                    aria-label="Nazwa folderu"
-                    disabled={isRenamingFolder}
-                    onChange={(event) => setEditing({ id: folder.id, name: event.target.value })}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') void saveName();
-                      if (event.key === 'Escape') setEditing(null);
-                    }}
-                  />
-                  <Button
-                    variant="ghost"
-                    icon={<Check size={14} />}
-                    aria-label="Zapisz nazwę"
-                    disabled={isRenamingFolder}
-                    onClick={() => void saveName()}
-                  />
-                  <Button variant="ghost" icon={<X size={14} />} aria-label="Anuluj" onClick={() => setEditing(null)} />
-                </>
-              ) : (
-                <>
-                  <button type="button" className="hotspot-folders__select" onClick={() => onSelect(folder.id)}>
-                    <Folder size={14} aria-hidden="true" />
-                    <span className="hotspot-folders__name">{folder.name}</span>
-                    <span className="hotspot-folders__count mono-data">{folder.hotspot_count}</span>
-                  </button>
-                  <Button
-                    variant="ghost"
-                    icon={<Pencil size={14} />}
-                    title="Zmień nazwę"
-                    aria-label={`Zmień nazwę folderu ${folder.name}`}
-                    onClick={() => setEditing({ id: folder.id, name: folder.name })}
-                  />
-                  <Button
-                    variant="ghost"
-                    icon={<Trash2 size={14} />}
-                    title="Usuń folder"
-                    aria-label={`Usuń folder ${folder.name}`}
-                    onClick={() => setDeleting(folder)}
-                  />
-                </>
-              )}
+              <button type="button" className="hotspot-folders__select" onClick={() => onSelect(ALL_FOLDERS)}>
+                <Folders size={16} aria-hidden="true" />
+                <span className="hotspot-folders__name">Wszystkie foldery</span>
+                <span className="hotspot-folders__count">
+                  {folders.reduce((total, folder) => total + folder.hotspot_count, 0)}
+                </span>
+              </button>
             </li>
-          ))}
-        </ul>
-      )}
+            {folders.map((folder) => {
+              const selected = folder.id === selectedId;
+              return (
+                <li
+                  key={folder.id}
+                  className={`hotspot-folders__item${selected ? ' hotspot-folders__item--selected' : ''}${editing?.id === folder.id ? ' hotspot-folders__item--editing' : ''}`}
+                >
+                  {editing?.id === folder.id ? (
+                    <>
+                      <input
+                        className="hotspot-folders__name-input"
+                        value={editing.name}
+                        autoFocus
+                        maxLength={255}
+                        aria-label="Nazwa folderu"
+                        disabled={isRenamingFolder}
+                        onChange={(event) => setEditing({ id: folder.id, name: event.target.value })}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') void saveName();
+                          if (event.key === 'Escape') setEditing(null);
+                        }}
+                      />
+                      <Button
+                        variant="primary"
+                        className="hotspot-folders__save"
+                        icon={<Check size={14} />}
+                        title="Zapisz"
+                        aria-label="Zapisz nazwę"
+                        disabled={isRenamingFolder}
+                        onClick={() => void saveName()}
+                      />
+                      <Button
+                        variant="ghost"
+                        icon={<X size={14} />}
+                        title="Anuluj"
+                        aria-label="Anuluj"
+                        onClick={() => setEditing(null)}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <button type="button" className="hotspot-folders__select" onClick={() => onSelect(folder.id)}>
+                        {selected ? <FolderOpen size={16} aria-hidden="true" /> : <Folder size={16} aria-hidden="true" />}
+                        <span className="hotspot-folders__name">{folder.name}</span>
+                        <span className="hotspot-folders__count">{folder.hotspot_count}</span>
+                      </button>
+                      <Button
+                        variant="ghost"
+                        icon={<Pencil size={13} />}
+                        title="Zmień nazwę"
+                        aria-label={`Zmień nazwę folderu ${folder.name}`}
+                        onClick={() => setEditing({ id: folder.id, name: folder.name })}
+                      />
+                      <Button
+                        variant="ghost"
+                        className="hotspot-folders__delete"
+                        icon={<Trash2 size={13} />}
+                        title="Usuń folder"
+                        aria-label={`Usuń folder ${folder.name}`}
+                        onClick={() => setDeleting(folder)}
+                      />
+                    </>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <form className="hotspot-folders__new" onSubmit={(event) => void add(event)}>
+        {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
+        <div className="hotspot-folders__new-field">
+          <FolderPlus size={16} className="hotspot-folders__new-icon" aria-hidden="true" />
+          <input
+            value={newName}
+            placeholder="Nowy folder…"
+            aria-label="Nazwa nowego folderu"
+            maxLength={255}
+            disabled={isCreatingFolder}
+            onChange={(event) => setNewName(event.target.value)}
+          />
+          {newName.trim() && (
+            <Button
+              type="submit"
+              variant="primary"
+              className="hotspot-folders__create"
+              icon={<CornerDownLeft size={13} />}
+              title="Utwórz (Enter)"
+              aria-label="Utwórz folder"
+              disabled={isCreatingFolder}
+            />
+          )}
+        </div>
+      </form>
 
       <Modal title="Usuń folder" open={deleting !== null} onClose={() => setDeleting(null)}>
         <p>

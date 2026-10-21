@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-import { Search, Clock, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+import { Search } from 'lucide-react';
 import type { CellType } from '../../../types/cellType';
+import { FALLBACK_CELL_TYPE_COLOR } from '../utils/cellTypeColors';
 import './CellTypeSelector.css';
 
 const RECENT_MAX = 5;
@@ -10,45 +11,24 @@ interface CellTypeSelectorProps {
   activeCellTypeId: number | null;
   colorMap: ReadonlyMap<number, string>;
   onSelect: (cellTypeId: number) => void;
+  /** Outlines per cell type, shown at the end of each row. */
+  counts?: ReadonlyMap<number, number>;
 }
 
+/** Cell type picker of the viewer panel: search, recently used chips and the full (scrolling) list. */
 export default function CellTypeSelector({
   cellTypes,
   activeCellTypeId,
   colorMap,
   onSelect,
+  counts,
 }: CellTypeSelectorProps) {
-  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [recentIds, setRecentIds] = useState<number[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const activeCellType = cellTypes.find((ct) => ct.id === activeCellTypeId) ?? null;
-  const activeColor = activeCellTypeId != null ? (colorMap.get(activeCellTypeId) ?? '#94a3b8') : '#94a3b8';
-
-  // Close on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        setQuery('');
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  // Focus search input when opened
-  useEffect(() => {
-    if (open) inputRef.current?.focus();
-  }, [open]);
 
   const handleSelect = (id: number) => {
     onSelect(id);
     setRecentIds((prev) => [id, ...prev.filter((r) => r !== id)].slice(0, RECENT_MAX));
-    setOpen(false);
-    setQuery('');
   };
 
   const lowerQuery = query.toLowerCase();
@@ -57,109 +37,64 @@ export default function CellTypeSelector({
   const recentTypes = recentIds
     .map((id) => cellTypes.find((ct) => ct.id === id))
     .filter(Boolean) as CellType[];
+  const colorOf = (id: number) => colorMap.get(id) ?? FALLBACK_CELL_TYPE_COLOR;
 
   return (
-    <div className="cts-container" ref={containerRef}>
-      {/* Trigger button */}
-      <button
-        id="cell-type-selector-trigger"
-        type="button"
-        className="cts-trigger"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span
-          className="cts-trigger__swatch"
-          style={{ background: activeColor }}
-          aria-hidden="true"
+    <div className="cts">
+      <div className="cts-search">
+        <Search size={15} className="cts-search__icon" aria-hidden="true" />
+        <input
+          id="cell-type-search-input"
+          type="text"
+          className="cts-search__input"
+          placeholder="Szukaj typu komórki…"
+          aria-label="Szukaj typu komórki"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
         />
-        <span className="cts-trigger__label">
-          {activeCellType ? activeCellType.name : 'Wybierz typ komórki…'}
-        </span>
-        <ChevronDown size={14} className={`cts-trigger__chevron${open ? ' cts-trigger__chevron--open' : ''}`} />
-      </button>
+      </div>
 
-      {open && (
-        <div className="cts-dropdown" role="dialog" aria-label="Wybierz typ komórki">
-          {/* Search */}
-          <div className="cts-search">
-            <Search size={14} className="cts-search__icon" aria-hidden="true" />
-            <input
-              ref={inputRef}
-              id="cell-type-search-input"
-              type="text"
-              className="cts-search__input"
-              placeholder="Szukaj typu komórki…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+      {/* Recently used: only when not searching */}
+      {!query && recentTypes.length > 0 && (
+        <>
+          <span className="cts-caption">Ostatnio używane</span>
+          <div className="cts-recent">
+            {recentTypes.map((ct) => (
+              <button
+                key={ct.id}
+                type="button"
+                className={`cts-chip${ct.id === activeCellTypeId ? ' cts-chip--active' : ''}`}
+                aria-pressed={ct.id === activeCellTypeId}
+                onClick={() => handleSelect(ct.id)}
+              >
+                <span className="cts-swatch cts-swatch--sm" style={{ background: colorOf(ct.id) }} aria-hidden="true" />
+                {ct.name}
+              </button>
+            ))}
           </div>
-
-          <div className="cts-list-scroll">
-            {/* Recently used — only when no search query */}
-            {!query && recentTypes.length > 0 && (
-              <section className="cts-section">
-                <div className="cts-section__label">
-                  <Clock size={11} aria-hidden="true" />
-                  Ostatnio używane
-                </div>
-                {recentTypes.map((ct) => (
-                  <CellTypeOption
-                    key={ct.id}
-                    cellType={ct}
-                    color={colorMap.get(ct.id) ?? '#94a3b8'}
-                    active={ct.id === activeCellTypeId}
-                    onSelect={handleSelect}
-                  />
-                ))}
-              </section>
-            )}
-
-            {/* Full / filtered list */}
-            <section className="cts-section">
-              {(query || recentTypes.length > 0) && (
-                <div className="cts-section__label">Wszystkie typy</div>
-              )}
-              {filtered.length === 0 ? (
-                <p className="cts-empty">Brak wyników dla „{query}"</p>
-              ) : (
-                filtered.map((ct) => (
-                  <CellTypeOption
-                    key={ct.id}
-                    cellType={ct}
-                    color={colorMap.get(ct.id) ?? '#94a3b8'}
-                    active={ct.id === activeCellTypeId}
-                    onSelect={handleSelect}
-                  />
-                ))
-              )}
-            </section>
-          </div>
-        </div>
+        </>
       )}
+
+      <div className="cts-list" role="listbox" aria-label="Typ komórki">
+        {filtered.length === 0 ? (
+          <p className="cts-empty">Brak typu „{query}”.</p>
+        ) : (
+          filtered.map((ct) => (
+            <button
+              key={ct.id}
+              type="button"
+              role="option"
+              aria-selected={ct.id === activeCellTypeId}
+              className={`cts-option${ct.id === activeCellTypeId ? ' cts-option--active' : ''}`}
+              onClick={() => handleSelect(ct.id)}
+            >
+              <span className="cts-swatch" style={{ background: colorOf(ct.id) }} aria-hidden="true" />
+              <span className="cts-option__name">{ct.name}</span>
+              {counts && <span className="cts-option__count">{counts.get(ct.id) ?? 0}</span>}
+            </button>
+          ))
+        )}
+      </div>
     </div>
-  );
-}
-
-interface CellTypeOptionProps {
-  cellType: CellType;
-  color: string;
-  active: boolean;
-  onSelect: (id: number) => void;
-}
-
-function CellTypeOption({ cellType, color, active, onSelect }: CellTypeOptionProps) {
-  return (
-    <button
-      type="button"
-      role="option"
-      aria-selected={active}
-      className={`cts-option${active ? ' cts-option--active' : ''}`}
-      onClick={() => onSelect(cellType.id)}
-    >
-      <span className="cts-option__swatch" style={{ background: color }} aria-hidden="true" />
-      <span className="cts-option__name">{cellType.name}</span>
-    </button>
   );
 }
