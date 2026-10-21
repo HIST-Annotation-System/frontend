@@ -155,19 +155,30 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   return (
     <Annotorious>
       <div className="viewer-screen">
-        <ViewerHeader backTo={`/hotspots${search}`} backLabel="Wróć do listy">
+        <ViewerHeader backTo={`/hotspots${search}`} backLabel="Hotspoty">
+          {folderName && (
+            <Link
+              className="viewer-header__crumb viewer-header__crumb--link"
+              to={{
+                pathname: '/hotspots',
+                search: new URLSearchParams(writeCatalogParams({ ...catalog, folder: hotspot.folder_id })).toString(),
+              }}
+              title={`Wróć do folderu ${folderName}`}
+            >
+              {folderName}
+            </Link>
+          )}
+          {folderName && <ChevronRight size={14} className="viewer-header__crumb-sep" aria-hidden="true" />}
+          <span className="viewer-header__name" title={hotspot.name}>
+            {hotspot.name}
+          </span>
+          {hotspot.reannotated_at && <CorrectedChip />}
           {modeOption && (
             <span className="viewer-header__chip" title={modeOption.description}>
               {MODE_ICONS[modeOption.value]}
               {modeOption.label}
             </span>
           )}
-          {folderName && <span className="viewer-header__crumb">{folderName}</span>}
-          {folderName && <ChevronRight size={14} className="viewer-header__crumb-sep" aria-hidden="true" />}
-          <span className="viewer-header__name" title={hotspot.name}>
-            {hotspot.name}
-          </span>
-          {hotspot.reannotated_at && <CorrectedChip />}
           <HotspotQueueNav
             hotspot={hotspot}
             query={{

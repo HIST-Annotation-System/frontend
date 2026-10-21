@@ -167,14 +167,11 @@ function HotspotCatalogList({
   return (
     <>
       <div className="hotspots-page__top">
-        <div className="hotspots-page__modes">
-          <span className="label-caps">Tryb pracy</span>
-          {modes}
-        </div>
         <div className="hotspots-page__header">
           <div className="hotspots-page__heading">
             <h1 className="page-title hotspots-page__title">{folder?.name ?? 'Wszystkie foldery'}</h1>
             <span className="hotspots-page__total">{hotspotCount(total)}</span>
+            {modes}
           </div>
           {folder && browsing && <HotspotUploadButtons folderId={folder.id} folderName={folder.name} />}
         </div>

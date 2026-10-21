@@ -139,7 +139,7 @@ export default function FirstLoginPage() {
           <div className="auth-password-block">
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="password">Nowe hasło</label>
+                <label htmlFor="password">Nowe hasło (min. 8 znaków)</label>
                 <input
                   id="password"
                   type="password"
@@ -153,7 +153,7 @@ export default function FirstLoginPage() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="confirmPassword">Potwierdź nowe hasło</label>
+                <label htmlFor="confirmPassword">Powtórz hasło</label>
                 <input
                   id="confirmPassword"
                   type="password"

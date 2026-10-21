@@ -117,6 +117,18 @@
   text-overflow: ellipsis;
 }
 
+.viewer-header__crumb--link {
+  border-radius: var(--radius-xs);
+  color: var(--c-text-2);
+  text-decoration: none;
+}
+
+.viewer-header__crumb--link:hover {
+  color: var(--c-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .viewer-header__meta {
   flex: none;
   font-family: var(--font-mono);

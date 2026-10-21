@@ -800,41 +800,48 @@
 }
 
 /* Work mode switch of the catalog: a segmented tray, the active mode raised. */
+/* Compact segmented switch next to the catalog title; descriptions live in the tooltips. */
 .hotspot-modes {
-  display: grid;
-  flex: 1;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: inline-flex;
+  flex: none;
   gap: 2px;
-  max-width: 880px;
+  margin-left: var(--space-3);
   padding: 2px;
   border: var(--border-width) solid var(--c-border);
   border-radius: var(--radius-md);
   background: var(--c-surface-2);
+  align-self: center;
 }
 
 .hotspot-modes__option {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  min-width: 0;
-  padding: 6px var(--space-3);
+  align-items: center;
+  gap: 6px;
+  height: var(--control-sm);
+  padding: 0 10px;
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--c-text);
+  color: var(--c-text-2);
   font: inherit;
-  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background-color var(--motion-fast) var(--easing);
+  transition:
+    background-color var(--motion-fast) var(--easing),
+    color var(--motion-fast) var(--easing);
 }
 
 .hotspot-modes__option:hover {
   background: var(--c-hover);
+  color: var(--c-text);
 }
 
 .hotspot-modes__option--active,
 .hotspot-modes__option--active:hover {
   background: var(--c-surface);
+  color: var(--c-text);
   box-shadow: var(--shadow-sm);
 }
 
@@ -845,8 +852,6 @@
 
 .hotspot-modes__icon {
   flex-shrink: 0;
-  margin-top: 2px;
-  margin-bottom: 2px;
   color: var(--c-text-3);
 }
 
@@ -854,33 +859,8 @@
   color: var(--c-accent-text);
 }
 
-.hotspot-modes__text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-/* Labels arrive in mixed case; show them in sentence case. */
-.hotspot-modes__label {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 20px;
-}
-
-
 .hotspot-modes__option--active .hotspot-modes__label {
   font-weight: 600;
-}
-
-.hotspot-modes__description {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--c-text-2);
-  font-size: 12px;
-  line-height: 16px;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
 }
 
 /* Tags on a card and in the viewer. */

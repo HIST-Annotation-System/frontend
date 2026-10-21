@@ -52,17 +52,6 @@
   padding: var(--space-4) var(--space-6) var(--space-3);
 }
 
-.hotspots-page__modes {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.hotspots-page__modes > .label-caps {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
 .hotspots-page__header {
   display: flex;
   align-items: flex-end;

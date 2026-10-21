@@ -29,11 +29,8 @@ export default function HotspotModeSwitch({ mode, onChange }: HotspotModeSwitchP
             title={option.description}
             onClick={() => onChange(option.value)}
           >
-            <Icon size={16} className="hotspot-modes__icon" aria-hidden="true" />
-            <span className="hotspot-modes__text">
-              <span className="hotspot-modes__label">{option.label}</span>
-              <span className="hotspot-modes__description">{option.description}</span>
-            </span>
+            <Icon size={14} className="hotspot-modes__icon" aria-hidden="true" />
+            <span className="hotspot-modes__label">{option.label}</span>
           </button>
         );
       })}
