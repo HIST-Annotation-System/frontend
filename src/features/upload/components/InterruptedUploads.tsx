@@ -1,4 +1,4 @@
-import { CirclePause, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -37,13 +37,12 @@ export default function InterruptedUploads() {
         {interrupted.map((upload) => (
           <li key={upload.slideId} className="upload-queue__item upload-queue__item--interrupted">
             <div className="upload-queue__row">
-              <CirclePause size={16} className="upload-queue__status-icon" aria-hidden="true" />
               <span className="upload-queue__name" title={upload.fileName}>
                 {upload.fileName}
               </span>
               <span className="mono-data upload-queue__size">{formatBytes(upload.fileSize)}</span>
               <span className="upload-queue__actions">
-                <Button className="btn-sm upload-queue__resume" onClick={() => pickFileFor(upload)}>
+                <Button className="upload-queue__resume" onClick={() => pickFileFor(upload)}>
                   Wznów
                 </Button>
                 <Button

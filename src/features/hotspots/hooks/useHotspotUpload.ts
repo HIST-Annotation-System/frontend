@@ -3,12 +3,12 @@ import { useCallback, useRef, useState } from 'react';
 import { hotspotQueryKeys, uploadHotspotImage } from '../../../services/hotspotsApi';
 import { getErrorMessage } from '../../../utils/errors';
 
-export interface HotspotUploadFailure {
+interface HotspotUploadFailure {
   fileName: string;
   message: string;
 }
 
-export interface HotspotUploadState {
+interface HotspotUploadState {
   /** The folder the files go to. */
   folderId: string | null;
   folderName: string | null;

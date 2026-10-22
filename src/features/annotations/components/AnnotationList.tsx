@@ -88,8 +88,8 @@ export default function AnnotationList({ owner, classes, readOnly = false, onErr
 
   return (
     <div className="annotation-panel">
-      <div className="annotation-panel__head">
-        <span className="label-caps">
+      <div className="pane-strip annotation-panel__head">
+        <span>
           Anotacje{' '}
           <span className="annotation-panel__count">
             {annotations ? (activeFilter === ALL ? annotations.length : `${rows.length} / ${annotations.length}`) : ''}

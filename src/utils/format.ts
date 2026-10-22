@@ -1,5 +1,9 @@
 const BYTE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const;
 
+/** A number with a fixed count of decimals, Polish style ("0,4990", "806,10"). */
+export const formatDecimal = (value: number, digits: number): string =>
+  value.toLocaleString('pl-PL', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
 export const formatBytes = (bytes: number): string => {
   let value = bytes;
   let unit = 0;
@@ -7,7 +11,7 @@ export const formatBytes = (bytes: number): string => {
     value /= 1024;
     unit += 1;
   }
-  return `${value >= 10 || unit === 0 ? value.toFixed(0) : value.toFixed(1)} ${BYTE_UNITS[unit]}`;
+  return `${formatDecimal(value, value >= 10 || unit === 0 ? 0 : 1)} ${BYTE_UNITS[unit]}`;
 };
 
 export const formatDimensions = (width: number | null, height: number | null): string =>

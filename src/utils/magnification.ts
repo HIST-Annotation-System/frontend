@@ -1,7 +1,7 @@
 import type { Slide } from '../types/slide';
 
 /** Standard microscope objective steps offered as quick zoom presets. */
-export const MAGNIFICATION_PRESETS = [1, 2, 5, 10, 20, 40] as const;
+const MAGNIFICATION_PRESETS = [1, 2, 5, 10, 20, 40] as const;
 
 /** ~10 µm/px corresponds to 1x, so 0.5 µm/px ≈ 20x and 0.25 µm/px ≈ 40x. */
 const MICRONS_PER_PIXEL_AT_1X = 10;

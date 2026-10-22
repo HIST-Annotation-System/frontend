@@ -18,7 +18,7 @@
   flex-shrink: 0;
   align-items: stretch;
   height: var(--header-height);
-  padding: 0 16px 0 20px;
+  padding: 0 var(--space-4) 0 var(--space-5);
   border-bottom: var(--border-width) solid var(--c-border);
   background: var(--c-surface);
 }
@@ -36,7 +36,7 @@
 .app-header__nav {
   display: flex;
   align-items: stretch;
-  gap: 4px;
+  gap: var(--space-1);
   min-width: 0;
 }
 
@@ -44,7 +44,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
   color: var(--c-text-2);
   font-weight: 500;
   text-decoration: none;
@@ -124,8 +124,27 @@ a.app-header__tab:hover {
   background: var(--c-hover-2);
 }
 
+/* Narrow windows keep every tab: tighter tabs, and the user menu shows only its arrow. */
 @media (max-width: 900px) {
+  .app-header__brand {
+    padding-right: var(--space-3);
+  }
+
   .app-header__nav {
+    gap: 0;
+  }
+
+  .app-header__tab {
+    padding: 0 var(--space-2);
+    font-size: 13px;
+  }
+
+  .app-header__tab::after {
+    right: 8px;
+    left: 8px;
+  }
+
+  .user-menu-name {
     display: none;
   }
 }
@@ -133,7 +152,7 @@ a.app-header__tab:hover {
 /* Compact header for the viewer screens. */
 .app-layout--compact .app-header {
   height: var(--header-compact);
-  padding: 0 8px 0 12px;
+  padding: 0 var(--space-2) 0 var(--space-3);
 }
 
 .app-layout--compact .app-header__brand {
@@ -149,21 +168,8 @@ a.app-header__tab:hover {
   gap: var(--space-2);
 }
 
-.app-layout--compact .user-menu-info,
-.app-layout--compact .user-menu-chevron {
-  display: none;
-}
-
 .app-layout--compact .user-menu-trigger {
-  height: 32px;
-  padding: 0 2px;
-  border-radius: 50%;
-}
-
-.app-layout--compact .user-menu-trigger .user-menu-avatar {
-  width: 28px;
-  height: 28px;
-  font-size: 11px;
+  height: var(--control-sm);
 }
 
 /* Viewer screens portal their context bar (ViewerHeader) in here. */
@@ -184,9 +190,9 @@ a.app-header__tab:hover {
 .user-menu-trigger {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 40px;
-  padding: 0 6px 0 10px;
+  gap: 6px;
+  height: var(--control-md);
+  padding: 0 var(--space-2) 0 10px;
   border: 0;
   border-radius: var(--radius-md);
   background: transparent;
@@ -201,46 +207,14 @@ a.app-header__tab:hover {
   background: var(--c-hover);
 }
 
-.user-menu-info {
-  display: flex;
-  flex-direction: column;
-  line-height: 16px;
-}
-
 .user-menu-name {
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
 }
 
-.user-menu-role {
-  color: var(--c-text-3);
-  font-size: 12px;
-}
-
 .user-menu-chevron {
   color: var(--c-text-3);
-}
-
-.user-menu-avatar {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--c-primary);
-  color: var(--c-on-primary);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.user-menu-avatar--lg {
-  width: 36px;
-  height: 36px;
-  font-size: 13px;
 }
 
 .user-menu-backdrop {
@@ -257,27 +231,19 @@ a.app-header__tab:hover {
   display: flex;
   flex-direction: column;
   width: 260px;
-  padding: 4px;
+  padding: var(--space-1);
   border: var(--border-width) solid var(--c-border);
   border-radius: var(--radius-md);
   background: var(--c-surface);
-  box-shadow: var(--shadow-md);
 }
 
 .user-menu-header {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
-  padding: 10px 10px 12px;
-  border-bottom: var(--border-width) solid var(--c-border);
-}
-
-.user-menu-header__text {
-  display: flex;
   flex-direction: column;
-  min-width: 0;
-  line-height: 18px;
+  gap: 2px;
+  margin-bottom: var(--space-1);
+  padding: 10px 10px var(--space-3);
+  border-bottom: var(--border-width) solid var(--c-border);
 }
 
 .user-menu-header__name {
@@ -309,10 +275,6 @@ a.app-header__tab:hover {
   cursor: pointer;
 }
 
-.user-menu-item svg {
-  color: var(--c-text-2);
-}
-
 .user-menu-item:hover {
   background: var(--c-hover);
   color: var(--c-text);
@@ -320,15 +282,6 @@ a.app-header__tab:hover {
 
 .user-menu-separator {
   height: 1px;
-  margin: 4px 0;
+  margin: var(--space-1) 0;
   background: var(--c-border);
-}
-
-.user-menu-item.text-danger,
-.user-menu-item.text-danger svg {
-  color: var(--c-danger-text);
-}
-
-.user-menu-item.text-danger:hover {
-  background: var(--c-danger-soft);
 }

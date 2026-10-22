@@ -8,7 +8,7 @@ export interface HotspotSortOption {
   description: string;
 }
 
-/** The image stats computed on every hotspot, with a short label for cards and table headers. */
+/** The image stats computed on every hotspot, with a short label for the details panel and table headers. */
 export const HOTSPOT_FEATURES: (HotspotSortOption & { value: HotspotFeature; shortLabel: string })[] = [
   {
     value: 'entropy',
@@ -60,7 +60,7 @@ const TAG_SORT_OPTIONS: HotspotSortOption[] = [
   },
 ];
 
-export const HOTSPOT_SORT_OPTIONS: HotspotSortOption[] = [CREATED_AT_OPTION, ...HOTSPOT_FEATURES, ...TAG_SORT_OPTIONS];
+const HOTSPOT_SORT_OPTIONS: HotspotSortOption[] = [CREATED_AT_OPTION, ...HOTSPOT_FEATURES, ...TAG_SORT_OPTIONS];
 
 /** Assessing picks among untagged hotspots, so the tag-based orders make no sense there. */
 export const sortOptionsFor = (mode: HotspotMode): HotspotSortOption[] => {

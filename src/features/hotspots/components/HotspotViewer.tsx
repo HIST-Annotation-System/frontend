@@ -5,6 +5,9 @@ import type { Hotspot } from '../../../types/hotspot';
 import { formatZoomPercent } from '../../../utils/magnification';
 import ZoomControls from '../../viewer/components/ZoomControls';
 import { useMagnification } from '../../viewer/hooks/useMagnification';
+import { useMiddleButtonPan } from '../../viewer/hooks/useMiddleButtonPan';
+import ViewerHintSlot from '../../viewer/components/ViewerHintSlot';
+import ViewerStatusBarHost from '../../viewer/components/ViewerStatusBarHost';
 import { createViewerOptions } from '../../viewer/viewerOptions';
 import '../../viewer/components/SlideViewer.css';
 
@@ -33,6 +36,7 @@ export default function HotspotViewer({ hotspot, status, children }: HotspotView
     [hotspot.id],
   );
   const { imageZoom } = useMagnification(null);
+  useMiddleButtonPan();
   const zoom = imageZoom === null ? '—' : formatZoomPercent(imageZoom);
 
   return (
@@ -40,19 +44,20 @@ export default function HotspotViewer({ hotspot, status, children }: HotspotView
       <div className="slide-viewer__frame">
         <OpenSeadragonViewer className="slide-viewer__canvas" options={options} />
         <div className="viewer-nav" role="toolbar" aria-label="Nawigacja">
-          <ZoomControls showActualSize zoomLabel={<span className="viewer-nav__zoom">{zoom}</span>} />
+          <ZoomControls zoomLabel={<span className="viewer-nav__zoom">{zoom}</span>} />
         </div>
         {children}
       </div>
-      <div className="slide-viewer__bar">
+      <ViewerStatusBarHost>
         <div className="viewer-status">
+          <ViewerHintSlot />
           <span className="viewer-status__item">
             <span className="viewer-status__label">Powiększenie</span>
             <span className="viewer-status__value viewer-status__value--strong">{zoom}</span>
           </span>
           {status}
         </div>
-      </div>
+      </ViewerStatusBarHost>
     </div>
   );
 }

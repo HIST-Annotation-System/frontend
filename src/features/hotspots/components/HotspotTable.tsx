@@ -1,27 +1,21 @@
-import { Check, FolderInput, PanelRight, Pencil, Trash2, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Check, FolderInput, Pencil, Trash2, X } from 'lucide-react';
+import { useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
-import Badge, { type BadgeTone } from '../../../components/ui/Badge';
+import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
-import Modal from '../../../components/ui/Modal';
 import { getHotspotThumbnailUrl } from '../../../services/hotspotsApi';
-import type { Hotspot, HotspotFeature, HotspotFolder, HotspotSort, HotspotStatus } from '../../../types/hotspot';
-import type { Tag } from '../../../types/tag';
+import type { Hotspot, HotspotFeature, HotspotFolder, HotspotSort } from '../../../types/hotspot';
 import { getErrorMessage } from '../../../utils/errors';
-import { formatDateTime } from '../../../utils/format';
+import { formatDateTime, formatDecimal } from '../../../utils/format';
+import { useDismiss } from '../../../hooks/useDismiss';
 import { useHotspotMutations } from '../hooks/useHotspots';
-import { useTags } from '../hooks/useTags';
 import { HOTSPOT_STATUS_OPTIONS, hotspotStatus } from '../utils/hotspotReview';
+import { isRowControl } from '../utils/rowClick';
 import { HOTSPOT_FEATURES } from '../utils/hotspotSort';
-import { TAG_DIMENSIONS, tagLabel, tagTone } from '../utils/hotspotTags';
+import { TAG_DIMENSIONS, tagLabel } from '../utils/hotspotTags';
+import HotspotDeleteModal from './HotspotDeleteModal';
 import './Hotspots.css';
-
-const STATUS_TONES: Record<HotspotStatus, BadgeTone> = {
-  untagged: 'neutral',
-  to_reannotate: 'warn',
-  reannotated: 'accent',
-};
 
 interface HotspotTableProps {
   hotspots: Hotspot[];
@@ -41,7 +35,10 @@ interface HotspotTableProps {
   onShowDetails?: (hotspotId: string) => void;
 }
 
-/** The browse view: the essentials of each hotspot and its management; the rest is in the details panel. */
+/**
+ * The browse view: the essentials of each hotspot and its management. The name opens the hotspot for annotation;
+ * a click anywhere else on the row (or Enter) shows it in the details panel.
+ */
 export default function HotspotTable({
   hotspots,
   folders,
@@ -54,7 +51,6 @@ export default function HotspotTable({
   detailId = null,
   onShowDetails,
 }: HotspotTableProps) {
-  const { data: allTags = [] } = useTags();
   const selectedCount = hotspots.filter((hotspot) => selectedIds.has(hotspot.id)).length;
   const allSelected = hotspots.length > 0 && selectedCount === hotspots.length;
   const tagSort = TAG_DIMENSIONS.some((dimension) => dimension.value === sort);
@@ -80,7 +76,9 @@ export default function HotspotTable({
                 />
               )}
             </th>
-            <th className="hotspot-table__thumb-head">Podgląd</th>
+            <th className="hotspot-table__thumb-head">
+              <span className="visually-hidden">Podgląd</span>
+            </th>
             <th>Nazwa</th>
             {sortFeature && (
               <th title={sortFeature.description} className="hotspot-table__number hotspot-table__active">
@@ -89,10 +87,10 @@ export default function HotspotTable({
             )}
             {showFolder && <th>Folder</th>}
             <th className={tagSort ? 'hotspot-table__active' : undefined}>Tagi</th>
-            <th>Status</th>
+            <th>Stan</th>
             <th className="hotspot-table__number">Anotacje</th>
             <th className={`hotspot-table__number${sort === 'score' ? ' hotspot-table__active' : ''}`}>Wynik</th>
-            <th className={`hotspot-table__date${sort === 'created_at' ? ' hotspot-table__active' : ''}`}>Utworzono</th>
+            <th className={`hotspot-table__date${sort === 'created_at' ? ' hotspot-table__active' : ''}`}>Dodano</th>
             <th className="hotspot-table__actions">Akcje</th>
           </tr>
         </thead>
@@ -102,7 +100,6 @@ export default function HotspotTable({
               key={hotspot.id}
               hotspot={hotspot}
               folders={folders}
-              allTags={allTags}
               linkSearch={linkSearch}
               selected={selectedIds.has(hotspot.id)}
               onToggleSelect={() => onToggleSelect(hotspot.id)}
@@ -121,7 +118,6 @@ export default function HotspotTable({
 interface HotspotRowProps {
   hotspot: Hotspot;
   folders: HotspotFolder[];
-  allTags: Tag[];
   linkSearch: string;
   selected: boolean;
   onToggleSelect: () => void;
@@ -134,7 +130,6 @@ interface HotspotRowProps {
 function HotspotRow({
   hotspot,
   folders,
-  allTags,
   linkSearch,
   selected,
   onToggleSelect,
@@ -158,21 +153,7 @@ function HotspotRow({
     ...hotspot.tags.filter((tag) => tag.dimension === null),
   ];
 
-  useEffect(() => {
-    if (!isMoveOpen) return undefined;
-    const closeOutside = (event: MouseEvent) => {
-      if (!moveRoot.current?.contains(event.target as Node)) setIsMoveOpen(false);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsMoveOpen(false);
-    };
-    document.addEventListener('mousedown', closeOutside);
-    document.addEventListener('keydown', closeOnEscape);
-    return () => {
-      document.removeEventListener('mousedown', closeOutside);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
-  }, [isMoveOpen]);
+  useDismiss(isMoveOpen, moveRoot, () => setIsMoveOpen(false));
 
   const saveName = async () => {
     const name = nameDraft?.trim();
@@ -205,6 +186,25 @@ function HotspotRow({
     }
   };
 
+  const showDetails = (event: MouseEvent<HTMLElement>) => {
+    if (onShowDetails && !isRowControl(event)) onShowDetails();
+  };
+
+  // Enter shows the focused row; the arrows move to the next/previous row and show it.
+  const onRowKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === 'Enter') onShowDetails?.();
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      const row = (
+        event.key === 'ArrowDown' ? event.currentTarget.nextElementSibling : event.currentTarget.previousElementSibling
+      ) as HTMLElement | null;
+      if (!row) return;
+      event.preventDefault();
+      row.focus();
+      row.click();
+    }
+  };
+
   return (
     <tr
       className={
@@ -212,19 +212,18 @@ function HotspotRow({
           .filter(Boolean)
           .join(' ') || undefined
       }
+      tabIndex={onShowDetails ? 0 : undefined}
+      aria-selected={onShowDetails ? detailsOpen : undefined}
+      onClick={showDetails}
+      onKeyDown={onRowKeyDown}
     >
       <td className="hotspot-table__check">
         <input type="checkbox" checked={selected} aria-label={`Zaznacz hotspot ${hotspot.name}`} onChange={onToggleSelect} />
       </td>
       <td>
-        <Link
-          to={link}
-          className="hotspot-table__thumb"
-          title="Otwórz do anotacji"
-          aria-label={`Otwórz hotspot ${hotspot.name}`}
-        >
+        <span className="hotspot-table__thumb">
           <img src={getHotspotThumbnailUrl(hotspot.id)} alt="" loading="lazy" />
-        </Link>
+        </span>
       </td>
       <td className="hotspot-table__name">
         {nameDraft !== null ? (
@@ -251,7 +250,7 @@ function HotspotRow({
             />
           </span>
         ) : (
-          <Link to={link} className="hotspot-table__name-link" title={hotspot.name}>
+          <Link to={link} className="hotspot-table__name-link" title={`Otwórz do anotacji: ${hotspot.name}`}>
             {hotspot.name}
           </Link>
         )}
@@ -259,7 +258,7 @@ function HotspotRow({
       </td>
       {sortFeature && (
         <td className="hotspot-table__number mono-data hotspot-table__strong">
-          {hotspot.features?.[sortFeature] === undefined ? '—' : hotspot.features[sortFeature].toFixed(2)}
+          {hotspot.features?.[sortFeature] === undefined ? '—' : formatDecimal(hotspot.features[sortFeature], 2)}
         </td>
       )}
       {showFolder && (
@@ -274,28 +273,18 @@ function HotspotRow({
           <span className="hotspot-pills hotspot-table__tags">
             {tags.map((tag) => (
               <span key={tag.id} title={tagLabel(tag)}>
-                <Badge tone={tagTone(tag, allTags)}>{tag.name}</Badge>
+                <Badge>{tag.name}</Badge>
               </span>
             ))}
           </span>
         )}
       </td>
-      <td>{status && <Badge tone={STATUS_TONES[status.value]}>{status.label}</Badge>}</td>
+      <td className="hotspot-table__status">{status?.label}</td>
       <td className="hotspot-table__number mono-data">{hotspot.annotation_count}</td>
       <td className="hotspot-table__number mono-data hotspot-table__strong">{hotspot.score}</td>
       <td className="mono-data hotspot-table__date">{formatDateTime(hotspot.created_at)}</td>
       <td className="hotspot-table__actions">
         <div className="hotspot-table__action-row">
-          {onShowDetails && (
-            <Button
-              variant="ghost"
-              active={detailsOpen}
-              icon={<PanelRight size={14} />}
-              title="Szczegóły"
-              aria-label={`Szczegóły hotspotu ${hotspot.name}`}
-              onClick={onShowDetails}
-            />
-          )}
           <Button
             variant="ghost"
             icon={<Pencil size={14} />}
@@ -345,20 +334,13 @@ function HotspotRow({
             onClick={() => setIsConfirmingDelete(true)}
           />
         </div>
-        <Modal title="Usuń hotspot" open={isConfirmingDelete} onClose={() => setIsConfirmingDelete(false)}>
-          <p>
-            Czy na pewno chcesz usunąć hotspot „{hotspot.name}”? Obraz oraz wszystkie jego anotacje zostaną trwale
-            usunięte. Slajd źródłowy pozostaje bez zmian.
-          </p>
-          <div className="hotspot-form__actions">
-            <Button onClick={() => setIsConfirmingDelete(false)} disabled={isDeleting}>
-              Wróć
-            </Button>
-            <Button variant="primary" onClick={() => void confirmDelete()} disabled={isDeleting}>
-              {isDeleting ? 'Usuwanie…' : 'Usuń'}
-            </Button>
-          </div>
-        </Modal>
+        <HotspotDeleteModal
+          name={hotspot.name}
+          open={isConfirmingDelete}
+          isDeleting={isDeleting}
+          onConfirm={() => void confirmDelete()}
+          onClose={() => setIsConfirmingDelete(false)}
+        />
       </td>
     </tr>
   );

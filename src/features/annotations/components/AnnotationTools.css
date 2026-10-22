@@ -1,57 +1,8 @@
-/* Tool strip floating over the canvas, top-left: label, tools, then undo / redo. */
-.annotation-tools {
-  position: absolute;
-  top: var(--space-3);
-  left: var(--space-3);
-  z-index: 80;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-1);
-  border: var(--border-width) solid var(--c-border);
-  border-radius: 10px;
-  background: var(--c-surface);
-  box-shadow: var(--shadow-md);
-}
-
-.annotation-tools__label {
-  padding: 2px 0 var(--space-1);
-  font-size: 10px;
-  font-weight: 500;
-  line-height: 14px;
-  letter-spacing: 0.06em;
-  text-align: center;
-  text-transform: uppercase;
-  color: var(--c-text-3);
-}
-
+/* Annotation tools: the shared floating .tool-column (global.css); tools, a line, then undo / redo. */
 .annotation-tools__divider {
   height: 1px;
   margin: var(--space-1) 2px;
   background: var(--c-border);
-}
-
-.annotation-tools .btn {
-  border-color: transparent;
-  background: transparent;
-  color: var(--c-text-2);
-  box-shadow: none;
-}
-
-.annotation-tools .btn--icon-only {
-  width: 36px;
-  height: 32px;
-  border-radius: 7px;
-}
-
-.annotation-tools .btn:hover:not(:disabled) {
-  background: var(--c-hover);
-  color: var(--c-text);
-}
-
-.annotation-tools .btn:disabled {
-  background: transparent;
-  color: var(--c-border-strong);
 }
 
 .tool-mode-toggle {
@@ -60,77 +11,7 @@
   gap: 2px;
 }
 
-.annotation-tools .tool-mode-toggle .btn--icon-only {
-  height: 36px;
-}
-
-/* The active tool is a solid accent tile. */
-.annotation-tools .tool-mode-toggle .btn--active,
-.annotation-tools .tool-mode-toggle .btn--active:hover:not(:disabled) {
-  background: var(--c-accent);
-  color: var(--c-on-primary);
-}
-
-/* Drawing hint: dark chip beside the tool strip, dark in both themes so it reads over any tissue. */
-.drawing-hint {
-  position: absolute;
-  top: var(--space-3);
-  left: 64px;
-  z-index: 80;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  max-width: calc(100% - 64px - 260px);
-  height: 32px;
-  padding: 0 var(--space-3) 0 var(--space-2);
-  overflow: hidden;
-  border-radius: var(--radius-md);
-  background: rgb(15 27 42 / 0.88);
-  color: #e6eaf0;
-  font-size: 12px;
-  line-height: 16px;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.drawing-hint__tool {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 6px;
-  height: 22px;
-  padding: 0 var(--space-2);
-  border-radius: 5px;
-  background: color-mix(in srgb, var(--c-accent) 28%, transparent);
-  font-weight: 500;
-}
-
-.drawing-hint__class {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 6px;
-}
-
-.drawing-hint__swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.4);
-}
-
-.drawing-hint__dot {
-  flex: none;
-  opacity: 0.4;
-}
-
-.drawing-hint__text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Annotation list of the viewer panel: header with count and type filter, rows below. */
+/* Annotation list of the viewer panel: header strip with count and type filter, a bordered list below. */
 .annotation-panel {
   display: flex;
   flex: 1;
@@ -138,62 +19,52 @@
   min-height: 0;
 }
 
-.annotation-panel__head {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  min-height: 26px;
-  padding: 10px var(--space-3) 6px var(--space-4);
-  box-sizing: content-box;
-}
-
 .annotation-panel__count {
-  font-family: var(--font-mono);
-  letter-spacing: 0;
+  margin-left: 2px;
+  font-weight: 400;
+  color: var(--c-text-3);
 }
 
 .annotation-panel__filter {
   max-width: 160px;
-  height: 26px;
-  padding: 0 24px 0 var(--space-2);
+  height: 20px;
+  padding: 0 18px 0 6px;
   font-size: 12px;
 }
 
 .annotation-panel__body {
   flex: 1;
   min-height: 0;
-  padding: 0 var(--space-2) var(--space-2);
+  padding: 10px;
   overflow-y: auto;
 }
 
 .annotation-list {
   display: flex;
   flex-direction: column;
-  gap: 1px;
   margin: 0;
   padding: 0;
+  overflow: hidden;
+  border: var(--border);
+  border-radius: var(--radius-md);
+  background: var(--c-input);
   list-style: none;
 }
 
 .annotation-list__empty {
-  margin: 0;
-  padding: var(--space-4) var(--space-2);
-  font-size: 12px;
-  line-height: 16px;
   color: var(--c-text-3);
-  text-align: center;
 }
 
 .annotation-item {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  height: 32px;
-  padding: 0 var(--space-1) 0 var(--space-2);
-  border-radius: 5px;
-  transition: background-color var(--motion-fast) var(--easing);
+  gap: 6px;
+  height: 26px;
+  padding: 0 2px 0 var(--space-2);
+}
+
+.annotation-item + .annotation-item {
+  border-top: var(--border);
 }
 
 .annotation-item:hover {
@@ -209,8 +80,8 @@
   width: 10px;
   height: 10px;
   flex-shrink: 0;
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px var(--c-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25);
 }
 
 .annotation-item__main {
@@ -228,31 +99,33 @@
 }
 
 .annotation-item__main:focus-visible {
-  border-radius: var(--radius-xs);
-  outline: 2px solid var(--c-accent);
+  outline: 2px solid var(--c-focus-outline);
   outline-offset: 1px;
 }
 
 .annotation-item__number {
-  width: 30px;
-  font-family: var(--font-mono);
+  width: 28px;
   font-size: 12px;
   line-height: 16px;
-  color: var(--c-text-2);
+  color: var(--c-text-3);
   white-space: nowrap;
+}
+
+.annotation-item--selected .annotation-item__number {
+  color: var(--c-text);
+  font-weight: 600;
 }
 
 /* Borderless until hovered, like an inline cell editor. */
 .annotation-item__class {
   flex: 1;
   min-width: 0;
-  height: 24px;
-  padding: 0 20px 0 6px;
+  height: 20px;
+  padding: 0 18px 0 4px;
   border: 1px solid transparent;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   background-color: transparent;
   color: var(--c-text);
-  font-size: 13px;
   cursor: pointer;
 }
 
@@ -269,23 +142,22 @@
 
 .annotation-item__points {
   flex: none;
-  min-width: 40px;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  min-width: 36px;
+  font-size: 12px;
   color: var(--c-text-3);
   text-align: right;
   white-space: nowrap;
 }
 
 .annotation-item .btn--ghost.btn--icon-only {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   color: var(--c-text-3);
 }
 
 .annotation-item .btn--ghost.btn--icon-only:hover:not(:disabled) {
-  background: var(--c-danger-soft);
+  background: transparent;
   color: var(--c-danger-text);
 }

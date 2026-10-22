@@ -4,7 +4,7 @@
  * held in a Map<cellTypeId, color> that lives in the component's state.
  */
 
-export const CELL_TYPE_PALETTE: readonly string[] = [
+const CELL_TYPE_PALETTE: readonly string[] = [
   '#FFD60A', // yellow
   '#00E5FF', // cyan
   '#A6F000', // lime
@@ -37,13 +37,4 @@ export function assignCellTypeColors(
     }
   }
   return updated;
-}
-
-/** Return the color for a given cell type id, falling back to the grey swatch. */
-export function getCellTypeColor(
-  colorMap: ReadonlyMap<number, string>,
-  cellTypeId: number | null | undefined,
-): string {
-  if (cellTypeId == null) return FALLBACK_CELL_TYPE_COLOR;
-  return colorMap.get(cellTypeId) ?? FALLBACK_CELL_TYPE_COLOR;
 }

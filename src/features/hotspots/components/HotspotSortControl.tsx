@@ -1,4 +1,3 @@
-import { ArrowDownWideNarrow, ArrowUpNarrowWide } from 'lucide-react';
 import type { HotspotSort, SortOrder } from '../../../types/hotspot';
 import type { HotspotSortOption } from '../utils/hotspotSort';
 import './Hotspots.css';
@@ -14,7 +13,6 @@ interface HotspotSortControlProps {
 /** Orders the catalog by date, an image feature or the tags, ascending or descending. */
 export default function HotspotSortControl({ options, sort, order, onChange }: HotspotSortControlProps) {
   const selected = options.find((option) => option.value === sort);
-  const descending = order === 'desc';
 
   return (
     <div className="hotspot-sort">
@@ -32,26 +30,15 @@ export default function HotspotSortControl({ options, sort, order, onChange }: H
           </option>
         ))}
       </select>
-      <div className="hotspot-sort__order" role="group" aria-label="Kierunek sortowania">
-        <button
-          type="button"
-          className={`hotspot-sort__dir${descending ? '' : ' hotspot-sort__dir--active'}`}
-          aria-pressed={!descending}
-          onClick={() => onChange(sort, 'asc')}
-        >
-          <ArrowUpNarrowWide size={14} aria-hidden="true" />
-          Rosnąco
-        </button>
-        <button
-          type="button"
-          className={`hotspot-sort__dir${descending ? ' hotspot-sort__dir--active' : ''}`}
-          aria-pressed={descending}
-          onClick={() => onChange(sort, 'desc')}
-        >
-          <ArrowDownWideNarrow size={14} aria-hidden="true" />
-          Malejąco
-        </button>
-      </div>
+      <select
+        className="hotspot-sort__select hotspot-sort__direction"
+        aria-label="Kierunek sortowania"
+        value={order}
+        onChange={(event) => onChange(sort, event.target.value as SortOrder)}
+      >
+        <option value="desc">Malejąco</option>
+        <option value="asc">Rosnąco</option>
+      </select>
     </div>
   );
 }

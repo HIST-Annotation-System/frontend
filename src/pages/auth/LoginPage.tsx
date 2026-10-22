@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import BrandLogo from '../../components/layout/BrandLogo';
 import AuthAppearance from './AuthAppearance';
@@ -43,7 +43,6 @@ export default function LoginPage() {
 
           {error && (
             <div className="auth-error" role="alert">
-              <AlertCircle size={16} aria-hidden="true" />
               <span>{error}</span>
             </div>
           )}
@@ -92,7 +91,7 @@ export default function LoginPage() {
 
           <button type="submit" disabled={loading} className="auth-button">
             {loading && <span className="auth-button__spinner" aria-hidden="true" />}
-            {loading ? 'Logowanie...' : 'Zaloguj się'}
+            {loading ? 'Logowanie…' : 'Zaloguj się'}
           </button>
         </form>
 

@@ -14,7 +14,7 @@ import { polygonVertices, sameGeometry, toPolygonGeometry } from '../../../utils
 import { flattenCurve, hasSmoothPoints } from './curve';
 
 /** W3C annotation body purpose used to attach the tissue class to a shape. */
-export const CLASSIFYING_PURPOSE = 'classifying';
+const CLASSIFYING_PURPOSE = 'classifying';
 
 /** Point of an Annotorious path (`@annotorious/plugin-tools`). */
 export interface PolylinePoint {

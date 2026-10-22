@@ -33,11 +33,3 @@ export const fitSlideRect = (viewer: OpenSeadragon.Viewer, rect: Rect, offset: O
     immediately,
   );
 };
-
-/** The Deep Zoom image rectangle shown by the whole viewer container (not clipped to the image); null until open. */
-export const getVisibleImageRect = (viewer: OpenSeadragon.Viewer): Rect | null => {
-  const image = slideImage(viewer);
-  if (!image) return null;
-  const { x, y, width, height } = image.viewportToImageRectangle(viewer.viewport.getBounds(true));
-  return { x, y, width, height };
-};

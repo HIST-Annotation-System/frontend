@@ -1,18 +1,19 @@
-import { Calculator, Check, CircleAlert, Lock, Pencil, Plus, Trash2, X } from 'lucide-react';
-import Badge from '../../components/ui/Badge';
-import { useState, type FormEvent } from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
+import { useState, type FormEvent, type KeyboardEvent } from 'react';
+import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useTagMutations, useTags } from '../../features/hotspots/hooks/useTags';
 import {
   CUSTOM_TAG_DEFAULT_WEIGHT,
   customWeightCap,
   maxCustomWeight,
-  dimensionTags,
   TAG_DIMENSIONS,
   TAG_WEIGHT_MAX,
-  tagTone,
+  tagErrorMessage,
 } from '../../features/hotspots/utils/hotspotTags';
 import type { Tag } from '../../types/tag';
 import { getErrorMessage } from '../../utils/errors';
+import AdminAlert from './AdminAlert';
 import './TagsPage.css';
 
 /** The shared hotspot tags: names, weights (a hotspot's score is the sum), and removal of custom tags. */
@@ -22,19 +23,16 @@ export default function TagsPage() {
   const [newName, setNewName] = useState('');
   const [newWeight, setNewWeight] = useState(CUSTOM_TAG_DEFAULT_WEIGHT);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const cap = customWeightCap(tags);
-  // Display split only: core ratings (with a dimension) vs. tags created by experts.
-  const baseTags = tags.filter((tag) => TAG_DIMENSIONS.some((item) => item.value === tag.dimension));
-  const customTags = tags.filter((tag) => !TAG_DIMENSIONS.some((item) => item.value === tag.dimension));
-  // Worked example of the score: heaviest value of each dimension plus the first custom tag.
-  const exampleTags = [
-    ...TAG_DIMENSIONS.map((dimension) => dimensionTags(tags, dimension.value)[0]),
-    customTags[0],
-  ].filter((tag): tag is Tag => tag !== undefined);
-  const example = `${exampleTags.map((tag) => `${tag.name} ${tag.weight}`).join(' + ')} = ${exampleTags.reduce(
-    (sum, tag) => sum + tag.weight,
-    0,
-  )}`;
+  // Display order only: the core ratings by dimension (Ważność, Poprawność), then tags created by experts.
+  const groups = [
+    ...TAG_DIMENSIONS.map((dimension) => ({
+      label: dimension.label,
+      tags: tags.filter((tag) => tag.dimension === dimension.value),
+    })),
+    { label: 'Własne', tags: tags.filter((tag) => !TAG_DIMENSIONS.some((item) => item.value === tag.dimension)) },
+  ];
 
   const create = async (event: FormEvent) => {
     event.preventDefault();
@@ -45,222 +43,244 @@ export default function TagsPage() {
       await createTag({ name, weight: newWeight });
       setNewName('');
     } catch (requestError) {
-      setApiError(getErrorMessage(requestError, 'Nie udało się utworzyć tagu.'));
+      setApiError(tagErrorMessage(requestError, 'Nie udało się utworzyć tagu.'));
     }
   };
 
   return (
     <div className="admin-page tags-page">
       <div className="admin-page-header">
-        <div className="admin-page-header__text">
-          <h1 className="page-title">Tagi hotspotów</h1>
-        </div>
+        <h1 className="admin-page-title">
+          Tagi hotspotów
+          <span className="admin-page-count">{tags.length}</span>
+        </h1>
       </div>
 
-      {apiError && (
-        <div className="admin-alert admin-card--narrow" role="alert">
-          <CircleAlert size={16} aria-hidden="true" />
-          <span>{apiError}</span>
-          <button type="button" className="admin-alert__dismiss" title="Zamknij" onClick={() => setApiError(null)}>
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
-      {exampleTags.length > 1 && (
-        <div className="tags-example admin-card--narrow">
-          <Calculator size={16} className="tags-example__icon" aria-hidden="true" />
-          <span>
-            Przykład: <span className="tags-example__formula">{example}</span>
-          </span>
-        </div>
-      )}
-
-      {baseTags.length > 0 && (
-        <div className="admin-card admin-card--narrow">
-          <div className="tags-card__header">
-            <h2 className="admin-card__title">Oceny podstawowe</h2>
-          </div>
-          {TAG_DIMENSIONS.map((dimension) => {
-            const groupTags = baseTags.filter((tag) => tag.dimension === dimension.value);
-            if (groupTags.length === 0) return null;
-            return (
-              <div key={dimension.value} className="tags-group">
-                <span className="tags-group__label label-caps">{dimension.label}</span>
-                <ul className="tags-list" role="list">
-                  {groupTags.map((tag) => (
-                    <TagRow key={`${tag.id}:${tag.name}:${tag.weight}`} tag={tag} allTags={tags} onError={setApiError} />
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <div className="admin-card admin-card--narrow">
-        <div className="admin-card__header">
-          <h2 className="admin-card__title">Tagi własne ekspertów</h2>
-          <span className="admin-card__count">{customTags.length}</span>
-        </div>
-
-        <form onSubmit={(event) => void create(event)} className="admin-add-form">
+      <form onSubmit={(event) => void create(event)} className="admin-add">
+        <label className="admin-field">
+          <span className="admin-field__label">Nowy tag</span>
           <input
             type="text"
             className="admin-input"
-            placeholder="Nazwa nowego tagu…"
             maxLength={64}
             value={newName}
             onChange={(event) => setNewName(event.target.value)}
             autoComplete="off"
           />
-          <label className="tags-weight">
-            <span className="tags-weight__label">waga</span>
-            <input
-              type="number"
-              className="admin-input admin-input--weight"
-              aria-label="Waga nowego tagu"
-              title={`Wynik hotspotu to suma wag jego tagów. Tag własny musi ważyć mniej niż najlżejsza niezerowa ocena${cap === null ? '' : ` (obecnie < ${cap})`}.`}
-              min={0}
-              max={maxCustomWeight(tags)}
-              value={newWeight}
-              onChange={(event) => setNewWeight(Number(event.target.value))}
-            />
-          </label>
-          <button type="submit" className="btn-primary btn-sm" disabled={isCreating || !newName.trim()}>
-            <Plus size={14} />
-            Dodaj
-          </button>
-        </form>
+        </label>
+        <label className="admin-field">
+          <span className="admin-field__label">Waga</span>
+          <input
+            type="number"
+            className="admin-input admin-input--weight"
+            title={`Wynik hotspotu to suma wag jego tagów. Tag własny musi ważyć mniej niż najlżejsza niezerowa ocena${cap === null ? '' : ` (obecnie < ${cap})`}.`}
+            min={0}
+            max={maxCustomWeight(tags)}
+            value={newWeight}
+            onChange={(event) => setNewWeight(Number(event.target.value))}
+          />
+        </label>
+        <Button type="submit" variant="primary" disabled={isCreating || !newName.trim()}>
+          Dodaj
+        </Button>
+      </form>
 
-        {isLoading ? (
-          <div className="admin-loading">Ładowanie…</div>
-        ) : (
-          <ul className="tags-list" role="list">
-            {customTags.map((tag) => (
-              <TagRow key={`${tag.id}:${tag.name}:${tag.weight}`} tag={tag} allTags={tags} onError={setApiError} />
-            ))}
-            {customTags.length === 0 && <li className="admin-empty">Brak tagów własnych.</li>}
-          </ul>
-        )}
-      </div>
+      {apiError && <AdminAlert message={apiError} onDismiss={() => setApiError(null)} />}
+
+      {isLoading ? (
+        <div className="admin-loading">Ładowanie…</div>
+      ) : (
+        <table className="admin-table admin-table--760 admin-table--editable tags-table">
+          <thead>
+            <tr>
+              <th>Rodzaj</th>
+              <th>Nazwa</th>
+              <th className="admin-table__num">Waga</th>
+              <th className="admin-table__actions" aria-label="Akcje" />
+            </tr>
+          </thead>
+          <tbody>
+            {groups.flatMap((group) =>
+              group.tags.map((tag, index) => (
+                <TagRow
+                  key={tag.id}
+                  tag={tag}
+                  kind={index === 0 ? group.label : ''}
+                  isEditing={editingId === tag.id}
+                  onStartEdit={() => {
+                    setApiError(null);
+                    setEditingId(tag.id);
+                  }}
+                  onEndEdit={() => setEditingId(null)}
+                  onError={setApiError}
+                />
+              )),
+            )}
+            {tags.length === 0 && (
+              <tr className="admin-table__empty">
+                <td colSpan={4}>Brak tagów.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
 
 interface TagRowProps {
   tag: Tag;
-  allTags: Tag[];
+  /** The group label, shown only on the first row of its group. */
+  kind: string;
+  isEditing: boolean;
+  onStartEdit: () => void;
+  onEndEdit: () => void;
   onError: (message: string | null) => void;
 }
 
-function TagRow({ tag, allTags, onError }: TagRowProps) {
+/**
+ * One tag. The pencil edits a custom tag's name and weight together; a core rating keeps its name, so its pencil
+ * edits only the weight, and it cannot be deleted.
+ */
+function TagRow({ tag, kind, isEditing, onStartEdit, onEndEdit, onError }: TagRowProps) {
   const { updateTag, isUpdating, deleteTag, isDeleting } = useTagMutations();
   const [name, setName] = useState(tag.name);
   const [weight, setWeight] = useState(tag.weight);
   const dimension = TAG_DIMENSIONS.find((item) => item.value === tag.dimension);
   const changed = name.trim() !== tag.name || weight !== tag.weight;
-  // UI only: custom tag names show as a pill until the pencil opens the name field.
-  const [isRenaming, setIsRenaming] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const save = async () => {
+    if (!name.trim()) return;
+    if (!changed) {
+      onEndEdit();
+      return;
+    }
     onError(null);
     try {
       await updateTag({
         tagId: tag.id,
         changes: { ...(name.trim() !== tag.name && { name: name.trim() }), ...(weight !== tag.weight && { weight }) },
       });
+      onEndEdit();
     } catch (requestError) {
-      onError(getErrorMessage(requestError, 'Nie udało się zapisać tagu.'));
+      onError(tagErrorMessage(requestError, 'Nie udało się zapisać tagu.'));
     }
   };
 
   const remove = async () => {
-    if (!window.confirm(`Usunąć tag „${tag.name}”? Zniknie ze wszystkich hotspotów.`)) return;
     onError(null);
     try {
       await deleteTag(tag.id);
     } catch (requestError) {
       onError(getErrorMessage(requestError, 'Nie udało się usunąć tagu.'));
+    } finally {
+      setIsConfirmingDelete(false);
     }
   };
 
-  return (
-    <li className={`tags-row${dimension ? ' tags-row--base' : ''}`}>
-      {isRenaming ? (
-        <span className="tags-row__name-cell">
-          <input
-            type="text"
-            className="admin-input admin-input--inline tags-row__name"
-            aria-label="Nazwa tagu"
-            maxLength={64}
-            value={name}
-            autoFocus
-            onChange={(event) => setName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && changed && name.trim()) void save();
-              if (event.key === 'Escape') {
-                setName(tag.name);
-                setIsRenaming(false);
-              }
-            }}
-          />
-        </span>
-      ) : (
-        <span
-          className="tags-row__name-cell"
-          title={dimension ? 'Nazw ocen nie można zmieniać.' : undefined}
-        >
-          <span className="tags-pill">
-            <Badge tone={tagTone(tag, allTags)}>{name}</Badge>
-          </span>
+  const startEdit = () => {
+    setName(tag.name);
+    setWeight(tag.weight);
+    onStartEdit();
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') void save();
+    if (event.key === 'Escape') onEndEdit();
+  };
+
+  if (isEditing) {
+    return (
+      <tr>
+        <td className="admin-table__muted tags-kind">{kind}</td>
+        <td className="tags-name">
           {dimension ? (
-            <Lock size={12} className="tags-row__lock" aria-hidden="true" />
+            <span title="Nazw ocen nie można zmieniać.">{tag.name}</span>
+          ) : (
+            <input
+              type="text"
+              className="admin-edit-input"
+              aria-label="Nazwa tagu"
+              maxLength={64}
+              value={name}
+              autoFocus
+              disabled={isUpdating}
+              onChange={(event) => setName(event.target.value)}
+              onKeyDown={onKeyDown}
+            />
+          )}
+        </td>
+        <td className="admin-table__num">
+          <input
+            type="number"
+            className="admin-edit-input admin-edit-input--num"
+            aria-label="Waga tagu"
+            min={0}
+            max={TAG_WEIGHT_MAX}
+            value={weight}
+            autoFocus={dimension !== undefined}
+            disabled={isUpdating}
+            onChange={(event) => setWeight(Number(event.target.value))}
+            onKeyDown={onKeyDown}
+          />
+        </td>
+        <td className="admin-table__actions">
+          <span className="admin-row-actions">
+            <Button variant="primary" disabled={!name.trim() || isUpdating} onClick={() => void save()}>
+              Zapisz
+            </Button>
+            <Button onClick={onEndEdit}>Anuluj</Button>
+          </span>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr>
+      <td className="admin-table__muted tags-kind">{kind}</td>
+      <td className="admin-table__truncate tags-name" title={tag.name}>
+        {tag.name}
+      </td>
+      <td className="admin-table__num">{tag.weight}</td>
+      <td className="admin-table__actions">
+        <span className="admin-row-actions">
+          <button
+            type="button"
+            className="admin-icon-btn"
+            title={dimension ? 'Zmień wagę' : 'Zmień nazwę'}
+            aria-label={dimension ? 'Zmień wagę' : 'Zmień nazwę'}
+            onClick={startEdit}
+          >
+            <Pencil size={13} />
+          </button>
+          {dimension ? (
+            <span className="admin-icon-btn admin-icon-btn--placeholder" aria-hidden="true" />
           ) : (
             <button
               type="button"
-              className="admin-icon-btn tags-row__rename"
-              title="Zmień nazwę"
-              onClick={() => setIsRenaming(true)}
+              className="admin-icon-btn admin-icon-btn--danger"
+              title="Usuń tag"
+              aria-label="Usuń tag"
+              disabled={isDeleting}
+              onClick={() => setIsConfirmingDelete(true)}
             >
-              <Pencil size={13} />
+              <Trash2 size={13} />
             </button>
           )}
         </span>
-      )}
-      <label className="tags-weight">
-        <span className="tags-weight__label">waga</span>
-        <input
-          type="number"
-          className="admin-input admin-input--inline admin-input--weight"
-          aria-label="Waga tagu"
-          min={0}
-          max={TAG_WEIGHT_MAX}
-          value={weight}
-          onChange={(event) => setWeight(Number(event.target.value))}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && changed) void save();
-          }}
-        />
-      </label>
-      <button
-        type="button"
-        className="admin-icon-btn admin-icon-btn--success"
-        title="Zapisz"
-        disabled={!changed || !name.trim() || isUpdating}
-        onClick={() => void save()}
-      >
-        <Check size={15} />
-      </button>
-      <button
-        type="button"
-        className="admin-icon-btn admin-icon-btn--danger"
-        title={dimension ? 'Ocen nie można usuwać.' : 'Usuń tag'}
-        disabled={dimension !== undefined || isDeleting}
-        onClick={() => void remove()}
-      >
-        <Trash2 size={14} />
-      </button>
-    </li>
+        <ConfirmDialog
+          title="Usuń tag"
+          open={isConfirmingDelete}
+          confirmLabel="Usuń"
+          busy={isDeleting}
+          onConfirm={() => void remove()}
+          onCancel={() => setIsConfirmingDelete(false)}
+        >
+          Usunąć tag „{tag.name}”? Zniknie ze wszystkich hotspotów.
+        </ConfirmDialog>
+      </td>
+    </tr>
   );
 }

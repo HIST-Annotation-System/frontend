@@ -1,4 +1,4 @@
-/* Catalog layout: folder sidebar, then a fixed top (mode, header, toolbar) over a scrolling list. */
+/* Catalog layout: folder sidebar | title and toolbar strips over a full-width scrolling list | details panel. */
 .hotspots-layout {
   display: flex;
   flex: 1;
@@ -9,10 +9,10 @@
   display: flex;
   flex-direction: column;
   flex: none;
-  width: 264px;
+  width: 208px;
   min-height: 0;
   border-right: var(--border-width) solid var(--c-border);
-  background: var(--c-surface);
+  background: var(--c-pane);
 }
 
 .hotspots-sidebar__header {
@@ -20,13 +20,12 @@
   flex: none;
   align-items: center;
   justify-content: space-between;
-  height: 44px;
+  height: 40px;
   padding: 0 var(--space-3) 0 var(--space-4);
 }
 
 .hotspots-sidebar__count {
   color: var(--c-text-3);
-  font-family: var(--font-mono);
   font-size: 12px;
 }
 
@@ -35,33 +34,50 @@
 }
 
 .hotspots-page {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--c-page);
+}
+
+/* Title, toolbar and list; the details panel is a full-height column on its right. */
+.hotspots-page__main {
   position: relative;
   display: flex;
   flex: 1;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--c-page);
+}
+
+.hotspots-page__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .hotspots-page__top {
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: 14px;
-  padding: var(--space-4) var(--space-6) var(--space-3);
+  background: var(--c-surface);
 }
 
 .hotspots-page__header {
   display: flex;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-3);
+  min-height: 48px;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--border-width) solid var(--c-border);
 }
 
 .hotspots-page__heading {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-3);
   min-width: 0;
 }
@@ -69,6 +85,8 @@
 .hotspots-page__title {
   min-width: 0;
   margin: 0;
+  font-size: 16px;
+  line-height: 22px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -76,23 +94,19 @@
 
 .hotspots-page__total {
   color: var(--c-text-3);
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .hotspots-page__toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-}
-
-.hotspots-page__divider {
-  width: 1px;
-  height: 24px;
-  margin: 0 2px;
-  background: var(--c-border);
+  gap: var(--space-2) 10px;
+  min-height: 48px;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--border-width) solid var(--c-border);
 }
 
 .hotspots-page__status-locked.hotspot-sort__select:disabled {
@@ -108,7 +122,6 @@
 .hotspots-page__shown {
   margin-left: auto;
   color: var(--c-text-3);
-  font-family: var(--font-mono);
   font-size: 12px;
   white-space: nowrap;
 }
@@ -124,23 +137,20 @@
   flex: 1;
   min-width: 0;
   flex-direction: column;
-  gap: var(--space-4);
   min-height: 0;
   overflow: auto;
-  padding: var(--space-1) var(--space-6) var(--space-6);
 }
 
-/* Room for the floating bulk bar. */
-.hotspots-page__body--bulk {
-  padding-bottom: 80px;
+.hotspots-page__body > .hotspot-activity {
+  padding: var(--space-3) var(--space-4) 0;
 }
 
 .hotspots-page__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
   margin: 0;
-  padding: 0;
+  padding: var(--space-4);
   list-style: none;
 }
 
@@ -153,29 +163,14 @@
   transition: opacity var(--motion-fast) var(--easing);
 }
 
-/* Empty list: dashed box with an icon tile. */
+/* Empty list: a centred title and hint. */
 .hotspots-page__empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  margin-top: var(--space-2);
   padding: 64px var(--space-6);
-  border: var(--border-width) dashed var(--c-border-strong);
-  border-radius: var(--radius-md);
   text-align: center;
-}
-
-.hotspots-page__empty-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: var(--border-width) solid var(--c-border);
-  border-radius: 10px;
-  background: var(--c-surface);
-  color: var(--c-text-2);
 }
 
 .hotspots-page__empty-title {
@@ -208,13 +203,26 @@
   text-align: center;
 }
 
-.hotspots-page__no-folders > svg {
-  color: var(--c-text-3);
-}
-
 .hotspots-page__no-folders-title {
   color: var(--c-text);
   font-size: 16px;
   font-weight: 600;
   line-height: 22px;
+}
+
+/* Sorting and filtering are two groups: a wider gap between them instead of a line. */
+.hotspots-page__toolbar .hotspot-sort + * {
+  margin-left: 6px;
+}
+
+/* The cards' "select all" at the end of the toolbar. */
+.hotspots-page__select-all {
+  display: inline-flex;
+  margin-left: auto;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-text);
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
 }

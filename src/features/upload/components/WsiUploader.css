@@ -1,74 +1,17 @@
-/* Upload panel body: drop zone, queue, interrupted uploads, format guide. The whole body accepts drops;
-   the drop zone shows the drag state. */
+/* Library header: upload buttons with import/queue messages below them. */
 .wsi-uploader {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-2);
   min-width: 0;
-}
-
-.wsi-uploader__dropzone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 28px var(--space-5);
-  border: 1.5px dashed var(--c-border-strong);
-  border-radius: var(--radius-md);
-  background: var(--c-surface-2);
-  text-align: center;
-  transition:
-    border-color var(--motion-fast) var(--easing),
-    background-color var(--motion-fast) var(--easing);
-}
-
-.wsi-uploader--dragging .wsi-uploader__dropzone {
-  border-style: solid;
-  border-color: var(--c-accent);
-  background: var(--c-accent-soft);
-}
-
-.wsi-uploader__icon {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: var(--c-accent-soft);
-  color: var(--c-accent-text);
-}
-
-.wsi-uploader--dragging .wsi-uploader__icon {
-  background: var(--c-surface);
-}
-
-.wsi-uploader__prompt {
-  font-weight: 600;
-}
-
-.wsi-uploader__extensions {
-  color: var(--c-text-3);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 16px;
-}
-
-.wsi-uploader__hint {
-  max-width: 320px;
-  color: var(--c-text-2);
-  font-size: 12px;
-  line-height: 16px;
-  text-wrap: pretty;
 }
 
 .wsi-uploader__buttons {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  margin-top: 6px;
 }
 
 .wsi-uploader__message {

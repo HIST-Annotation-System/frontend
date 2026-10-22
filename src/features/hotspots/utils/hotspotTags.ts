@@ -1,5 +1,6 @@
 import type { BadgeTone } from '../../../components/ui/Badge';
 import type { Tag, TagDimension } from '../../../types/tag';
+import { getErrorMessage } from '../../../utils/errors';
 
 export const TAG_DIMENSIONS: { value: TagDimension; label: string }[] = [
   { value: 'importance', label: 'Ważność' },
@@ -45,4 +46,14 @@ export function tagTone(tag: Tag, allTags: Tag[]): BadgeTone {
     return dimensionTags(allTags, 'importance')[0]?.id === tag.id ? 'danger' : 'info';
   }
   return 'neutral';
+}
+
+/** The API's weight errors (backend services/tags.py) arrive in English; everything else as it comes. */
+export function tagErrorMessage(error: unknown, fallback: string): string {
+  const message = getErrorMessage(error, fallback);
+  const cap = /^Custom tags must weigh less than (\d+)/.exec(message)?.[1];
+  if (cap) return `Waga tagu własnego musi być mniejsza niż ${cap} (najmniejsza niezerowa waga oceny).`;
+  const conflict = /^Custom tags would outweigh the core tags; lower them below (\d+) first: (.*)\.$/.exec(message);
+  if (conflict) return `Tagi własne ważyłyby więcej niż oceny. Najpierw zmniejsz poniżej ${conflict[1]}: ${conflict[2]}.`;
+  return message;
 }

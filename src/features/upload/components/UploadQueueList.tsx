@@ -1,29 +1,19 @@
-import { CircleAlert, CircleCheck, Clock, LoaderCircle, RotateCw, X, type LucideIcon } from 'lucide-react';
+import { X } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import { useUpload } from '../../../context/UploadProvider';
 import { formatBytes } from '../../../utils/format';
 import { describeTransfer, progressPercent } from '../utils/uploadProgress';
-import { isActive, type UploadItem, type UploadItemStatus } from '../utils/uploadQueue';
+import { isActive, type UploadItem } from '../utils/uploadQueue';
 import './UploadQueueList.css';
-
-const STATUS_ICONS: Record<UploadItemStatus, LucideIcon> = {
-  queued: Clock,
-  uploading: LoaderCircle,
-  finalizing: LoaderCircle,
-  completed: CircleCheck,
-  error: CircleAlert,
-};
 
 function UploadQueueRow({ item }: { item: UploadItem }) {
   const { cancel, retry, remove, uploadAnyway } = useUpload();
   const active = isActive(item);
   const canResume = item.status === 'error' && item.resume !== null;
-  const StatusIcon = STATUS_ICONS[item.status];
 
   return (
     <li className={`upload-queue__item upload-queue__item--${item.status}`}>
       <div className="upload-queue__row">
-        <StatusIcon size={16} className="upload-queue__status-icon" aria-hidden="true" />
         <span className="upload-queue__name" title={item.file.name}>
           {item.file.name}
         </span>
@@ -38,7 +28,7 @@ function UploadQueueRow({ item }: { item: UploadItem }) {
             </Button>
           )}
           {canResume && (
-            <Button variant="ghost" icon={<RotateCw size={14} />} onClick={() => retry(item.id)}>
+            <Button variant="ghost" onClick={() => retry(item.id)}>
               Wznów
             </Button>
           )}

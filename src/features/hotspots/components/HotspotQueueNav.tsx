@@ -23,7 +23,7 @@ export default function HotspotQueueNav({ hotspot, query, search }: HotspotQueue
   const index = found >= 0 ? found : lastIndex;
   const previous = index > 0 ? data[index - 1] : undefined;
   const next = index >= 0 ? data[found >= 0 ? index + 1 : index] : undefined;
-  const position = isPending ? '…' : `${found >= 0 ? found + 1 : '–'} / ${data.length}`;
+  const position = isPending ? '…' : `${found >= 0 ? found + 1 : '—'} / ${data.length}`;
 
   return (
     <nav className="hotspot-queue" aria-label="Kolejka hotspotów">

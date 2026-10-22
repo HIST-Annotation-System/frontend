@@ -11,10 +11,6 @@ export interface StartUploadResponse {
   upload_id: string;
 }
 
-export interface PresignedUrlsResponse {
-  urls: string[];
-}
-
 export interface RefreshUrlsResponse {
   urls: Record<string, string>;
 }

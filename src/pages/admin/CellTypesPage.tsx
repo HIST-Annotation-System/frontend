@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cellTypesApi, cellTypeQueryKeys } from '../../services/cellTypesApi';
 import type { CellType } from '../../types/cellType';
-import { Trash2, Plus, Pencil, Check, X, CircleAlert } from 'lucide-react';
-import './CellTypesPage.css';
+import { Pencil, Trash2 } from 'lucide-react';
+import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import AdminAlert from './AdminAlert';
 
 export default function CellTypesPage() {
   const queryClient = useQueryClient();
   const [newName, setNewName] = useState('');
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editName, setEditName] = useState('');
   const [apiError, setApiError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<CellType | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const { data: cellTypes, isLoading } = useQuery({
     queryKey: cellTypeQueryKeys.all,
@@ -52,6 +54,7 @@ export default function CellTypesPage() {
     onError: (err: unknown) => {
       setDeleteError(extractError(err, 'Nie można usunąć — typ komórki jest używany w anotacjach.'));
     },
+    onSettled: () => setDeleting(null),
   });
 
   const handleCreate = (e: React.FormEvent) => {
@@ -61,169 +64,204 @@ export default function CellTypesPage() {
     createMutation.mutate(trimmed);
   };
 
-  const startEdit = (ct: CellType) => {
-    setEditingId(ct.id);
-    setEditName(ct.name);
+  const rename = (id: number, name: string) => {
     setApiError(null);
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setApiError(null);
-  };
-
-  const confirmEdit = (id: number) => {
-    const trimmed = editName.trim();
-    if (!trimmed) return;
-    updateMutation.mutate({ id, name: trimmed });
+    updateMutation.mutate({ id, name });
   };
 
   const handleDelete = (ct: CellType) => {
     setDeleteError(null);
-    if (window.confirm(`Usunąć typ komórki „${ct.name}"?`)) {
-      deleteMutation.mutate(ct.id);
-    }
+    setDeleting(ct);
   };
 
   return (
     <div className="admin-page ct-page">
       <div className="admin-page-header">
-        <div className="admin-page-header__text">
-          <h1 className="page-title">Typy komórek</h1>
-        </div>
+        <h1 className="admin-page-title">
+          Typy komórek
+          {cellTypes && <span className="admin-page-count">{cellTypes.length}</span>}
+        </h1>
       </div>
 
-      {apiError && (
-        <div className="admin-alert admin-card--narrow" role="alert">
-          <CircleAlert size={16} aria-hidden="true" />
-          <span>{apiError}</span>
-          <button type="button" className="admin-alert__dismiss" title="Zamknij" onClick={() => setApiError(null)}>
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
-      <div className="admin-card admin-card--narrow">
-        <div className="admin-card__header">
-          <h2 className="admin-card__title">Dostępne typy komórek</h2>
-          <span className="admin-card__count">{cellTypes?.length ?? 0}</span>
-        </div>
-
-        {/* Create form */}
-        <form onSubmit={handleCreate} className="admin-add-form">
+      <form onSubmit={handleCreate} className="admin-add">
+        <label className="admin-field">
+          <span className="admin-field__label">Nowy typ komórki</span>
           <input
             id="new-cell-type-input"
             type="text"
             className="admin-input"
-            placeholder="Nazwa nowego typu komórki…"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             autoComplete="off"
           />
-          <button
-            id="add-cell-type-btn"
-            type="submit"
-            className="btn-primary btn-sm"
-            disabled={createMutation.isPending || !newName.trim()}
-          >
-            <Plus size={14} />
-            Dodaj
-          </button>
-        </form>
+        </label>
+        <Button
+          id="add-cell-type-btn"
+          type="submit"
+          variant="primary"
+          disabled={createMutation.isPending || !newName.trim()}
+        >
+          Dodaj
+        </Button>
+      </form>
 
-        {/* List */}
-        <div className="admin-list__scroll">
-          {isLoading ? (
-            <div className="admin-loading">Ładowanie…</div>
-          ) : (
-            <ul className="ct-list" role="list">
-              {cellTypes && cellTypes.length > 0 && (
-                <li className="ct-list__head" aria-hidden="true">
-                  <span>Nazwa</span>
-                  <span />
-                </li>
-              )}
-              {cellTypes?.length === 0 && (
-                <li className="admin-empty">Brak typów komórek. Dodaj pierwszy powyżej.</li>
-              )}
-              {cellTypes?.map((ct) => {
-                // A failed delete is explained under its own row, as in the design.
-                const deleteBlocked = deleteError !== null && deleteMutation.variables === ct.id;
-                return (
-                  <li key={ct.id} className="ct-item">
-                    <div className="ct-item__row">
-                      {editingId === ct.id ? (
-                        /* Inline edit row */
-                        <div className="ct-item__edit-row">
-                          <input
-                            id={`edit-cell-type-${ct.id}`}
-                            type="text"
-                            className="admin-input admin-input--inline ct-input--editing"
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') confirmEdit(ct.id);
-                              if (e.key === 'Escape') cancelEdit();
-                            }}
-                            autoFocus
-                          />
-                          <button
-                            type="button"
-                            className="admin-icon-btn admin-icon-btn--success"
-                            title="Zapisz"
-                            onClick={() => confirmEdit(ct.id)}
-                            disabled={updateMutation.isPending || !editName.trim()}
-                          >
-                            <Check size={15} />
-                          </button>
-                          <button
-                            type="button"
-                            className="admin-icon-btn"
-                            title="Anuluj"
-                            onClick={cancelEdit}
-                          >
-                            <X size={15} />
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="ct-item__name-cell">
-                          <span className="ct-item__name">{ct.name}</span>
-                          <button
-                            type="button"
-                            className="admin-icon-btn ct-item__rename"
-                            title="Zmień nazwę"
-                            onClick={() => startEdit(ct)}
-                          >
-                            <Pencil size={13} />
-                          </button>
-                        </span>
-                      )}
-                      <span className="ct-item__actions">
-                        <button
-                          type="button"
-                          className="admin-icon-btn admin-icon-btn--danger"
-                          title="Usuń typ"
-                          onClick={() => handleDelete(ct)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </span>
-                    </div>
-                    {deleteBlocked && (
-                      <div className="ct-item__blocked" role="alert">
-                        <CircleAlert size={14} aria-hidden="true" />
-                        <span>{deleteError}</span>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-      </div>
+      {apiError && <AdminAlert message={apiError} onDismiss={() => setApiError(null)} />}
+
+      {isLoading ? (
+        <div className="admin-loading">Ładowanie…</div>
+      ) : (
+        <table className="admin-table admin-table--720 admin-table--editable">
+          <thead>
+            <tr>
+              <th>Nazwa</th>
+              <th className="admin-table__actions" aria-label="Akcje" />
+            </tr>
+          </thead>
+          <tbody>
+            {cellTypes?.length === 0 && (
+              <tr className="admin-table__empty">
+                <td colSpan={2}>Brak typów komórek.</td>
+              </tr>
+            )}
+            {cellTypes?.map((ct) => {
+              // A failed delete is explained under its own row.
+              const deleteBlocked = deleteError !== null && deleteMutation.variables === ct.id;
+              return (
+                <Fragment key={ct.id}>
+                  <CellTypeRow
+                    cellType={ct}
+                    isEditing={editingId === ct.id}
+                    isSaving={updateMutation.isPending && updateMutation.variables?.id === ct.id}
+                    isDeleting={deleteMutation.isPending}
+                    onStartEdit={() => {
+                      setApiError(null);
+                      setEditingId(ct.id);
+                    }}
+                    onCancelEdit={() => setEditingId(null)}
+                    onRename={(name) => rename(ct.id, name)}
+                    onDelete={() => handleDelete(ct)}
+                  />
+                  {deleteBlocked && (
+                    <tr className="admin-table__error">
+                      <td colSpan={2}>
+                        <span role="alert">{deleteError}</span>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+
+      <ConfirmDialog
+        title="Usuń typ komórki"
+        open={deleting !== null}
+        confirmLabel="Usuń"
+        busy={deleteMutation.isPending}
+        onConfirm={() => deleting && deleteMutation.mutate(deleting.id)}
+        onCancel={() => setDeleting(null)}
+      >
+        Usunąć typ komórki „{deleting?.name}”?
+      </ConfirmDialog>
     </div>
+  );
+}
+
+interface CellTypeRowProps {
+  cellType: CellType;
+  isEditing: boolean;
+  isSaving: boolean;
+  isDeleting: boolean;
+  onStartEdit: () => void;
+  onCancelEdit: () => void;
+  onRename: (name: string) => void;
+  onDelete: () => void;
+}
+
+/** One cell type: the name with rename and delete buttons, or a field with "Zapisz" / "Anuluj" while renaming. */
+function CellTypeRow({
+  cellType,
+  isEditing,
+  isSaving,
+  isDeleting,
+  onStartEdit,
+  onCancelEdit,
+  onRename,
+  onDelete,
+}: CellTypeRowProps) {
+  const [name, setName] = useState(cellType.name);
+  const trimmed = name.trim();
+  const save = () => {
+    if (!trimmed) return;
+    if (trimmed === cellType.name) onCancelEdit();
+    else onRename(trimmed);
+  };
+  const startEdit = () => {
+    setName(cellType.name);
+    onStartEdit();
+  };
+
+  if (isEditing) {
+    return (
+      <tr>
+        <td>
+          <input
+            type="text"
+            className="admin-edit-input"
+            aria-label="Nazwa typu komórki"
+            value={name}
+            autoFocus
+            disabled={isSaving}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') save();
+              if (e.key === 'Escape') onCancelEdit();
+            }}
+          />
+        </td>
+        <td className="admin-table__actions">
+          <span className="admin-row-actions">
+            <Button variant="primary" disabled={!trimmed || isSaving} onClick={save}>
+              Zapisz
+            </Button>
+            <Button onClick={onCancelEdit}>Anuluj</Button>
+          </span>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr>
+      <td className="admin-table__truncate" title={cellType.name}>
+        {cellType.name}
+      </td>
+      <td className="admin-table__actions">
+        <span className="admin-row-actions">
+          <button
+            type="button"
+            className="admin-icon-btn"
+            title="Zmień nazwę"
+            aria-label="Zmień nazwę"
+            onClick={startEdit}
+          >
+            <Pencil size={13} />
+          </button>
+          <button
+            type="button"
+            className="admin-icon-btn admin-icon-btn--danger"
+            title="Usuń typ komórki"
+            aria-label="Usuń typ komórki"
+            onClick={onDelete}
+            disabled={isDeleting}
+          >
+            <Trash2 size={13} />
+          </button>
+        </span>
+      </td>
+    </tr>
   );
 }
 

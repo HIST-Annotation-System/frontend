@@ -32,7 +32,7 @@ import { isActive, isAlreadyQueued, nextToStart, uploadQueueReducer, type Upload
 const DEFAULT_CONCURRENCY = 4;
 const MAX_CONCURRENCY = 8;
 /** Parts uploaded in parallel; override with VITE_UPLOAD_CONCURRENCY (1-8). */
-export const UPLOAD_CONCURRENCY = Math.min(
+const UPLOAD_CONCURRENCY = Math.min(
   MAX_CONCURRENCY,
   Math.max(1, Math.trunc(Number(import.meta.env.VITE_UPLOAD_CONCURRENCY)) || DEFAULT_CONCURRENCY),
 );

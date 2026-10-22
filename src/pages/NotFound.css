@@ -20,18 +20,6 @@
   text-align: center;
 }
 
-.not-found__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: var(--border-width) solid var(--c-border);
-  border-radius: 10px;
-  background: var(--c-surface-2);
-  color: var(--c-text-2);
-}
-
 .not-found__code {
   margin-top: var(--space-1);
   color: var(--c-text-3);
@@ -40,7 +28,7 @@
 .not-found__title {
   margin: 0;
   color: var(--c-text);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 20px;
 }

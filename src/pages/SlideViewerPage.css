@@ -5,47 +5,37 @@
   min-height: 0;
 }
 
-.viewer-page__sidebar {
-  display: flex;
-  flex-direction: column;
-  width: var(--sidebar-width);
-  flex-shrink: 0;
-  overflow-y: auto;
-  background: var(--c-surface);
-  border-right: var(--border-width) solid var(--c-border);
-}
-
-/* Sidebar on the right of the canvas (hotspot viewer). */
-.viewer-page__sidebar--end {
-  border-right: none;
-  border-left: var(--border-width) solid var(--c-border);
-}
-
 .viewer-page__main {
   position: relative;
   display: flex;
   flex: 1;
   flex-direction: column;
   min-width: 0;
-  padding: 0;
   background: var(--c-viewer);
 }
 
-/* Over the canvas, below the floating toolbars. */
+/* Action errors while the side pane is hidden: at the top centre of the image, clear of the tool panel. */
 .viewer-page__error {
   position: absolute;
-  top: 60px;
+  top: var(--space-3);
   left: 50%;
   z-index: 90;
-  width: min(520px, 90%);
+  width: min(520px, calc(100% - 2 * 72px));
   transform: translateX(-50%);
 }
 
-.viewer-page__error .error-message {
-  box-shadow: var(--shadow-md);
+/* Action errors at the top of the side pane. */
+.viewer-panel__error {
+  flex: none;
+  padding: var(--space-2);
+  border-bottom: var(--border);
 }
 
-/* Viewer screens: the context bar above the workspace. */
+.viewer-panel__corrected {
+  color: var(--c-text-2);
+}
+
+/* Viewer screens: the context bar above the workspace, the status bar (SlideViewer.css) under all of it. */
 .viewer-screen {
   display: flex;
   flex: 1;
@@ -61,7 +51,7 @@
   height: 40px;
   padding: 0 var(--space-2);
   overflow: hidden;
-  border-bottom: var(--border-width) solid var(--c-border);
+  border-bottom: var(--border);
   background: var(--c-surface);
   white-space: nowrap;
 }
@@ -75,60 +65,6 @@
   background: transparent;
 }
 
-.viewer-header__back {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 6px;
-  height: var(--control-sm);
-  padding: 0 10px 0 6px;
-  border-radius: var(--radius-sm);
-  color: var(--c-text-2);
-  font-size: 13px;
-  font-weight: 500;
-  text-decoration: none;
-  transition:
-    background-color var(--motion-fast) var(--easing),
-    color var(--motion-fast) var(--easing);
-}
-
-.viewer-header__back:hover {
-  background: var(--c-hover);
-  color: var(--c-text);
-}
-
-.viewer-header__back:focus-visible {
-  outline: 2px solid var(--c-accent);
-  outline-offset: 1px;
-}
-
-.viewer-header__divider {
-  flex: none;
-  width: 1px;
-  height: 20px;
-  background: var(--c-border);
-}
-
-.viewer-header__title {
-  min-width: 0;
-  overflow: hidden;
-  font-size: 13px;
-  font-weight: 600;
-  text-overflow: ellipsis;
-}
-
-.viewer-header__crumb--link {
-  border-radius: var(--radius-xs);
-  color: var(--c-text-2);
-  text-decoration: none;
-}
-
-.viewer-header__crumb--link:hover {
-  color: var(--c-text);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 .viewer-header__meta {
   flex: none;
   font-family: var(--font-mono);
@@ -136,190 +72,90 @@
   color: var(--c-text-3);
 }
 
-/* Breadcrumb of the hotspot viewer: mode chip, folder, hotspot name. */
-.viewer-header__chip {
+/* Breadcrumb of the hotspot viewer: catalog / folder / hotspot. */
+.crumbs {
   display: flex;
-  flex: none;
   align-items: center;
   gap: 6px;
-  height: 22px;
-  padding: 0 var(--space-2);
-  border-radius: 11px;
-  background: var(--c-accent-soft);
-  color: var(--c-accent-text);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.viewer-header__chip--sm {
-  gap: var(--space-1);
-  height: 20px;
-  padding: 0 7px;
-  border-radius: 10px;
-  font-size: 11px;
-}
-
-.viewer-header__crumb {
   min-width: 0;
-  overflow: hidden;
   font-size: 13px;
-  color: var(--c-text-2);
-  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.viewer-header__crumb-sep {
-  flex: none;
+.crumbs a {
+  color: var(--c-text-2);
+  text-decoration: none;
+}
+
+.crumbs a:hover {
+  color: var(--c-text);
+  text-decoration: underline;
+}
+
+.crumbs__sep {
   color: var(--c-text-3);
 }
 
-.viewer-header__name {
+.crumbs__here {
   min-width: 0;
   overflow: hidden;
-  font-family: var(--font-mono);
-  font-size: 13px;
   font-weight: 500;
   text-overflow: ellipsis;
 }
 
-/* Right-hand panel of a viewer (slide info, hotspot cell types / annotations / verdict). */
-.viewer-panel {
-  display: flex;
+.viewer-header__mode {
   flex: none;
-  flex-direction: column;
-  width: 288px;
-  min-height: 0;
-  overflow-y: auto;
-  border-left: var(--border-width) solid var(--c-border);
-  background: var(--c-surface);
+  color: var(--c-text-2);
+  font-size: 12px;
 }
 
-.viewer-panel--wide {
-  width: 312px;
-}
-
-.viewer-panel__head {
-  display: flex;
+/* Shows or hides the side pane, at the far end of the bar. */
+.viewer-header__panel-toggle {
   flex: none;
-  align-items: center;
-  justify-content: space-between;
-  height: 40px;
-  padding: 0 var(--space-2) 0 var(--space-4);
-  border-bottom: var(--border-width) solid var(--c-border);
-}
-
-.viewer-panel--slide .viewer-panel__head {
-  height: 44px;
-}
-
-.viewer-panel__icon-btn {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: var(--control-sm);
   height: var(--control-sm);
-  padding: 0;
+  margin-left: auto;
+  padding: 0 var(--space-2);
   border: none;
   border-radius: var(--radius-sm);
-  background: transparent;
+  background: none;
   color: var(--c-text-2);
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
   cursor: pointer;
-  transition:
-    background-color var(--motion-fast) var(--easing),
-    color var(--motion-fast) var(--easing);
 }
 
-.viewer-panel__icon-btn:hover {
-  background: var(--c-hover);
+.viewer-header__panel-toggle:hover {
+  background: var(--c-surface-2);
   color: var(--c-text);
 }
 
-.viewer-panel__icon-btn:focus-visible {
-  outline: 2px solid var(--c-accent);
-  outline-offset: -2px;
-}
-
-/* Rolled-up panel: a thin rail with the way back in. */
-.viewer-panel--collapsed {
-  align-items: center;
-  gap: 6px;
-  width: 44px;
-  padding-top: 6px;
-  overflow: hidden;
-}
-
-.viewer-panel--slide.viewer-panel--collapsed {
-  gap: var(--space-1);
-  width: 40px;
-  padding-top: var(--space-2);
-}
-
-.viewer-panel__rail-swatch {
-  width: 16px;
-  height: 16px;
-  margin-top: 6px;
-  border-radius: var(--radius-xs);
-  box-shadow: 0 0 0 1px var(--c-border-strong);
-}
-
-.viewer-panel__rail-count {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 16px;
-  color: var(--c-text-3);
-}
-
-/* Bordered blocks stacked in the panel. */
-.viewer-panel__section {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  gap: 10px;
-  padding: var(--space-3) var(--space-4) 14px;
-  border-top: var(--border-width) solid var(--c-border);
-}
-
-.viewer-panel__section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  min-height: 20px;
-}
-
-.viewer-panel__head + .viewer-panel__section {
-  border-top: none;
-}
-
-/* Cell types: search, recent chips and the list, under the panel head. */
-.viewer-panel__types {
-  flex: none;
-  padding: 10px var(--space-3) var(--space-2);
-  border-bottom: var(--border-width) solid var(--c-border);
-}
-
-/* The annotation list takes the spare height and scrolls inside. */
+/* The annotation list takes its own height; the sections follow right under it (the pane scrolls). */
 .viewer-panel__annotations {
   display: flex;
-  flex: 1 1 auto;
+  flex: none;
   flex-direction: column;
-  min-height: 160px;
-}
-
-.viewer-panel__section + .viewer-panel__annotations {
-  border-top: var(--border-width) solid var(--c-border);
+  border-bottom: var(--border);
 }
 
 /* Slide not available (loading error, still processing, failed). */
 .viewer-page__notice {
   display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-6);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  max-width: 520px;
+  padding: var(--space-6) var(--space-4);
 }
 
-.viewer-page__notice-card,
+.viewer-page__notice .error-message {
+  align-self: stretch;
+}
+
+.viewer-page__notice a {
+  color: var(--c-text);
+}
+
 .viewer-page__deleted-box {
   display: flex;
   flex-direction: column;
@@ -327,21 +163,15 @@
   gap: var(--space-3);
   width: 440px;
   max-width: 100%;
-  padding: 28px;
-  border: var(--border-width) solid var(--c-border);
+  padding: var(--space-6);
+  border: var(--border);
   border-radius: var(--radius-lg);
   background: var(--c-surface);
   color: var(--c-text);
-  box-shadow: var(--shadow-lg);
-}
-
-.viewer-page__notice-card .error-message {
-  align-self: stretch;
 }
 
 .viewer-page__notice-title,
 .viewer-page__deleted-box h2 {
-  margin: 0;
   font-size: 16px;
   font-weight: 600;
   line-height: 22px;
@@ -350,14 +180,10 @@
 
 .viewer-page__notice-text,
 .viewer-page__deleted-box p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 18px;
   color: var(--c-text-2);
   text-wrap: pretty;
 }
 
-.viewer-page__notice-card > .btn,
 .viewer-page__deleted-box > .btn {
   margin-top: var(--space-2);
 }
@@ -374,13 +200,3 @@
   background: var(--c-scrim);
 }
 
-.viewer-page__deleted-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: var(--c-danger-soft);
-  color: var(--c-danger-text);
-}

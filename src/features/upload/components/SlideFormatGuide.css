@@ -1,85 +1,41 @@
-.format-guide summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: var(--space-1) 0;
-  color: var(--c-text-2);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  list-style: none;
-}
-
-.format-guide summary::-webkit-details-marker {
-  display: none;
-}
-
-/* Disclosure chevron drawn in CSS (rotates when open). */
-.format-guide summary::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-right: 1.5px solid currentcolor;
-  border-bottom: 1.5px solid currentcolor;
-  transform: rotate(-45deg);
-  transition: transform var(--motion-fast) var(--easing);
-}
-
-.format-guide[open] summary::before {
-  transform: rotate(45deg);
-}
-
-.format-guide summary:hover {
-  color: var(--c-text);
-}
-
 .format-guide__table-wrap {
-  margin-top: var(--space-2);
   overflow-x: auto;
-  border: var(--border-width) solid var(--c-border);
+  border: var(--border);
   border-radius: var(--radius-md);
 }
 
 .format-guide__table {
   width: 100%;
+  border-style: hidden;
   border-collapse: collapse;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 12px;
+  line-height: 16px;
 }
 
 .format-guide__table th,
 .format-guide__table td {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: var(--border-width) solid var(--c-border);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border);
   text-align: left;
   vertical-align: top;
 }
 
-.format-guide__table tbody tr:last-child td {
-  border-bottom: none;
-}
-
 .format-guide__table th {
-  background: var(--c-surface-2);
-  color: var(--c-text-3);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  line-height: 16px;
-  text-transform: uppercase;
+  background: var(--c-pane);
+  color: var(--c-text-2);
+  font-weight: 400;
 }
 
-.format-guide__table td.mono-data {
-  color: var(--c-text-2);
-  font-size: 12px;
+.format-guide__table .tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 .format-guide__row--archive td:last-child {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .format-guide__note {
-  margin: var(--space-2) 0 0;
+  margin: var(--space-3) 0 0;
   color: var(--c-text-2);
   font-size: 12px;
   line-height: 16px;

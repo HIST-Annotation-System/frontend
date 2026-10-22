@@ -1,13 +1,11 @@
-import { Download, File } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import { getStorageDownloadUrl } from '../../../services/storageApi';
 import { getErrorMessage } from '../../../utils/errors';
-import { formatBytes, formatDateTime } from '../../../utils/format';
 import StorageExplorer from './StorageExplorer';
-import { fileKind } from './storageLabels';
+import StorageFileCells from './StorageFileCells';
 import './StorageBrowser.css';
 
 const PATH_PARAM = 'path';
@@ -43,22 +41,15 @@ export default function StorageBrowser() {
         onNavigate={navigateTo}
         renderFile={(object, name) => (
           <li key={object.key} className="storage-item">
-            <span className="storage-item__main storage-item__main--file">
-              <File size={16} className="storage-item__icon" aria-hidden="true" />
-              <span className="storage-item__name">{name}</span>
-            </span>
-            <span className="storage-item__meta storage-item__size">{formatBytes(object.size)}</span>
-            <span className="storage-item__meta">{formatDateTime(object.last_modified)}</span>
-            <span className="storage-item__kind">{fileKind(name)}</span>
+            <StorageFileCells object={object} name={name} />
             <span className="storage-item__action">
               <Button
-                variant="ghost"
-                icon={<Download size={14} />}
-                title="Pobierz plik"
-                aria-label="Pobierz plik"
+                title={`Pobierz ${name}`}
                 disabled={downloadingKey === object.key}
                 onClick={() => void openObject(object.key)}
-              />
+              >
+                Pobierz
+              </Button>
             </span>
           </li>
         )}

@@ -68,7 +68,7 @@ type UploadLocks = Pick<LockManager, 'request' | 'query'>;
 const LOCK_PREFIX = 'hist.upload.';
 export const UPLOAD_RUNNING_ELSEWHERE_MESSAGE = 'To przesyłanie trwa już w innej karcie przeglądarki.';
 
-export const uploadLockName = (slideId: string): string => `${LOCK_PREFIX}${slideId}`;
+const uploadLockName = (slideId: string): string => `${LOCK_PREFIX}${slideId}`;
 
 const browserLocks = (): UploadLocks | null => globalThis.navigator?.locks ?? null;
 

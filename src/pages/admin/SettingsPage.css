@@ -1,12 +1,47 @@
-.settings-grid {
+/* Categories and groups side by side, each at most 480px wide; stacked on narrow screens. */
+.settings-split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 480px));
+  column-gap: var(--space-8);
   align-items: start;
-  gap: var(--space-5);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.settings-section__title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  padding: var(--space-5) var(--space-4) 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.settings-section .admin-add {
+  padding-top: var(--space-3);
+}
+
+.settings-section .admin-add .admin-input {
+  width: 240px;
+}
+
+.admin-table td.settings-name {
+  width: 100%;
 }
 
 @media (max-width: 900px) {
-  .settings-grid {
-    grid-template-columns: minmax(0, 1fr);
+  .settings-split {
+    grid-template-columns: minmax(0, 480px);
+  }
+
+  .settings-section + .settings-section {
+    margin-top: var(--space-2);
   }
 }

@@ -1,5 +1,5 @@
 /** File extensions accepted as hotspot images (the server checks the actual content too). */
-export const HOTSPOT_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg'] as const;
+const HOTSPOT_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg'] as const;
 
 /** `accept` attribute for the file picker. */
 export const HOTSPOT_IMAGE_ACCEPT = [...HOTSPOT_IMAGE_EXTENSIONS, 'image/png', 'image/jpeg'].join(',');

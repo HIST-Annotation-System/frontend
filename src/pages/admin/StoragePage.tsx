@@ -5,11 +5,11 @@ export default function StoragePage() {
   return (
     <div className="admin-page storage-page">
       <div className="admin-page-header">
-        <div className="admin-page-header__text">
-          <h1 className="page-title">Zarządzanie plikami</h1>
-        </div>
+        <h1 className="admin-page-title">Magazyn</h1>
       </div>
-      <StorageBrowser />
+      <div className="storage-page__body">
+        <StorageBrowser />
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+
 import { useState } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -10,14 +10,11 @@ import './Hotspots.css';
 
 interface HotspotBulkBarProps {
   hotspotIds: string[];
-  /** How many hotspots are listed; offers selecting all of them while fewer are selected. */
-  visibleCount?: number;
-  onSelectVisible?: () => void;
   onClear: () => void;
 }
 
 /** Tags every selected hotspot at once. */
-export default function HotspotBulkBar({ hotspotIds, visibleCount, onSelectVisible, onClear }: HotspotBulkBarProps) {
+export default function HotspotBulkBar({ hotspotIds, onClear }: HotspotBulkBarProps) {
   const { data: tags = [] } = useTags();
   const { bulkTag, isBulkTagging } = useHotspotTagMutations();
   const [error, setError] = useState<string | null>(null);
@@ -57,12 +54,6 @@ export default function HotspotBulkBar({ hotspotIds, visibleCount, onSelectVisib
       <span className="hotspot-bulk__count">
         Zaznaczono <span className="mono-data">{hotspotIds.length}</span>
       </span>
-      {onSelectVisible && visibleCount !== undefined && visibleCount > hotspotIds.length && (
-        <button type="button" className="hotspot-bulk__select-all" onClick={onSelectVisible}>
-          Zaznacz widoczne ({visibleCount})
-        </button>
-      )}
-      <span className="hotspot-bulk__divider" aria-hidden="true" />
       {TAG_DIMENSIONS.map((dimension) =>
         actionSelect(`Ustaw: ${dimension.label.toLowerCase()}`, dimensionTags(tags, dimension.value), (tagId) =>
           void apply({ add: [tagId], remove: [] }),
@@ -70,7 +61,7 @@ export default function HotspotBulkBar({ hotspotIds, visibleCount, onSelectVisib
       )}
       {actionSelect('Dodaj tag', customTags(tags), (tagId) => void apply({ add: [tagId], remove: [] }))}
       {actionSelect('Usuń tag', tags, (tagId) => void apply({ add: [], remove: [tagId] }))}
-      <Button variant="ghost" icon={<X size={14} />} onClick={onClear}>
+      <Button variant="ghost" onClick={onClear}>
         Odznacz
       </Button>
       {error && (

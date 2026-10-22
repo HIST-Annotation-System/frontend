@@ -1,4 +1,4 @@
-import { ChevronRight, Cloud, CornerLeftUp, Folder, FolderOpen } from 'lucide-react';
+import { Folder, FolderUp } from 'lucide-react';
 import type { ReactNode } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -16,8 +16,9 @@ interface StorageExplorerProps {
   prefix: string;
   onNavigate: (prefix: string) => void;
   /**
-   * Renders one file row (an <li class="storage-item">) with cells: name, size, date, type and optionally an
-   * action (`.storage-item__action`); folders are always rendered the same way (they just navigate).
+   * Renders one file row (an <li class="storage-item">) with cells: name (`.storage-item__main`, icon first), size,
+   * date, type and optionally an action (`.storage-item__action`). A row that is clickable as a whole puts those
+   * cells in a `.storage-item__row` button instead. Folders always navigate on a click anywhere in the row.
    */
   renderFile: (object: StorageObject, name: string) => ReactNode;
 }
@@ -33,16 +34,19 @@ export default function StorageExplorer({ prefix, onNavigate, renderFile }: Stor
   return (
     <div className="storage-explorer">
       <nav className="storage-breadcrumb" aria-label="Ścieżka w magazynie">
-        <Cloud size={16} className="storage-breadcrumb__icon" aria-hidden="true" />
-        <button type="button" className="storage-breadcrumb__crumb" onClick={() => onNavigate('')}>
-          Magazyn
+        <button
+          type="button"
+          className={`storage-breadcrumb__crumb${segments.length === 0 ? ' storage-breadcrumb__crumb--current' : ''}`}
+          onClick={() => onNavigate('')}
+        >
+          magazyn
         </button>
         {segments.map((segment, index) => (
           <span key={segment + index.toString()} className="storage-breadcrumb__segment">
-            <ChevronRight size={14} className="storage-breadcrumb__sep" aria-hidden="true" />
+            <span className="storage-breadcrumb__sep" aria-hidden="true">/</span>
             <button
               type="button"
-              className="storage-breadcrumb__crumb"
+              className={`storage-breadcrumb__crumb${index === segments.length - 1 ? ' storage-breadcrumb__crumb--current' : ''}`}
               onClick={() => onNavigate(`${segments.slice(0, index + 1).join('/')}/`)}
             >
               {segment}
@@ -69,39 +73,37 @@ export default function StorageExplorer({ prefix, onNavigate, renderFile }: Stor
             <span>Typ</span>
           </li>
           {segments.length > 0 && (
-            <li className="storage-item storage-item--up">
+            <li className="storage-item">
               <button
                 type="button"
-                className="storage-item__main"
+                className="storage-item__row"
                 title="Folder nadrzędny"
                 onClick={() => onNavigate(parentPrefix)}
               >
-                <CornerLeftUp size={16} className="storage-item__icon" aria-hidden="true" />
-                <span className="storage-item__name">..</span>
+                <span className="storage-item__main">
+                  <FolderUp size={14} aria-hidden="true" />
+                  <span className="storage-item__name">..</span>
+                </span>
               </button>
             </li>
           )}
           {prefixes.map((folderPrefix) => (
             <li key={folderPrefix} className="storage-item">
-              <button type="button" className="storage-item__main" onClick={() => onNavigate(folderPrefix)}>
-                <Folder size={16} className="storage-item__icon storage-item__icon--folder" aria-hidden="true" />
-                <span className="storage-item__name">{relativeName(folderPrefix, prefix)}</span>
+              <button type="button" className="storage-item__row" onClick={() => onNavigate(folderPrefix)}>
+                <span className="storage-item__main storage-item__main--folder">
+                  <Folder size={14} aria-hidden="true" />
+                  <span className="storage-item__name" title={relativeName(folderPrefix, prefix)}>
+                    {relativeName(folderPrefix, prefix)}
+                  </span>
+                </span>
+                <span className="storage-item__meta storage-item__size">—</span>
+                <span className="storage-item__meta">—</span>
+                <span className="storage-item__kind">Folder</span>
               </button>
-              <span className="storage-item__meta storage-item__size">—</span>
-              <span className="storage-item__meta">—</span>
-              <span className="storage-item__kind">Folder</span>
             </li>
           ))}
           {objects.map((object) => renderFile(object, relativeName(object.key, prefix)))}
-          {isEmpty && (
-            <li className="storage-list__empty">
-              <span className="storage-list__empty-icon" aria-hidden="true">
-                <FolderOpen size={20} />
-              </span>
-              <span className="storage-list__empty-title">Ten folder jest pusty.</span>
-              <span className="storage-list__empty-text">Pliki wgrane do tego miejsca magazynu pojawią się tutaj.</span>
-            </li>
-          )}
+          {isEmpty && <li className="storage-list__empty">Ten folder jest pusty.</li>}
         </ul>
       )}
 

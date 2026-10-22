@@ -1,9 +1,8 @@
-import { File } from 'lucide-react';
+
 import { useState } from 'react';
-import { formatBytes, formatDateTime } from '../../../utils/format';
 import type { StorageObject } from '../../../types/storage';
 import StorageExplorer from './StorageExplorer';
-import { fileKind } from './storageLabels';
+import StorageFileCells from './StorageFileCells';
 
 interface StorageFilePickerProps {
   onSelect: (object: StorageObject) => void;
@@ -19,13 +18,9 @@ export default function StorageFilePicker({ onSelect }: StorageFilePickerProps) 
       onNavigate={setPrefix}
       renderFile={(object, name) => (
         <li key={object.key} className="storage-item">
-          <button type="button" className="storage-item__main" onClick={() => onSelect(object)}>
-            <File size={16} className="storage-item__icon" aria-hidden="true" />
-            <span className="storage-item__name">{name}</span>
+          <button type="button" className="storage-item__row" onClick={() => onSelect(object)}>
+            <StorageFileCells object={object} name={name} />
           </button>
-          <span className="storage-item__meta storage-item__size">{formatBytes(object.size)}</span>
-          <span className="storage-item__meta">{formatDateTime(object.last_modified)}</span>
-          <span className="storage-item__kind">{fileKind(name)}</span>
         </li>
       )}
     />

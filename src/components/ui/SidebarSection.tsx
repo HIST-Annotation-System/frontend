@@ -1,12 +1,10 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import './SidebarSection.css';
 
 interface SidebarSectionProps {
-  title?: string;
-  actions?: ReactNode;
-  grow?: boolean;
-  compact?: boolean;
+  title: string;
+  /** Shown after the title, e.g. a count. */
+  meta?: ReactNode;
   /** The title rolls the body up and down. */
   collapsible?: boolean;
   /** Whether a collapsible section starts unrolled. */
@@ -14,41 +12,36 @@ interface SidebarSectionProps {
   children: ReactNode;
 }
 
+/** A section of a side pane: a plain header strip over its body. */
 export default function SidebarSection({
   title,
-  actions,
-  grow = false,
-  compact = false,
+  meta,
   collapsible = false,
   defaultOpen = true,
   children,
 }: SidebarSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const isOpen = !collapsible || open;
+  const heading = (
+    <>
+      {collapsible && <span className="sidebar-section__caret">{open ? '▾' : '▸'}</span>}
+      {title}
+      {meta != null && <span className="sidebar-section__meta">{meta}</span>}
+    </>
+  );
 
   return (
-    <section className={`sidebar-section${grow ? ' sidebar-section--grow' : ''}`}>
-      {(title || actions) && (
-        <header className="sidebar-section__header">
-          {collapsible ? (
-            <button
-              type="button"
-              className="sidebar-section__toggle label-caps"
-              aria-expanded={open}
-              onClick={() => setOpen(!open)}
-            >
-              {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              {title}
-            </button>
-          ) : (
-            title && <h3 className="label-caps">{title}</h3>
-          )}
-          {actions}
-        </header>
-      )}
-      {isOpen && (
-        <div className={`sidebar-section__body${compact ? ' sidebar-section__body--compact' : ''}`}>{children}</div>
-      )}
+    <section className="sidebar-section">
+      <header className="pane-strip">
+        {collapsible ? (
+          <button type="button" className="sidebar-section__toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
+            {heading}
+          </button>
+        ) : (
+          <h3 className="sidebar-section__title">{heading}</h3>
+        )}
+      </header>
+      {isOpen && <div className="sidebar-section__body">{children}</div>}
     </section>
   );
 }

@@ -3,15 +3,6 @@ import { useTheme } from '../../context/ThemeProvider';
 
 type CellTypeKey = 'lymphocyte' | 'tumour' | 'fibroblast' | 'macrophage' | 'plasma' | 'endothelial';
 
-const CELL_TYPES: Record<CellTypeKey, { name: string; color: string }> = {
-  lymphocyte: { name: 'Limfocyt', color: '#FFD60A' },
-  tumour: { name: 'Komórka nowotworowa', color: '#00E5FF' },
-  fibroblast: { name: 'Fibroblast', color: '#A6F000' },
-  macrophage: { name: 'Makrofag', color: '#FF8A00' },
-  plasma: { name: 'Plazmocyt', color: '#00C26E' },
-  endothelial: { name: 'Komórka śródbłonka', color: '#2E6BFF' },
-};
-
 /** Depth layers: back (small, blurred), middle (sharp, annotated), front (large, blurred). */
 type Layer = 0 | 1 | 2;
 
@@ -48,12 +39,9 @@ interface Colors {
   accent: string;
   glow: string;
   handle: string;
-  chipBg: string;
-  chipFg: string;
   bgCentre: string;
   bgEdge: string;
   vignette: string;
-  font: string;
 }
 
 interface Band {
@@ -106,12 +94,9 @@ function readColors(): Colors {
     accent: token('--login-highlight', dark ? '#7FE0E2' : '#1B6F72'),
     glow: withAlpha(token('--login-highlight', dark ? '#7FE0E2' : '#1B6F72'), 0.5),
     handle: dark ? token('--c-page', '#0E1219') : '#FFFFFF',
-    chipBg: token('--c-tooltip-bg', dark ? '#E6EAF0' : '#0F1B2A'),
-    chipFg: token('--c-tooltip-fg', dark ? '#0F1B2A' : '#E6EAF0'),
     bgCentre: token('--login-bg-from', dark ? '#0E1A2C' : '#E9EDF2'),
     bgEdge: token('--login-bg-to', dark ? '#0B1422' : '#F4F5F7'),
     vignette: dark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(74, 85, 102, 0.12)',
-    font: `500 11px ${token('--font-sans', 'system-ui, sans-serif')}`,
   };
 }
 
@@ -233,16 +218,6 @@ function partialPolyline(ctx: CanvasRenderingContext2D, pts: [number, number][],
   return tip;
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
 /** Gentle curves across the screen that cells and stroma fibres line up along. */
 function makeBands(width: number, height: number): Band[] {
   const count = 2 + Math.round(Math.random());
@@ -266,16 +241,16 @@ interface LoginBackgroundProps {
   avoidRef: RefObject<HTMLElement | null>;
 }
 
-/** A slide-like field of cells in three depth layers; cells get "annotated" one after another. */
+/** A slide-like field of cells in three depth layers; cells get outlined one after another. */
 export default function LoginBackground({ avoidRef }: LoginBackgroundProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { theme, palette } = useTheme();
+  const { theme } = useTheme();
   const repaintRef = useRef<() => unknown>(() => undefined);
 
   useEffect(() => {
     repaintRef.current();
-  }, [theme, palette]);
+  }, [theme]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -565,24 +540,6 @@ export default function LoginBackground({ avoidRef }: LoginBackgroundProps) {
         }
       }
 
-      if (h.cell.type) {
-        const type = CELL_TYPES[h.cell.type];
-        const top = pts.reduce((best, p) => (p[1] < best[1] ? p : best), pts[0]);
-        ctx.font = colors.font;
-        const chipW = ctx.measureText(type.name).width + 8 + 7 + 6 + 8;
-        const chipX = top[0] - chipW / 2;
-        const chipY = top[1] - 10 - 20;
-        ctx.fillStyle = colors.chipBg;
-        roundRect(ctx, chipX, chipY, chipW, 20, 4);
-        ctx.fill();
-        ctx.fillStyle = type.color;
-        ctx.beginPath();
-        ctx.arc(chipX + 8 + 3.5, chipY + 10, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = colors.chipFg;
-        ctx.textBaseline = 'middle';
-        ctx.fillText(type.name, chipX + 8 + 7 + 6, chipY + 10.5);
-      }
       ctx.globalAlpha = 1;
     };
 

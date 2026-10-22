@@ -12,7 +12,7 @@ export default function AnnotationStatus({ owner }: { owner: AnnotationOwner }) 
   return (
     <>
       <span className="viewer-status__item">
-        <span className="viewer-status__label">Obrysy</span>
+        <span className="viewer-status__label">Anotacje</span>
         <span className="viewer-status__value">{annotations ? annotations.length : '—'}</span>
       </span>
       <span className="viewer-status__item">

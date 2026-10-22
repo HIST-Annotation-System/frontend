@@ -23,17 +23,17 @@ import StoragePage from './pages/admin/StoragePage';
 const SlideViewerPage = lazy(() => import('./pages/SlideViewerPage'));
 const HotspotViewerPage = lazy(() => import('./pages/HotspotViewerPage'));
 
-function RequireAuth({ children, role }: { children: ReactElement, role?: 'ADMIN' | 'ANNOTATOR' }) {
+function RequireAuth({ children, role }: { children: ReactElement; role?: 'ADMIN' | 'ANNOTATOR' }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return <Spinner label="Ładowanie sesji..." />;
+    return <Spinner label="Ładowanie sesji…" />;
   }
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  
+
   if (user.is_first_login) {
     return <Navigate to="/setup" replace />;
   }
@@ -47,20 +47,20 @@ function RequireAuth({ children, role }: { children: ReactElement, role?: 'ADMIN
 
 function RequireGuest({ children }: { children: ReactElement }) {
   const { user, isLoading } = useAuth();
-  
-  if (isLoading) return <Spinner label="Ładowanie sesji..." />;
+
+  if (isLoading) return <Spinner label="Ładowanie sesji…" />;
   if (user) return <Navigate to="/" replace />;
-  
+
   return children;
 }
 
 function RequireFirstLogin({ children }: { children: ReactElement }) {
   const { user, isLoading } = useAuth();
-  
-  if (isLoading) return <Spinner label="Ładowanie sesji..." />;
+
+  if (isLoading) return <Spinner label="Ładowanie sesji…" />;
   if (!user) return <Navigate to="/login" replace />;
   if (!user.is_first_login) return <Navigate to="/" replace />;
-  
+
   return children;
 }
 

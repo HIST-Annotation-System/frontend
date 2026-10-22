@@ -21,7 +21,7 @@ export default function ExportAnnotationsButton({ owner, name, onError, label }:
   return (
     <Button
       className={label ? 'export-annotations' : undefined}
-      icon={<Download size={15} />}
+      icon={label ? undefined : <Download size={15} />}
       title={isDownloading ? 'Eksport…' : EXPORT_LABEL}
       aria-label={EXPORT_LABEL}
       disabled={isDownloading}

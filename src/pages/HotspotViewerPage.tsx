@@ -1,17 +1,8 @@
 import { Annotorious } from '@annotorious/react';
-import {
-  ArrowLeft,
-  Check,
-  ChevronRight,
-  LayoutGrid,
-  PanelRightClose,
-  PanelRightOpen,
-  PencilLine,
-  Star,
-} from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import SidebarSection from '../components/ui/SidebarSection';
 import Spinner from '../components/ui/Spinner';
 import AnnotationLayer from '../features/annotations/components/AnnotationLayer';
 import AnnotationStatus from '../features/annotations/components/AnnotationStatus';
@@ -29,12 +20,13 @@ import { useHotspot, useHotspotFolders } from '../features/hotspots/hooks/useHot
 import {
   catalogDefaults,
   HOTSPOT_MODES,
-  type HotspotMode,
   readCatalogParams,
   resolveFolderId,
   writeCatalogParams,
 } from '../features/hotspots/utils/hotspotReview';
 import ViewerHeader from '../features/viewer/components/ViewerHeader';
+import { HintSlotContext } from '../features/viewer/hintSlot';
+import { StatusSlotContext } from '../features/viewer/statusSlot';
 import type { AnnotationClass, AnnotationOwner, ToolMode } from '../types/annotation';
 import type { CellType } from '../types/cellType';
 import type { Hotspot } from '../types/hotspot';
@@ -56,15 +48,10 @@ export default function HotspotViewerPage() {
   if (hotspotQuery.isError || cellTypesQuery.isError) {
     return (
       <div className="viewer-page__notice">
-        <div className="viewer-page__notice-card">
-          <ErrorMessage
-            message={getErrorMessage(hotspotQuery.error ?? cellTypesQuery.error, 'Nie udało się wczytać hotspotu.')}
-          />
-          <Link className="btn btn--primary" to="/hotspots">
-            <ArrowLeft size={16} />
-            Wróć do katalogu hotspotów
-          </Link>
-        </div>
+        <ErrorMessage
+          message={getErrorMessage(hotspotQuery.error ?? cellTypesQuery.error, 'Nie udało się wczytać hotspotu.')}
+        />
+        <Link to="/hotspots">Wróć do katalogu hotspotów</Link>
       </div>
     );
   }
@@ -101,20 +88,22 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   const { data: folders } = useHotspotFolders();
   const owner: AnnotationOwner = { type: 'hotspots', id: hotspot.id };
 
-  // Load annotations so we can seed colors for existing cell types
+  // The saved annotations seed the colours of the cell types they use.
   const { data: annotations } = useAnnotations(owner);
   const { activeCellTypeId, colorMap, selectCellType } = useCellTypeTool(cellTypes, annotations);
 
-  // Build AnnotationClass list from cell types + color map for compatibility with existing components
+  // The annotation components work with classes: one per cell type, in its colour.
   const classes: AnnotationClass[] = cellTypes.map((ct) => ({
     id: String(ct.id),
     name: ct.name,
     color: colorMap.get(ct.id) ?? FALLBACK_CELL_TYPE_COLOR,
   }));
 
-  const activeClassId = activeCellTypeId != null ? String(activeCellTypeId) : null;
-  const activeClass = classes.find((item) => item.id === activeClassId) ?? null;
+  const activeClassId = activeCellTypeId !== null ? String(activeCellTypeId) : null;
   const [panelOpen, setPanelOpen] = useState(true);
+  const [statusSlot, setStatusSlot] = useState<HTMLDivElement | null>(null);
+  const [hintSlot, setHintSlot] = useState<HTMLElement | null>(null);
+  const hint = useMemo(() => ({ slot: hintSlot, setSlot: setHintSlot }), [hintSlot]);
   const modeOption = HOTSPOT_MODES.find((option) => option.value === catalog.mode);
   const folderName = folders?.find((folder) => folder.id === hotspot.folder_id)?.name;
 
@@ -125,174 +114,109 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
     counts.set(id, (counts.get(id) ?? 0) + 1);
   });
 
-  const handleSelectCellType = (id: number) => {
-    selectCellType(id);
+  const breadcrumbFolder = {
+    pathname: '/hotspots',
+    search: new URLSearchParams(writeCatalogParams({ ...catalog, folder: hotspot.folder_id })).toString(),
   };
-
-  const verdict = (
-    <section className="viewer-panel__section">
-      {(!assessing || hotspot.reannotated_at) && (
-        <div className="viewer-panel__section-head">
-          {!assessing && <span className="label-caps">Ocena eksperta</span>}
-          {hotspot.reannotated_at && <CorrectedChip />}
-        </div>
-      )}
-      <HotspotTagPanel
-        hotspot={hotspot}
-        mode={catalog.mode}
-        onReannotate={() =>
-          navigate({
-            pathname: `/hotspots/${hotspot.id}`,
-            search: new URLSearchParams(
-              writeCatalogParams({ ...catalogDefaults('reannotate'), folder: catalog.folder }),
-            ).toString(),
-          })
-        }
-      />
-    </section>
-  );
+  const errorMessage = error && <ErrorMessage message={error} onDismiss={() => setError(null)} />;
 
   return (
     <Annotorious>
-      <div className="viewer-screen">
-        <ViewerHeader backTo={`/hotspots${search}`} backLabel="Hotspoty">
-          {folderName && (
-            <Link
-              className="viewer-header__crumb viewer-header__crumb--link"
-              to={{
-                pathname: '/hotspots',
-                search: new URLSearchParams(writeCatalogParams({ ...catalog, folder: hotspot.folder_id })).toString(),
-              }}
-              title={`Wróć do folderu ${folderName}`}
-            >
-              {folderName}
-            </Link>
-          )}
-          {folderName && <ChevronRight size={14} className="viewer-header__crumb-sep" aria-hidden="true" />}
-          <span className="viewer-header__name" title={hotspot.name}>
-            {hotspot.name}
-          </span>
-          {hotspot.reannotated_at && <CorrectedChip />}
-          {modeOption && (
-            <span className="viewer-header__chip" title={modeOption.description}>
-              {MODE_ICONS[modeOption.value]}
-              {modeOption.label}
-            </span>
-          )}
-          <HotspotQueueNav
-            hotspot={hotspot}
-            query={{
-              // Browsing without a folder in the URL lists the first folder: the one this hotspot was opened from.
-              folderId: resolveFolderId(catalog, hotspot.folder_id),
-              sort: catalog.sort,
-              order: catalog.order,
-              status: catalog.status,
-              tagIds: catalog.tagIds,
-            }}
-            search={search}
-          />
-        </ViewerHeader>
-        <div className="viewer-page">
-          <div className="viewer-page__main">
-            <AnnotationLayer
-              owner={owner}
-              imageOffset={NO_OFFSET}
-              classes={classes}
-              mode={mode}
-              activeClassId={activeClassId}
-              readOnly={assessing}
-              onError={setError}
-            >
-              <HotspotViewer hotspot={hotspot} status={<AnnotationStatus owner={owner} />}>
-                {!assessing && (
-                  <AnnotationToolbar
-                    mode={toolMode}
-                    onModeChange={setToolMode}
-                    canDraw={activeClassId !== null}
-                    activeClass={activeClass}
-                  />
-                )}
-              </HotspotViewer>
-            </AnnotationLayer>
-            {error && (
-              <div className="viewer-page__error">
-                <ErrorMessage message={error} onDismiss={() => setError(null)} />
-              </div>
-            )}
-          </div>
-          {panelOpen ? (
-            <aside className="viewer-panel viewer-panel--wide" aria-label="Panel hotspotu">
-              <div className="viewer-panel__head">
-                <span className="label-caps">{assessing ? 'Ocena eksperta' : 'Typ komórki'}</span>
-                <button
-                  type="button"
-                  className="viewer-panel__icon-btn"
-                  title="Zwiń panel"
-                  aria-label="Zwiń panel"
-                  onClick={() => setPanelOpen(false)}
+      <StatusSlotContext.Provider value={statusSlot}>
+        <HintSlotContext.Provider value={hint}>
+          <div className="viewer-screen">
+            <ViewerHeader panel={{ open: panelOpen, onToggle: () => setPanelOpen(!panelOpen) }}>
+              <nav className="crumbs" aria-label="Ścieżka">
+                <Link to={`/hotspots${search}`}>Hotspoty</Link>
+                <span className="crumbs__sep">/</span>
+                <Link to={breadcrumbFolder}>{folderName ?? 'Folder'}</Link>
+                <span className="crumbs__sep">/</span>
+                <span className="crumbs__here" title={hotspot.name}>
+                  {hotspot.name}
+                </span>
+              </nav>
+              <HotspotQueueNav
+                hotspot={hotspot}
+                query={{
+                  // Browsing without a folder in the URL lists the first folder: the one this hotspot was opened from.
+                  folderId: resolveFolderId(catalog, hotspot.folder_id),
+                  sort: catalog.sort,
+                  order: catalog.order,
+                  status: catalog.status,
+                  tagIds: catalog.tagIds,
+                }}
+                search={search}
+              />
+              {modeOption && (
+                <span className="viewer-header__mode" title={modeOption.description}>
+                  Tryb: {modeOption.label.toLowerCase()}
+                </span>
+              )}
+            </ViewerHeader>
+            <div className="viewer-page">
+              <div className="viewer-page__main">
+                <AnnotationLayer
+                  owner={owner}
+                  imageOffset={NO_OFFSET}
+                  classes={classes}
+                  mode={mode}
+                  activeClassId={activeClassId}
+                  readOnly={assessing}
+                  onError={setError}
                 >
-                  <PanelRightClose size={16} />
-                </button>
+                  <HotspotViewer hotspot={hotspot} status={<AnnotationStatus owner={owner} />}>
+                    {!assessing && (
+                      <AnnotationToolbar mode={toolMode} onModeChange={setToolMode} canDraw={activeClassId !== null} />
+                    )}
+                  </HotspotViewer>
+                </AnnotationLayer>
+                {!panelOpen && errorMessage && <div className="viewer-page__error">{errorMessage}</div>}
               </div>
-              {/* Assessing is the expert's job, so the verdict comes first there. */}
-              {assessing && verdict}
-              {!assessing && (
-                <div className="viewer-panel__types">
-                  <CellTypeSelector
-                    cellTypes={cellTypes}
-                    activeCellTypeId={activeCellTypeId}
-                    colorMap={colorMap}
-                    onSelect={handleSelectCellType}
-                    counts={counts}
-                  />
-                </div>
+              {panelOpen && (
+                <aside className="side-pane" aria-label="Panel hotspotu">
+                  {errorMessage && <div className="viewer-panel__error">{errorMessage}</div>}
+                  {!assessing && (
+                    <SidebarSection title="Typ komórki">
+                      <CellTypeSelector
+                        cellTypes={cellTypes}
+                        activeCellTypeId={activeCellTypeId}
+                        colorMap={colorMap}
+                        onSelect={selectCellType}
+                        counts={counts}
+                      />
+                    </SidebarSection>
+                  )}
+                  <div className="viewer-panel__annotations">
+                    <AnnotationList owner={owner} classes={classes} readOnly={assessing} onError={setError} />
+                  </div>
+                  {/* Reviewing is the expert's job, so the verdict starts unrolled outside plain browsing. */}
+                  <SidebarSection title="Ocena eksperta" collapsible defaultOpen={catalog.mode !== 'browse'}>
+                    {hotspot.reannotated_at && catalog.mode !== 'reannotate' && (
+                      <p className="viewer-panel__corrected">Poprawione</p>
+                    )}
+                    <HotspotTagPanel
+                      hotspot={hotspot}
+                      mode={catalog.mode}
+                      onReannotate={() =>
+                        navigate({
+                          pathname: `/hotspots/${hotspot.id}`,
+                          search: new URLSearchParams(
+                            writeCatalogParams({ ...catalogDefaults('reannotate'), folder: catalog.folder }),
+                          ).toString(),
+                        })
+                      }
+                    />
+                  </SidebarSection>
+                  <SidebarSection title="Parametry" collapsible defaultOpen={false}>
+                    <HotspotInfoPanel hotspot={hotspot} folderName={folderName} onError={setError} />
+                  </SidebarSection>
+                </aside>
               )}
-              <div className="viewer-panel__annotations">
-                <AnnotationList owner={owner} classes={classes} readOnly={assessing} onError={setError} />
-              </div>
-              {!assessing && verdict}
-              <HotspotInfoPanel hotspot={hotspot} folderName={folderName} onError={setError} />
-            </aside>
-          ) : (
-            <aside className="viewer-panel viewer-panel--wide viewer-panel--collapsed" aria-label="Panel hotspotu">
-              <button
-                type="button"
-                className="viewer-panel__icon-btn"
-                title="Pokaż panel"
-                aria-label="Pokaż panel"
-                onClick={() => setPanelOpen(true)}
-              >
-                <PanelRightOpen size={16} />
-              </button>
-              {activeClass && !assessing && (
-                <span
-                  className="viewer-panel__rail-swatch"
-                  style={{ background: activeClass.color }}
-                  title={activeClass.name}
-                />
-              )}
-              <span className="viewer-panel__rail-count" title="Obrysy">
-                {annotations?.length ?? ''}
-              </span>
-            </aside>
-          )}
-        </div>
-      </div>
+            </div>
+            <div ref={setStatusSlot} className="viewer-screen__status" />
+          </div>
+        </HintSlotContext.Provider>
+      </StatusSlotContext.Provider>
     </Annotorious>
-  );
-}
-
-const MODE_ICONS: Record<HotspotMode, ReactNode> = {
-  browse: <LayoutGrid size={13} aria-hidden="true" />,
-  assess: <Star size={13} aria-hidden="true" />,
-  reannotate: <PencilLine size={13} aria-hidden="true" />,
-};
-
-function CorrectedChip() {
-  return (
-    <span className="viewer-header__chip viewer-header__chip--sm">
-      <Check size={12} aria-hidden="true" />
-      Poprawione
-    </span>
   );
 }

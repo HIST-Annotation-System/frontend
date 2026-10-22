@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useViewerEvent, type ViewerEventName } from '../../../hooks/useViewerEvent';
-import { imageZoomToMagnification, magnificationToImageZoom } from '../../../utils/magnification';
-import { getImageZoom, zoomToImageZoom } from '../utils/viewport';
+import { imageZoomToMagnification } from '../../../utils/magnification';
+import { getImageZoom } from '../utils/viewport';
 import { useOsdViewer } from './useOsdViewer';
 
 const ZOOM_EVENTS: readonly ViewerEventName[] = ['open', 'zoom', 'resize', 'animation-finish'];
@@ -17,19 +17,9 @@ export function useMagnification(nativeMagnification: number | null) {
     setImageZoom(zoom === null ? null : Math.round(zoom * 10_000) / 10_000);
   });
 
-  const zoomToMagnification = useCallback(
-    (magnification: number) => {
-      if (viewer && nativeMagnification) {
-        zoomToImageZoom(viewer, magnificationToImageZoom(magnification, nativeMagnification));
-      }
-    },
-    [viewer, nativeMagnification],
-  );
-
   return {
     imageZoom,
     magnification:
       imageZoom !== null && nativeMagnification ? imageZoomToMagnification(imageZoom, nativeMagnification) : null,
-    zoomToMagnification,
   };
 }

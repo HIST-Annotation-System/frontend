@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, LogOut, Moon, Shield, Sun, User } from 'lucide-react';
+import { ChevronDown, Moon, Sun } from 'lucide-react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeProvider';
 import BrandLogo from './BrandLogo';
 import { HeaderSlotContext } from './headerSlot';
-import PaletteSwitcher from './PaletteSwitcher';
 import UploadStatusBar from './UploadStatusBar';
 import './AppLayout.css';
 
@@ -35,11 +34,6 @@ export default function AppLayout() {
     user && (user.profile?.first_name || user.profile?.last_name)
       ? `${user.profile.first_name} ${user.profile.last_name}`
       : user?.username;
-  const initials = user
-    ? user.profile?.first_name
-      ? `${user.profile.first_name.charAt(0)}${user.profile.last_name?.charAt(0) || ''}`.toUpperCase()
-      : user.username.substring(0, 2).toUpperCase()
-    : '';
 
   return (
     <div className={`app-layout${compact ? ' app-layout--compact' : ''}`}>
@@ -65,7 +59,6 @@ export default function AppLayout() {
           </nav>
         )}
         <div className="app-header__actions">
-          <PaletteSwitcher />
           <div className="theme-switch" role="group" aria-label="Motyw">
             <button
               type="button"
@@ -97,14 +90,11 @@ export default function AppLayout() {
                   className={`user-menu-trigger${isUserMenuOpen ? ' user-menu-trigger--open' : ''}`}
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   title="Rozwiń menu profilu"
+                  aria-label={`Menu profilu: ${displayName}`}
                   aria-haspopup="menu"
                   aria-expanded={isUserMenuOpen}
                 >
-                  <span className="user-menu-info">
-                    <span className="user-menu-name">{displayName}</span>
-                    <span className="user-menu-role">{ROLE_LABELS[user.role] ?? user.role}</span>
-                  </span>
-                  <span className="user-menu-avatar">{initials}</span>
+                  <span className="user-menu-name">{displayName}</span>
                   <ChevronDown size={14} className="user-menu-chevron" aria-hidden="true" />
                 </button>
 
@@ -113,30 +103,21 @@ export default function AppLayout() {
                     <div className="user-menu-backdrop" onClick={() => setIsUserMenuOpen(false)} />
                     <div className="user-menu-dropdown" role="menu">
                       <div className="user-menu-header">
-                        <span className="user-menu-avatar user-menu-avatar--lg">{initials}</span>
-                        <span className="user-menu-header__text">
-                          <span className="user-menu-header__name">{displayName}</span>
-                          <span className="user-menu-header__login">{user.username}</span>
+                        <span className="user-menu-header__name">{displayName}</span>
+                        <span className="user-menu-header__login">
+                          {user.username} · {ROLE_LABELS[user.role] ?? user.role}
                         </span>
                       </div>
                       <Link to="/profile" className="user-menu-item" role="menuitem" onClick={() => setIsUserMenuOpen(false)}>
-                        <User size={16} aria-hidden="true" />
                         Mój profil
                       </Link>
-                      {user.role === 'ADMIN' && (
-                        <Link to="/admin" className="user-menu-item" role="menuitem" onClick={() => setIsUserMenuOpen(false)}>
-                          <Shield size={16} aria-hidden="true" />
-                          Panel administratora
-                        </Link>
-                      )}
                       <span className="user-menu-separator" aria-hidden="true" />
                       <button
                         type="button"
                         role="menuitem"
                         onClick={() => { logout(); setIsUserMenuOpen(false); }}
-                        className="user-menu-item text-danger"
+                        className="user-menu-item"
                       >
-                        <LogOut size={16} aria-hidden="true" />
                         Wyloguj się
                       </button>
                     </div>

@@ -4,7 +4,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { usersApi } from '../../services/usersApi';
 import { dictionariesApi } from '../../services/dictionariesApi';
 import type { ProfileUpdate, Role } from '../../types/user';
-import { Pencil, Check, Lock, CircleAlert, CircleCheck, X } from 'lucide-react';
+import Button from '../../components/ui/Button';
+import { Pencil, Lock, X } from 'lucide-react';
 import './ProfilePage.css';
 
 const ROLE_LABELS: Record<Role, string> = { ADMIN: 'Administrator', ANNOTATOR: 'Anotator' };
@@ -60,13 +61,12 @@ function InlineField({ label, value, displayValue, onSave, type = 'text', disabl
             }}
           />
           <div className="profile-row__edit-actions">
-            <button onClick={handleSave} className="btn-primary btn-sm" title="Zapisz">
-              <Check size={14} />
+            <Button variant="primary" className="btn-sm" onClick={handleSave} title="Zapisz">
               Zapisz
-            </button>
-            <button onClick={handleCancel} className="btn-secondary btn-sm" title="Anuluj">
+            </Button>
+            <Button className="btn-sm" onClick={handleCancel} title="Anuluj">
               Anuluj
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -166,7 +166,6 @@ export default function ProfilePage() {
 
         {localError && (
           <div className="profile-alert profile-alert--error" role="alert">
-            <CircleAlert size={16} aria-hidden="true" />
             <span>{localError}</span>
             <button type="button" className="profile-alert__close" title="Zamknij" onClick={() => setLocalError(null)}>
               <X size={14} />
@@ -175,7 +174,6 @@ export default function ProfilePage() {
         )}
         {successMessage && (
           <div className="profile-alert profile-alert--success" role="status">
-            <CircleCheck size={16} aria-hidden="true" />
             <span>{successMessage}</span>
             <button type="button" className="profile-alert__close" title="Zamknij" onClick={() => setSuccessMessage(null)}>
               <X size={14} />
@@ -195,7 +193,7 @@ export default function ProfilePage() {
             onSave={(val) => handleUpdate('last_name', val)}
           />
           <InlineField
-            label="Login"
+            label="Nazwa użytkownika"
             value={user.username}
             onSave={() => {}}
             disabled
@@ -254,13 +252,12 @@ export default function ProfilePage() {
                     ))}
                   </div>
                   <div className="profile-row__edit-actions">
-                    <button onClick={saveCategories} className="btn-primary btn-sm" title="Zapisz">
-                      <Check size={14} />
+                    <Button variant="primary" className="btn-sm" onClick={saveCategories} title="Zapisz">
                       Zapisz
-                    </button>
-                    <button onClick={cancelCategories} className="btn-secondary btn-sm" title="Anuluj">
+                    </Button>
+                    <Button className="btn-sm" onClick={cancelCategories} title="Anuluj">
                       Anuluj
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}

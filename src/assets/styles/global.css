@@ -13,8 +13,9 @@ body,
 body {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 13px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
   background: var(--c-page);
   color: var(--c-text);
   -webkit-font-smoothing: antialiased;
@@ -96,6 +97,13 @@ input[type='range'] {
   accent-color: var(--c-primary);
 }
 
+/* One checkbox size everywhere (table headers, cards, dialogs). */
+input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
 :root[data-theme='dark'] input[type='checkbox'],
 :root[data-theme='dark'] input[type='radio'],
 :root[data-theme='dark'] input[type='range'] {
@@ -108,46 +116,18 @@ input[type='range'] {
   scrollbar-color: var(--c-border-strong) transparent;
 }
 
+/* Small section heading (sidebars, upload lists, form labels): sentence case, no tracking. */
 .label-caps {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 16px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--c-text-3);
-}
-
-/* Numbers line up in tables and data readouts. */
-td,
-th,
-.mono-data,
-[class*='__count'],
-[class*='__meta'] {
-  font-variant-numeric: tabular-nums;
+  color: var(--c-text-2);
 }
 
 .mono-data {
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 18px;
-}
-
-/* Keyboard key hint, e.g. a shortcut next to a tool. */
-kbd,
-.kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius-xs);
-  background: transparent;
-  color: var(--c-text-3);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 16px;
 }
 
 /* Shared progress bar look (native <progress>). */
@@ -179,16 +159,9 @@ progress::-moz-progress-bar {
 
 /* Page heading block shared by library-style screens. */
 .page-title {
-  font-size: 24px;
+  font-size: 16px;
   font-weight: 600;
-  line-height: 30px;
-  letter-spacing: -0.01em;
-}
-
-.page-subtitle {
-  color: var(--c-text-2);
-  font-size: 13px;
-  line-height: 18px;
+  line-height: 22px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -199,4 +172,250 @@ progress::-moz-progress-bar {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Readable by screen readers only. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Right-hand panel: previews, details and viewer inspectors share its width, background and edge. */
+.side-pane {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: var(--side-pane-width);
+  min-height: 0;
+  overflow-y: auto;
+  border-left: var(--border);
+  background: var(--c-pane);
+}
+
+/* Header strip of a panel or of a section inside it. */
+.pane-strip {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  height: 26px;
+  padding: 0 2px 0 10px;
+  border-bottom: var(--border);
+  background: var(--c-stripe);
+  color: var(--c-text);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.pane-strip .btn--ghost {
+  width: 22px;
+  height: 22px;
+  min-width: 0;
+  padding: 0;
+}
+
+/* Label/value list. */
+.kv {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+
+.kv dt {
+  color: var(--c-label);
+  white-space: nowrap;
+}
+
+/* Values in the text colour, labels quieter: the two columns read apart. */
+.kv dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--c-text);
+  font-weight: 400;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kv dd a {
+  color: inherit;
+}
+
+/* The selected item in a side pane: image, title, label/value list, actions. */
+.preview-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+}
+
+.preview-pane > * {
+  flex-shrink: 0;
+}
+
+.preview-pane__image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--c-viewer);
+}
+
+.preview-pane__image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.preview-pane__image--square {
+  aspect-ratio: 1;
+}
+
+.preview-pane__image--square img {
+  object-fit: cover;
+}
+
+.preview-pane__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.preview-pane__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.preview-pane__actions .btn {
+  width: 100%;
+}
+
+/* Panel floating over a viewer image: tool column, navigation, hotspot bars. */
+.floating-panel,
+.tool-column,
+.viewer-nav {
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+/* Tool panel floating over a viewer image's top left corner (slide: hotspot selection; hotspot: annotation). */
+.tool-column {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 3px;
+  pointer-events: auto;
+}
+
+.tool-column .btn {
+  width: 30px;
+  height: 30px;
+  min-width: 0;
+  padding: 0;
+  border-color: transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text-2);
+  box-shadow: none;
+}
+
+.tool-column .btn:hover:not(:disabled) {
+  background: var(--c-surface-2);
+  color: var(--c-text);
+}
+
+.tool-column .btn--active,
+.tool-column .btn--active:hover:not(:disabled) {
+  background: var(--c-accent-soft);
+  color: var(--c-text);
+}
+
+.tool-column .btn:disabled {
+  background: transparent;
+  color: var(--c-border-strong);
+}
+
+/* Segmented switch (catalog work mode, library view): joined text buttons, the active one filled. */
+.segmented {
+  display: inline-flex;
+  flex: none;
+}
+
+.segmented__option {
+  height: var(--control-md);
+  margin-left: calc(-1 * var(--border-width));
+  padding: 0 var(--space-3);
+  border: var(--border-width) solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.segmented__option:first-child {
+  margin-left: 0;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.segmented__option:last-child {
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.segmented__option:hover {
+  background: var(--c-hover);
+  color: var(--c-text);
+}
+
+.segmented__option:focus-visible {
+  position: relative;
+  z-index: 1;
+}
+
+.segmented__option--active,
+.segmented__option--active:hover {
+  position: relative;
+  z-index: 1;
+  border-color: var(--c-text);
+  background: var(--c-text);
+  color: var(--c-surface);
+  font-weight: 500;
+}
+
+/* A button that reads as a text link (e.g. "Obsługiwane formaty", "Zaznacz wszystkie"). */
+.link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  color: var(--c-text);
 }

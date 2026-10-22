@@ -30,7 +30,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: 14px 12px 12px 20px;
+  padding: 14px var(--space-3) var(--space-3) var(--space-5);
   border-bottom: var(--border-width) solid var(--c-border);
 }
 

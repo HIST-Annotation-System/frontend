@@ -1,9 +1,8 @@
-import { CheckCheck, PenTool, Plus, Undo2, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import type { Hotspot } from '../../../types/hotspot';
-import { getErrorMessage } from '../../../utils/errors';
 import { useHotspotMutations } from '../hooks/useHotspots';
 import { useHotspotTagMutations, useTagMutations, useTags } from '../hooks/useTags';
 import type { HotspotMode } from '../utils/hotspotReview';
@@ -13,7 +12,7 @@ import {
   dimensionTags,
   maxCustomWeight,
   TAG_DIMENSIONS,
-  tagTone,
+  tagErrorMessage,
 } from '../utils/hotspotTags';
 import './Hotspots.css';
 
@@ -55,7 +54,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
     try {
       await action();
     } catch (requestError) {
-      setError(getErrorMessage(requestError, failure));
+      setError(tagErrorMessage(requestError, failure));
     }
   };
 
@@ -94,7 +93,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
                   <button
                     key={tag.id}
                     type="button"
-                    className={`hotspot-verdict__option hotspot-verdict__option--${tagTone(tag, tags)}`}
+                    className="hotspot-verdict__option"
                     aria-pressed={ownIds.has(tag.id)}
                     disabled={isTagging}
                     title={ownIds.has(tag.id) ? 'Kliknij ponownie, aby usunąć ocenę' : `Waga: ${tag.weight}`}
@@ -139,7 +138,6 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
               aria-haspopup="dialog"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              <Plus size={12} aria-hidden="true" />
               Dodaj tag
             </button>
             {isMenuOpen && (
@@ -203,7 +201,6 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
         <Button
           variant="primary"
           className="hotspot-tag-panel__action"
-          icon={<PenTool size={15} />}
           disabled={!isTagged}
           title={isTagged ? 'Otwórz hotspot w trybie „Reannotuj”' : 'Najpierw ustaw ważność i poprawność'}
           onClick={onReannotate}
@@ -216,7 +213,6 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
           <Button
             variant="ghost"
             className="hotspot-tag-panel__undo"
-            icon={<Undo2 size={13} />}
             disabled={isUpdating}
             onClick={() =>
               void run(
@@ -231,7 +227,6 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
           <Button
             variant="primary"
             className="hotspot-tag-panel__action"
-            icon={<CheckCheck size={15} />}
             disabled={isUpdating}
             onClick={() =>
               void run(

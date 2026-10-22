@@ -85,7 +85,7 @@ export const uploadChunkToStorage = (
         if (etag) {
           resolve(etag.replace(/"/g, ''));
         } else {
-          reject(new ApiError('ETag missing in response headers. Ensure MinIO exposes it.', xhr.status));
+          reject(new ApiError('ETag missing in response headers. Ensure the bucket CORS exposes it.', xhr.status));
         }
       } else {
         reject(new ApiError(`Upload failed with status ${xhr.status}`, xhr.status));

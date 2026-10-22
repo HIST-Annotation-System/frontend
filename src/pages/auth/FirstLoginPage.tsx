@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { dictionariesApi } from '../../services/dictionariesApi';
-import { AlertCircle, Check, CheckCircle2, Dot, KeyRound } from 'lucide-react';
 import BrandLogo from '../../components/layout/BrandLogo';
 import AuthAppearance from './AuthAppearance';
 import LoginBackground from './LoginBackground';
@@ -11,14 +10,17 @@ import './AuthPages.css';
 const STRENGTH_LABELS = ['Siła hasła', 'Słabe', 'Średnie', 'Dobre', 'Silne'];
 const STRENGTH_TONES = ['', 'danger', 'warn', 'success', 'success'];
 
+const hasDigitAndUpper = (password: string) => /\d/.test(password) && /[A-ZĄĆĘŁŃÓŚŹŻ]/.test(password);
+const hasSpecial = (password: string) => /[^A-Za-z0-9ĄĆĘŁŃÓŚŹŻąćęłńóśźż]/.test(password);
+
 /** Visual hint only; the checks in handleSubmit stay the source of truth. */
 function passwordScore(password: string): number {
   if (!password) return 0;
   let score = 0;
   if (password.length >= 8) score++;
   if (password.length >= 12) score++;
-  if (/\d/.test(password) && /[A-ZĄĆĘŁŃÓŚŹŻ]/.test(password)) score++;
-  if (/[^A-Za-z0-9ĄĆĘŁŃÓŚŹŻąćęłńóśźż]/.test(password)) score++;
+  if (hasDigitAndUpper(password)) score++;
+  if (hasSpecial(password)) score++;
   return Math.max(1, score);
 }
 
@@ -79,8 +81,8 @@ export default function FirstLoginPage() {
   const strengthTone = STRENGTH_TONES[score];
   const passwordRules: [string, boolean][] = [
     ['min. 8 znaków', password.length >= 8],
-    ['wielka litera i cyfra', /\d/.test(password) && /[A-ZĄĆĘŁŃÓŚŹŻ]/.test(password)],
-    ['znak specjalny', /[^A-Za-z0-9ĄĆĘŁŃÓŚŹŻąćęłńóśźż]/.test(password)],
+    ['wielka litera i cyfra', hasDigitAndUpper(password)],
+    ['znak specjalny', hasSpecial(password)],
     ['min. 12 znaków', password.length >= 12],
   ];
   const passwordsMatch = confirmPassword !== '' && confirmPassword === password;
@@ -96,10 +98,9 @@ export default function FirstLoginPage() {
         <form onSubmit={handleSubmit} className="auth-form auth-form--setup">
           <div className="auth-header">
             <h1>Pierwsze logowanie</h1>
-            <p>Uzupełnij swój profil aby kontynuować</p>
+            <p>Uzupełnij swój profil, aby kontynuować</p>
             {user && (
               <span className="auth-header__account">
-                <KeyRound size={14} aria-hidden="true" />
                 <span>
                   Konto <span className="auth-header__username">{user.username}</span> · zalogowano hasłem tymczasowym
                 </span>
@@ -184,14 +185,12 @@ export default function FirstLoginPage() {
               <div className="auth-strength__rules">
                 {passwordRules.map(([label, ok]) => (
                   <span key={label} className={`auth-strength__rule${ok ? ' auth-strength__rule--ok' : ''}`}>
-                    {ok ? <Check size={13} aria-hidden="true" /> : <Dot size={13} aria-hidden="true" />}
                     {label}
                   </span>
                 ))}
               </div>
               {(passwordsMatch || passwordsDiffer) && (
                 <span className={`auth-strength__match${passwordsDiffer ? ' auth-strength__match--bad' : ''}`}>
-                  {passwordsDiffer ? <AlertCircle size={14} aria-hidden="true" /> : <CheckCircle2 size={14} aria-hidden="true" />}
                   {passwordsDiffer ? 'Hasła nie są takie same.' : 'Hasła są zgodne.'}
                 </span>
               )}
@@ -218,7 +217,6 @@ export default function FirstLoginPage() {
                       onClick={() => toggleCategory(cat.id)}
                       disabled={loading}
                     >
-                      {selected && <Check size={14} aria-hidden="true" />}
                       {cat.name}
                     </button>
                   );
@@ -229,14 +227,13 @@ export default function FirstLoginPage() {
 
           {(error || localError) && (
             <div className="auth-error" role="alert">
-              <AlertCircle size={16} aria-hidden="true" />
               <span>{localError || error}</span>
             </div>
           )}
 
           <button type="submit" disabled={loading} className="auth-button">
             {loading && <span className="auth-button__spinner" aria-hidden="true" />}
-            {loading ? 'Zapisywanie...' : 'Zapisz i kontynuuj'}
+            {loading ? 'Zapisywanie…' : 'Zapisz i kontynuuj'}
           </button>
         </form>
 

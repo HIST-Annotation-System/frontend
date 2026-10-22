@@ -2,7 +2,8 @@ import { useSelection } from '@annotorious/react';
 import { Redo2, Undo2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Button from '../../../components/ui/Button';
-import type { AnnotationClass, ToolMode } from '../../../types/annotation';
+import type { ToolMode } from '../../../types/annotation';
+import ViewerHint from '../../viewer/components/ViewerHint';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
 import ToolModeToggle from './ToolModeToggle';
 import './AnnotationTools.css';
@@ -10,18 +11,25 @@ import './AnnotationTools.css';
 interface AnnotationToolbarProps {
   mode: ToolMode;
   onModeChange: (mode: ToolMode) => void;
+  /** A cell type is chosen, so the drawing tools can draw. */
   canDraw: boolean;
-  /** The cell type new outlines get. */
-  activeClass?: AnnotationClass | null;
 }
 
-const NO_CLASS_HINT = 'Wybierz typ komórki, aby rysować';
+/** What each tool does, for the status bar (as the tools work: see tools/ and AnnotationLayer). */
+const TOOL_HINTS: Record<ToolMode, string> = {
+  navigate: 'Nawigacja: klik zaznacza obrys; przeciągnij, aby przesunąć; kółko przybliża',
+  polygon: 'Poligon: klik dodaje punkt; dwuklik lub klik w pierwszy punkt zamyka; Esc anuluje',
+  curve: 'Krzywa: klik dodaje punkt; dwuklik lub klik w pierwszy punkt zamyka gładką krzywą; Esc anuluje',
+  freehand: 'Rysowanie ręczne: przeciągnij, aby narysować obrys; prawy przycisk przesuwa; Esc anuluje',
+};
+const EDIT_HINT = 'Edycja: przeciągaj punkty; Delete usuwa zaznaczony punkt; Esc kończy edycję';
+const NO_CLASS_HINT = 'Wybierz typ komórki po prawej, aby rysować';
 
 const isTextField = (target: EventTarget | null): boolean =>
   target instanceof HTMLElement &&
   (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 
-/** Tool strip on the canvas: tools, undo/redo (also Ctrl+Z / Ctrl+Y), hints; Esc cancels drawing or editing. */
+/** Tool strip on the canvas: tools, undo/redo (also Ctrl+Z / Ctrl+Y); Esc cancels drawing or editing. */
 export default function AnnotationToolbar({ mode, onModeChange, canDraw }: AnnotationToolbarProps) {
   const anno = useSlideAnnotator();
   const { selected } = useSelection();
@@ -63,15 +71,13 @@ export default function AnnotationToolbar({ mode, onModeChange, canDraw }: Annot
     return () => document.removeEventListener('keydown', shieldTextFields);
   }, []);
 
-  // Only a blocking state is announced on the canvas; usage hints would just clutter the image.
-  const blocked = mode !== 'navigate' && !canDraw && selected.length === 0;
+  const hint =
+    selected.length > 0 ? EDIT_HINT : mode !== 'navigate' && !canDraw ? NO_CLASS_HINT : TOOL_HINTS[mode];
 
   return (
     <>
-      <div className="annotation-tools" role="toolbar" aria-label="Narzędzia anotacji" aria-orientation="vertical">
-        <span className="annotation-tools__label" aria-hidden="true">
-          Narz.
-        </span>
+      <ViewerHint text={hint} />
+      <div className="tool-column annotation-tools" role="toolbar" aria-label="Narzędzia anotacji" aria-orientation="vertical">
         <ToolModeToggle mode={mode} onChange={onModeChange} />
         <span className="annotation-tools__divider" aria-hidden="true" />
         <Button
@@ -89,11 +95,6 @@ export default function AnnotationToolbar({ mode, onModeChange, canDraw }: Annot
           onClick={() => anno?.redo()}
         />
       </div>
-      {blocked && (
-        <div className="drawing-hint" role="status">
-          <span className="drawing-hint__text">{NO_CLASS_HINT}</span>
-        </div>
-      )}
     </>
   );
 }

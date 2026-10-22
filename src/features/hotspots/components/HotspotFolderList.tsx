@@ -1,4 +1,4 @@
-import { Check, CornerDownLeft, Folder, FolderOpen, FolderPlus, Folders, FolderX, Pencil, Trash2, X } from 'lucide-react';
+import { Check, CornerDownLeft, Folder, Folders, Pencil, Trash2, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -74,7 +74,6 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
       <div className="hotspot-folders__scroll">
         {folders.length === 0 ? (
           <div className="hotspot-folders__empty">
-            <FolderX size={20} aria-hidden="true" />
             <span className="hotspot-folders__empty-title">Brak folderów</span>
             <span>Utwórz folder poniżej albo zaznacz hotspoty na slajdzie.</span>
           </div>
@@ -84,8 +83,10 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
               className={`hotspot-folders__item hotspot-folders__item--all${selectedId === ALL_FOLDERS ? ' hotspot-folders__item--selected' : ''}`}
             >
               <button type="button" className="hotspot-folders__select" onClick={() => onSelect(ALL_FOLDERS)}>
-                <Folders size={16} aria-hidden="true" />
-                <span className="hotspot-folders__name">Wszystkie foldery</span>
+                <Folders size={14} aria-hidden="true" />
+                <span className="hotspot-folders__name" title="Wszystkie foldery">
+                  Wszystkie foldery
+                </span>
                 <span className="hotspot-folders__count">
                   {folders.reduce((total, folder) => total + folder.hotspot_count, 0)}
                 </span>
@@ -115,7 +116,6 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
                       />
                       <Button
                         variant="primary"
-                        className="hotspot-folders__save"
                         icon={<Check size={14} />}
                         title="Zapisz"
                         aria-label="Zapisz nazwę"
@@ -133,8 +133,10 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
                   ) : (
                     <>
                       <button type="button" className="hotspot-folders__select" onClick={() => onSelect(folder.id)}>
-                        {selected ? <FolderOpen size={16} aria-hidden="true" /> : <Folder size={16} aria-hidden="true" />}
-                        <span className="hotspot-folders__name">{folder.name}</span>
+                        <Folder size={14} aria-hidden="true" />
+                        <span className="hotspot-folders__name" title={folder.name}>
+                          {folder.name}
+                        </span>
                         <span className="hotspot-folders__count">{folder.hotspot_count}</span>
                       </button>
                       <Button
@@ -164,7 +166,6 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
       <form className="hotspot-folders__new" onSubmit={(event) => void add(event)}>
         {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
         <div className="hotspot-folders__new-field">
-          <FolderPlus size={16} className="hotspot-folders__new-icon" aria-hidden="true" />
           <input
             value={newName}
             placeholder="Nowy folder…"

@@ -1,4 +1,4 @@
-import { Brush, Check, Grid3x3, SquareDashedMousePointer, Trash2 } from 'lucide-react';
+import { Brush, Grid3x3, MousePointer2, Trash2 } from 'lucide-react';
 import OpenSeadragon from 'openseadragon';
 import { useEffect, useRef, useState } from 'react';
 import Button from '../../../components/ui/Button';
@@ -6,6 +6,7 @@ import { useLatest } from '../../../hooks/useLatest';
 import type { Offset, Position, Rect } from '../../../types/geometry';
 import type { HotspotBatch } from '../../../types/hotspot';
 import type { SlideDetail } from '../../../types/slide';
+import ViewerHint from '../../viewer/components/ViewerHint';
 import { useOsdViewer } from '../../viewer/hooks/useOsdViewer';
 import { useSlideHotspots } from '../hooks/useHotspots';
 import { formatSquareSize } from '../utils/hotspotFormat';
@@ -286,10 +287,12 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
     viewer.addHandler('canvas-drag', onDrag);
     viewer.addHandler('canvas-drag-end', onDragEnd);
     viewer.addHandler('canvas-click', onClick);
-    // Capture phase: OpenSeadragon's own listeners on the canvas stop its pointer events from bubbling.
-    viewer.element.addEventListener('pointerdown', onPointerDown, true);
-    viewer.element.addEventListener('pointerleave', onPointerLeave);
-    viewer.element.addEventListener('contextmenu', onContextMenu, true);
+    // Capture phase: OpenSeadragon's own listeners on the canvas stop its pointer events from bubbling. The element
+    // is kept: OpenSeadragon clears `viewer.element` when it is destroyed before this cleanup runs.
+    const element = viewer.element;
+    element.addEventListener('pointerdown', onPointerDown, true);
+    element.addEventListener('pointerleave', onPointerLeave);
+    element.addEventListener('contextmenu', onContextMenu, true);
     window.addEventListener('pointermove', onPointerMove, true);
     window.addEventListener('pointerup', onPointerUp, true);
     return () => {
@@ -297,9 +300,9 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
       viewer.removeHandler('canvas-drag', onDrag);
       viewer.removeHandler('canvas-drag-end', onDragEnd);
       viewer.removeHandler('canvas-click', onClick);
-      viewer.element.removeEventListener('pointerdown', onPointerDown, true);
-      viewer.element.removeEventListener('pointerleave', onPointerLeave);
-      viewer.element.removeEventListener('contextmenu', onContextMenu, true);
+      element.removeEventListener('pointerdown', onPointerDown, true);
+      element.removeEventListener('pointerleave', onPointerLeave);
+      element.removeEventListener('contextmenu', onContextMenu, true);
       window.removeEventListener('pointermove', onPointerMove, true);
       window.removeEventListener('pointerup', onPointerUp, true);
     };
@@ -334,9 +337,15 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
 
   const tooManyInDrag = preview && !preview.boxes;
   const count = chosen.size;
-  // Only the limit is announced on the canvas; the strip above already shows the count and the tools.
   const overLimit = isOverLimit || tooManyInDrag;
-  const status = `Za dużo pól - najwyżej ${MAX_BATCH_BOXES} naraz`;
+  const size = formatSquareSize(HOTSPOT_BOX_SIZE, slide.mpp_x);
+  const hint = overLimit
+    ? `Za dużo pól - najwyżej ${MAX_BATCH_BOXES} naraz`
+    : tool === 'brush'
+      ? `Pędzel: maluj, aby stawiać pola ${size}; prawy przycisk usuwa; Esc kończy`
+      : tool === 'grid'
+        ? `Siatka: przeciągnij, aby zaznaczyć pola ${size}; klik dodaje lub usuwa pole; prawy przycisk usuwa; Esc kończy`
+        : 'Nawigacja: przeciągnij, aby przesunąć; kółko przybliża';
 
   return (
     <>
@@ -374,67 +383,48 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
             />
           </g>
         </svg>
-        {!tool && count === 0 ? (
-          <button
-            type="button"
-            className="hotspot-mark-start"
-            title={`Zaznacz na slajdzie pola ${formatSquareSize(HOTSPOT_BOX_SIZE, slide.mpp_x)}, z których powstaną hotspoty`}
-            onClick={() => onToolChange('brush')}
-          >
-            <SquareDashedMousePointer size={16} aria-hidden="true" />
-            Zaznacz hotspoty
-          </button>
-        ) : (
-          <div
-            className={`hotspot-mark${tool ? ' hotspot-mark--active' : ''}`}
-            role="toolbar"
-            aria-label="Zaznaczanie hotspotów"
-          >
-            <span className="hotspot-mark__title">Zaznaczanie hotspotów</span>
-            {/* Clicking the active tool again goes back to panning; switching tools keeps the chosen boxes. */}
-            <div className="btn-group">
-              <Button
-                icon={<Brush size={14} />}
-                active={tool === 'brush'}
-                title="Pędzel: maluj po slajdzie, aby swobodnie stawiać pola 1024 × 1024 px (Esc kończy)"
-                onClick={() => onToolChange(tool === 'brush' ? null : 'brush')}
-              >
-                Pędzel
-              </Button>
-              <Button
-                icon={<Grid3x3 size={14} />}
-                active={tool === 'grid'}
-                title="Siatka: przeciągnij po slajdzie, aby zaznaczyć pola 1024 × 1024 px równo z poprzednimi (Esc kończy)"
-                onClick={() => onToolChange(tool === 'grid' ? null : 'grid')}
-              >
-                Siatka
-              </Button>
-            </div>
-            <span className="hotspot-mark__count">{fieldCount(count)}</span>
-            <span className="hotspot-mark__size">{formatSquareSize(HOTSPOT_BOX_SIZE, null)}</span>
-            <span className="hotspot-mark__divider" aria-hidden="true" />
+        {/* Floating tool panel at the top left: navigation, brush, grid; clicking the active tool again (or Esc) goes back to navigation. */}
+        <div className="tool-column" role="toolbar" aria-label="Zaznaczanie hotspotów" aria-orientation="vertical">
+          <Button
+            icon={<MousePointer2 size={18} />}
+            active={tool === null}
+            title="Nawigacja: przesuwanie i oglądanie slajdu"
+            aria-label="Nawigacja"
+            onClick={() => onToolChange(null)}
+          />
+          <Button
+            icon={<Brush size={18} />}
+            active={tool === 'brush'}
+            title={`Pędzel: maluj po slajdzie, aby swobodnie stawiać pola ${size} (Esc kończy)`}
+            aria-label="Pędzel"
+            onClick={() => onToolChange(tool === 'brush' ? null : 'brush')}
+          />
+          <Button
+            icon={<Grid3x3 size={18} />}
+            active={tool === 'grid'}
+            title={`Siatka: przeciągnij po slajdzie, aby zaznaczyć pola ${size} równo z poprzednimi (Esc kończy)`}
+            aria-label="Siatka"
+            onClick={() => onToolChange(tool === 'grid' ? null : 'grid')}
+          />
+        </div>
+        <ViewerHint text={hint} error={Boolean(overLimit)} />
+        {count > 0 && (
+          <div className="floating-panel hotspot-grid__panel" role="status">
+            <span className="hotspot-grid__status">{fieldCount(count)}</span>
+            <Button
+              variant="primary"
+              className="btn-sm"
+              onClick={() => setPendingBoxes([...chosen.values()])}
+            >
+              Zapisz hotspoty
+            </Button>
             <Button
               variant="ghost"
               icon={<Trash2 size={16} />}
               title="Wyczyść zaznaczenie (następne przeciągnięcie siatką zacznie nową siatkę)"
               aria-label="Wyczyść zaznaczenie"
-              disabled={count === 0}
               onClick={clear}
             />
-            {count > 0 ? (
-              <Button variant="primary" icon={<Check size={16} />} onClick={() => setPendingBoxes([...chosen.values()])}>
-                Utwórz hotspoty
-              </Button>
-            ) : (
-              <Button variant="primary" title="Zakończ zaznaczanie (Esc)" onClick={() => onToolChange(null)}>
-                Zakończ
-              </Button>
-            )}
-          </div>
-        )}
-        {overLimit && (
-          <div className="hotspot-mark__hint hotspot-mark__hint--error" role="status">
-            {status}
           </div>
         )}
       </div>

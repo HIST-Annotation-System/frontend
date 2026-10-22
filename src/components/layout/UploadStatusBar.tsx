@@ -1,4 +1,4 @@
-import { Upload } from 'lucide-react';
+
 import { useLocation } from 'react-router-dom';
 import { useUpload } from '../../context/UploadProvider';
 import { formatRemainingTime, formatTransferRate } from '../../utils/format';
@@ -10,7 +10,7 @@ const VIEWER_ROUTE = /^\/(slides|hotspots)\/[^/]+/;
 
 /** Upload progress, visible from any page so leaving the library panel doesn't hide it.
  *
- * The library page (`/`) already shows the whole queue inline in `WsiUploader`, so this stays
+ * The library page (`/`) already shows the whole queue below the slides, so this stays
  * hidden there to avoid showing the same uploads twice. Viewer screens get a small pill instead of
  * the full-width bar, so the image keeps its height.
  */
@@ -33,7 +33,6 @@ export default function UploadStatusBar() {
   if (VIEWER_ROUTE.test(pathname)) {
     return (
       <div className="upload-pill" role="status" title={`Przesyłanie w tle: ${active.file.name}`}>
-        <Upload size={14} className="upload-pill__icon" aria-hidden="true" />
         <span className="upload-pill__track">
           <span className="upload-pill__fill" style={{ width: `${percent}%` }} />
         </span>
@@ -45,9 +44,6 @@ export default function UploadStatusBar() {
 
   return (
     <div className="upload-status-bar" role="status">
-      <span className="upload-status-bar__icon" aria-hidden="true">
-        <Upload size={14} />
-      </span>
       <span className="upload-status-bar__title">{finalizing ? 'Finalizowanie…' : 'Przesyłanie'}</span>
       <span className="upload-status-bar__name" title={active.file.name}>
         {active.file.name}

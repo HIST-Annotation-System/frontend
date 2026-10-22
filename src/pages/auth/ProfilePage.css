@@ -27,8 +27,7 @@
   gap: 2px;
 }
 
-.profile-header .page-title,
-.profile-header .page-subtitle {
+.profile-header .page-title {
   margin: 0;
 }
 
@@ -200,15 +199,12 @@
 }
 
 .profile-chip {
-  display: inline-flex;
-  align-items: center;
-  height: 22px;
-  padding: 0 var(--space-2);
-  border-radius: 11px;
-  background: var(--c-accent-soft);
-  color: var(--c-accent-text);
-  font-size: 12px;
-  font-weight: 500;
+  display: inline;
+  color: var(--c-text);
+}
+
+.profile-chip:not(:last-child)::after {
+  content: ',';
 }
 
 .profile-row__edit .profile-chips {
@@ -222,7 +218,7 @@
   height: 28px;
   padding: 0 10px 0 var(--space-2);
   border: var(--border-width) solid var(--c-border-strong);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: var(--c-surface);
   color: var(--c-text);
   font-size: 13px;
@@ -245,16 +241,6 @@
   width: 14px;
   height: 14px;
   margin: 0;
-}
-
-.profile-note {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  color: var(--c-text-3);
-  font-size: 12px;
-  line-height: 16px;
 }
 
 @media (max-width: 640px) {

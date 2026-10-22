@@ -75,41 +75,6 @@
   min-width: 0;
 }
 
-.upload-queue__status-icon {
-  flex-shrink: 0;
-  color: var(--c-text-3);
-}
-
-.upload-queue__item--uploading .upload-queue__status-icon,
-.upload-queue__item--finalizing .upload-queue__status-icon {
-  color: var(--c-accent);
-  animation: upload-queue-spin 1s linear infinite;
-}
-
-.upload-queue__item--completed .upload-queue__status-icon {
-  color: var(--c-success);
-}
-
-.upload-queue__item--error .upload-queue__status-icon {
-  color: var(--c-danger);
-}
-
-.upload-queue__item--interrupted .upload-queue__status-icon {
-  color: var(--c-warn);
-}
-
-@keyframes upload-queue-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .upload-queue__status-icon {
-    animation: none !important;
-  }
-}
-
 .upload-queue__name {
   overflow: hidden;
   flex: 1;
@@ -156,14 +121,6 @@
 .upload-queue__progress {
   width: calc(100% - 26px);
   margin-left: 26px;
-}
-
-.upload-queue__item--completed .upload-queue__progress::-webkit-progress-value {
-  background: var(--c-success);
-}
-
-.upload-queue__item--completed .upload-queue__progress::-moz-progress-bar {
-  background: var(--c-success);
 }
 
 .upload-queue__message {

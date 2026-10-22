@@ -3,7 +3,7 @@ import { getSlide, slideQueryKeys } from '../../../services/slidesApi';
 import { isSlideProcessing, SLIDE_POLL_INTERVAL_MS } from './useSlides';
 
 /** A ready slide is still re-checked now and then, so a viewer notices when someone deletes it. */
-export const READY_SLIDE_POLL_INTERVAL_MS = 10000;
+const READY_SLIDE_POLL_INTERVAL_MS = 10000;
 
 /** One slide with its metadata; refreshes itself (often while it is being processed).
  * See useSlides.ts for why `refetchIntervalInBackground` is needed here too. */

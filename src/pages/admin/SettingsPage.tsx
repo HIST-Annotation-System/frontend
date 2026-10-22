@@ -2,26 +2,23 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dictionariesApi } from '../../services/dictionariesApi';
 import { usersApi } from '../../services/usersApi';
-import { Trash2, Plus, Tag, Users } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+import Button from '../../components/ui/Button';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import './SettingsPage.css';
 
-/** Polish plural of "osoba" for a member count. */
-function peopleLabel(count: number): string {
-  if (count === 1) return '1 osoba';
-  const lastTwo = count % 100;
-  const last = count % 10;
-  if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return `${count} osoby`;
-  return `${count} osób`;
+interface PendingDelete {
+  kind: 'category' | 'group';
+  id: number;
 }
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
 
-  // Categories state
   const [newCategoryName, setNewCategoryName] = useState('');
-
-  // Groups state
   const [newGroupName, setNewGroupName] = useState('');
+
+  const [deleting, setDeleting] = useState<PendingDelete | null>(null);
 
   const { data: categories, isLoading: loadingCategories } = useQuery({
     queryKey: ['categories'],
@@ -41,7 +38,6 @@ export default function SettingsPage() {
   const memberCount = (groupId: number) =>
     users?.filter((user) => user.profile?.group?.id === groupId).length ?? 0;
 
-  // Mutations
   const createCategoryMutation = useMutation({
     mutationFn: (name: string) => dictionariesApi.createCategory(name),
     onSuccess: () => {
@@ -68,7 +64,6 @@ export default function SettingsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['groups'] })
   });
 
-  // Handlers
   const handleAddCategory = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
@@ -81,116 +76,149 @@ export default function SettingsPage() {
     createGroupMutation.mutate(newGroupName);
   };
 
-  const handleDeleteCategory = (id: number) => {
-    if (window.confirm('Czy usunąć tę kategorię?')) {
-      deleteCategoryMutation.mutate(id);
-    }
-  };
-
-  const handleDeleteGroup = (id: number) => {
-    if (window.confirm('Czy usunąć tę grupę? Zostanie ona usunięta ze wszystkich profili.')) {
-      deleteGroupMutation.mutate(id);
-    }
+  const confirmDelete = () => {
+    if (!deleting) return;
+    (deleting.kind === 'category' ? deleteCategoryMutation : deleteGroupMutation).mutate(deleting.id);
+    setDeleting(null);
   };
 
   return (
     <div className="admin-page settings-page">
       <div className="admin-page-header">
-        <div className="admin-page-header__text">
-          <h1 className="page-title">Kategorie i grupy</h1>
-        </div>
+        <h1 className="admin-page-title">Kategorie i grupy</h1>
       </div>
 
-      <div className="settings-grid">
-        {/* Categories Section */}
-        <section className="admin-card">
-          <div className="admin-card__header">
-            <h2 className="admin-card__title">Kategorie obrazów</h2>
-            {categories && <span className="admin-card__count">{categories.length}</span>}
-          </div>
-
-          <form onSubmit={handleAddCategory} className="admin-add-form">
-            <input
-              type="text"
-              placeholder="Nowa kategoria…"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              className="admin-input"
-            />
-            <button type="submit" className="btn-primary btn-sm" disabled={createCategoryMutation.isPending || !newCategoryName.trim()}>
-              <Plus size={14} /> Dodaj
-            </button>
+      <div className="settings-split">
+        <section className="settings-section" aria-labelledby="settings-categories-title">
+          <h2 id="settings-categories-title" className="settings-section__title">
+            Kategorie obrazów
+            {categories && <span className="admin-page-count">{categories.length}</span>}
+          </h2>
+          <form onSubmit={handleAddCategory} className="admin-add">
+            <label className="admin-field">
+              <span className="admin-field__label">Nowa kategoria</span>
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                className="admin-input"
+                autoComplete="off"
+              />
+            </label>
+            <Button type="submit" variant="primary" disabled={createCategoryMutation.isPending || !newCategoryName.trim()}>
+              Dodaj
+            </Button>
           </form>
 
-          <div className="admin-list__scroll">
-            {loadingCategories ? (
-              <div className="admin-loading">Ładowanie…</div>
-            ) : (
-              <ul className="admin-list">
+          {loadingCategories ? (
+            <div className="admin-loading">Ładowanie…</div>
+          ) : (
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Nazwa</th>
+                  <th className="admin-table__actions" aria-label="Akcje" />
+                </tr>
+              </thead>
+              <tbody>
                 {categories?.map(category => (
-                  <li key={category.id} className="admin-list__item">
-                    <Tag size={15} className="admin-list__icon" aria-hidden="true" />
-                    <span className="admin-list__name">{category.name}</span>
-                    <button
-                      onClick={() => handleDeleteCategory(category.id)}
-                      className="admin-icon-btn admin-icon-btn--danger"
-                      title="Usuń"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </li>
+                  <tr key={category.id}>
+                    <td className="admin-table__truncate settings-name" title={category.name}>{category.name}</td>
+                    <td className="admin-table__actions">
+                      <button
+                        type="button"
+                        onClick={() => setDeleting({ kind: 'category', id: category.id })}
+                        className="admin-icon-btn admin-icon-btn--danger"
+                        title="Usuń kategorię"
+                        aria-label="Usuń kategorię"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-                {categories?.length === 0 && <li className="admin-empty">Brak kategorii</li>}
-              </ul>
-            )}
-          </div>
+                {categories?.length === 0 && (
+                  <tr className="admin-table__empty">
+                    <td colSpan={2}>Brak kategorii</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </section>
 
-        {/* Groups Section */}
-        <section className="admin-card">
-          <div className="admin-card__header">
-            <h2 className="admin-card__title">Grupy anotatorów</h2>
-            {groups && <span className="admin-card__count">{groups.length}</span>}
-          </div>
-
-          <form onSubmit={handleAddGroup} className="admin-add-form">
-            <input
-              type="text"
-              placeholder="Nowa grupa…"
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-              className="admin-input"
-            />
-            <button type="submit" className="btn-primary btn-sm" disabled={createGroupMutation.isPending || !newGroupName.trim()}>
-              <Plus size={14} /> Dodaj
-            </button>
+        <section className="settings-section" aria-labelledby="settings-groups-title">
+          <h2 id="settings-groups-title" className="settings-section__title">
+            Grupy anotatorów
+            {groups && <span className="admin-page-count">{groups.length}</span>}
+          </h2>
+          <form onSubmit={handleAddGroup} className="admin-add">
+            <label className="admin-field">
+              <span className="admin-field__label">Nowa grupa</span>
+              <input
+                type="text"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                className="admin-input"
+                autoComplete="off"
+              />
+            </label>
+            <Button type="submit" variant="primary" disabled={createGroupMutation.isPending || !newGroupName.trim()}>
+              Dodaj
+            </Button>
           </form>
 
-          <div className="admin-list__scroll">
-            {loadingGroups ? (
-              <div className="admin-loading">Ładowanie…</div>
-            ) : (
-              <ul className="admin-list">
+          {loadingGroups ? (
+            <div className="admin-loading">Ładowanie…</div>
+          ) : (
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Nazwa</th>
+                  {users && <th className="admin-table__num">Osoby</th>}
+                  <th className="admin-table__actions" aria-label="Akcje" />
+                </tr>
+              </thead>
+              <tbody>
                 {groups?.map(group => (
-                  <li key={group.id} className="admin-list__item">
-                    <Users size={15} className="admin-list__icon" aria-hidden="true" />
-                    <span className="admin-list__name">{group.name}</span>
-                    {users && <span className="admin-list__usage">{peopleLabel(memberCount(group.id))}</span>}
-                    <button
-                      onClick={() => handleDeleteGroup(group.id)}
-                      className="admin-icon-btn admin-icon-btn--danger"
-                      title="Usuń"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </li>
+                  <tr key={group.id}>
+                    <td className="admin-table__truncate settings-name" title={group.name}>{group.name}</td>
+                    {users && <td className="admin-table__num admin-table__muted">{memberCount(group.id)}</td>}
+                    <td className="admin-table__actions">
+                      <button
+                        type="button"
+                        onClick={() => setDeleting({ kind: 'group', id: group.id })}
+                        className="admin-icon-btn admin-icon-btn--danger"
+                        title="Usuń grupę"
+                        aria-label="Usuń grupę"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-                {groups?.length === 0 && <li className="admin-empty">Brak grup</li>}
-              </ul>
-            )}
-          </div>
+                {groups?.length === 0 && (
+                  <tr className="admin-table__empty">
+                    <td colSpan={users ? 3 : 2}>Brak grup</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </section>
       </div>
+
+      <ConfirmDialog
+        title={deleting?.kind === 'group' ? 'Usuń grupę' : 'Usuń kategorię'}
+        open={deleting !== null}
+        confirmLabel="Usuń"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleting(null)}
+      >
+        {deleting?.kind === 'group'
+          ? 'Czy usunąć tę grupę? Zostanie ona usunięta ze wszystkich profili.'
+          : 'Czy usunąć tę kategorię?'}
+      </ConfirmDialog>
     </div>
   );
 }

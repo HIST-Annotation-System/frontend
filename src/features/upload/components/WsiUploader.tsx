@@ -1,6 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Cloud, FolderOpen, Upload } from 'lucide-react';
-import { useRef, useState, type DragEvent } from 'react';
+import { useRef, useState } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Modal from '../../../components/ui/Modal';
@@ -11,16 +10,15 @@ import { importFromStorage } from '../../../services/uploadApi';
 import type { StorageObject } from '../../../types/storage';
 import { getErrorMessage } from '../../../utils/errors';
 import { ACCEPTED_UPLOAD_EXTENSIONS } from '../slideFileRules';
-import InterruptedUploads from './InterruptedUploads';
 import SlideFormatGuide from './SlideFormatGuide';
-import UploadQueueList from './UploadQueueList';
 import './WsiUploader.css';
 
 const ALREADY_IMPORTED = 'Ten plik był już zaimportowany - w bibliotece jest istniejący slajd.';
 
+/** Header buttons for adding slides; the library page shows the queue and accepts dropped files itself. */
 export default function WsiUploader() {
-  const [isDragging, setIsDragging] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importNotice, setImportNotice] = useState<string | null>(null);
@@ -50,47 +48,22 @@ export default function WsiUploader() {
     }
   };
 
-  const handleDragOver = (event: DragEvent) => {
-    event.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDrop = (event: DragEvent) => {
-    event.preventDefault();
-    setIsDragging(false);
-    enqueue(event.dataTransfer.files);
-  };
-
   return (
-    <div
-      className={`wsi-uploader${isDragging ? ' wsi-uploader--dragging' : ''}`}
-      onDragOver={handleDragOver}
-      onDragLeave={() => setIsDragging(false)}
-      onDrop={handleDrop}
-    >
-      <div className="wsi-uploader__dropzone">
-        <span className="wsi-uploader__icon" aria-hidden="true">
-          <Upload size={20} />
-        </span>
-        <p className="wsi-uploader__prompt">Przeciągnij pliki tutaj</p>
-        <p className="wsi-uploader__extensions">{ACCEPTED_UPLOAD_EXTENSIONS.join(' ')}</p>
-        <div className="wsi-uploader__buttons">
-          <Button variant="primary" icon={<FolderOpen size={16} />} onClick={() => inputRef.current?.click()}>
-            Wybierz pliki
-          </Button>
-          <Button icon={<Cloud size={16} />} disabled={isImporting} onClick={() => setIsPickerOpen(true)}>
-            {isImporting ? 'Importowanie…' : 'Wybierz z magazynu'}
-          </Button>
-        </div>
+    <div className="wsi-uploader">
+      <div className="wsi-uploader__buttons">
+        <Button variant="primary" onClick={() => inputRef.current?.click()}>
+          Prześlij…
+        </Button>
+        <Button disabled={isImporting} onClick={() => setIsPickerOpen(true)}>
+          {isImporting ? 'Importowanie…' : 'Z magazynu…'}
+        </Button>
+        <button type="button" className="link-button" onClick={() => setIsGuideOpen(true)}>
+          Obsługiwane formaty
+        </button>
       </div>
       {importError && <ErrorMessage message={importError} onDismiss={() => setImportError(null)} />}
       {importNotice && <p className="wsi-uploader__message">{importNotice}</p>}
       {queueNotice && <p className="wsi-uploader__message">{queueNotice}</p>}
-
-      <UploadQueueList />
-      <InterruptedUploads />
-
-      <SlideFormatGuide />
 
       <input
         ref={inputRef}
@@ -104,9 +77,11 @@ export default function WsiUploader() {
           event.target.value = '';
         }}
       />
-
       <Modal title="Wybierz plik z magazynu" open={isPickerOpen} onClose={() => setIsPickerOpen(false)}>
         <StorageFilePicker onSelect={(object) => void selectFromStorage(object)} />
+      </Modal>
+      <Modal title="Obsługiwane formaty i sposób przesyłania" open={isGuideOpen} onClose={() => setIsGuideOpen(false)}>
+        <SlideFormatGuide />
       </Modal>
     </div>
   );

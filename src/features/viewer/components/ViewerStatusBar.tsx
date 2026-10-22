@@ -2,6 +2,7 @@ import type { Slide } from '../../../types/slide';
 import { formatMagnification, formatZoomPercent } from '../../../utils/magnification';
 import { useSlideHotspots } from '../../hotspots/hooks/useHotspots';
 import { useMagnification } from '../hooks/useMagnification';
+import ViewerHintSlot from './ViewerHintSlot';
 
 interface ViewerStatusBarProps {
   slide: Pick<Slide, 'id'>;
@@ -18,6 +19,7 @@ export default function ViewerStatusBar({ slide, nativeMagnification }: ViewerSt
 
   return (
     <div className="viewer-status">
+      <ViewerHintSlot />
       <span className="viewer-status__item">
         <span className="viewer-status__label">Powiększenie</span>
         <span className="viewer-status__value viewer-status__value--strong">{scale}</span>
