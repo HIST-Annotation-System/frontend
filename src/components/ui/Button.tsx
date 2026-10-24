@@ -1,11 +1,14 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import './Button.css';
 
-type ButtonVariant = 'default' | 'primary' | 'ghost';
+/** `danger` confirms a delete (filled red); `danger-outline` starts one. */
+type ButtonVariant = 'default' | 'primary' | 'ghost' | 'danger' | 'danger-outline';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   icon?: ReactNode;
+  /** Passed through to the <button>, e.g. to move focus back to it. */
+  ref?: Ref<HTMLButtonElement>;
   /** Makes the button a toggle: styled as pressed and announced via aria-pressed. */
   active?: boolean;
 }

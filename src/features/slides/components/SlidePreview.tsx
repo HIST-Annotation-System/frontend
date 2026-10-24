@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -7,11 +7,10 @@ import { useAuth } from '../../../context/AuthContext';
 import { useUpload } from '../../../context/UploadProvider';
 import { getThumbnailUrl } from '../../../services/slidesApi';
 import type { Slide } from '../../../types/slide';
-import { formatBytes, formatDateTime, formatDecimal, formatDimensions } from '../../../utils/format';
-import { getNativeMagnification } from '../../../utils/magnification';
 import { useSlideMutations } from '../hooks/useSlideMutations';
 import { useSlideProgress } from '../hooks/useSlideProgress';
 import { describeSlideMutationError, isSlideGone, isSlideModified } from '../utils/slideConflicts';
+import SlideFacts from './SlideFacts';
 import SlideStatusBadge from './SlideStatusBadge';
 import './SlideLibrary.css';
 
@@ -43,7 +42,6 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
   const isUploading = slide.status === 'uploading';
   const isProcessing = slide.status === 'processing';
   const canManage = user?.role === 'ADMIN';
-  const magnification = getNativeMagnification(slide);
   const progress = progressOf(slide);
   // An upload running in this browser is cancelled through its queue (which also stops the transfer).
   const ownUpload = upload.items.find((item) => item.slideId === slide.id && item.status !== 'completed');
@@ -95,23 +93,11 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
       setError(
         describeSlideMutationError(
           requestError,
-          isUploading ? 'Nie udało się anulować przesyłania.' : 'Nie udało się usunąć slajdu.',
+          isUploading ? 'Nie udało się anulować wgrywania.' : 'Nie udało się usunąć slajdu.',
         ),
       );
     }
   };
-
-  const rows: [string, string][] = [
-    ['Plik', slide.original_filename],
-    ['Format', slide.vendor ?? '—'],
-    ['Rozmiar pliku', slide.file_size_bytes !== null ? formatBytes(slide.file_size_bytes) : '—'],
-    ['Wymiary (L0)', slide.width && slide.height ? formatDimensions(slide.width, slide.height) : '—'],
-    ['Rozdzielczość', slide.mpp_x ? `${formatDecimal(slide.mpp_x, 4)} µm/px` : '—'],
-    ['Poziomy piramidy', slide.level_count?.toString() ?? '—'],
-    ['Powiększenie', magnification ? `${magnification}×${slide.objective_power ? '' : ' (szacowane)'}` : '—'],
-    ['Dodano', formatDateTime(slide.created_at)],
-    [isUploading ? 'Przesyła' : 'Dodał', slide.uploaded_by ?? '—'],
-  ];
 
   return (
     <div className="preview-pane">
@@ -138,7 +124,10 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
           onBlur={() => void saveName()}
         />
       ) : (
-        <h2 className="preview-pane__title">{slide.name}</h2>
+        <h2 className="preview-pane__title">
+          {/* Opens the slide like its thumbnail does, once it can be viewed. */}
+          {slide.status === 'ready' ? <Link to={`/slides/${slide.id}`}>{slide.name}</Link> : slide.name}
+        </h2>
       )}
 
       <div className="slide-preview__status">
@@ -149,7 +138,7 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
         <div
           className="slide-preview__progress"
           role="progressbar"
-          aria-label={isUploading ? 'Postęp przesyłania' : 'Postęp przetwarzania'}
+          aria-label={isUploading ? 'Postęp wgrywania' : 'Postęp przetwarzania'}
           aria-valuenow={progress ?? undefined}
           aria-valuemin={0}
           aria-valuemax={100}
@@ -164,14 +153,7 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
         <p className="slide-preview__error">{slide.error_message}</p>
       )}
 
-      <dl className="kv">
-        {rows.map(([label, value]) => (
-          <Fragment key={label}>
-            <dt>{label}</dt>
-            <dd title={value}>{value}</dd>
-          </Fragment>
-        ))}
-      </dl>
+      <SlideFacts slide={slide} />
 
       <div className="preview-pane__actions">
         {slide.status === 'ready' ? (
@@ -188,8 +170,8 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
             <Button disabled={isUploading || isEditingName} onClick={startEditing}>
               Zmień nazwę
             </Button>
-            <Button className="slide-preview__delete" onClick={startDeleting}>
-              {isUploading ? 'Anuluj przesyłanie' : 'Usuń slajd'}
+            <Button variant="danger-outline" onClick={startDeleting}>
+              {isUploading ? 'Anuluj wgrywanie' : 'Usuń slajd'}
             </Button>
           </>
         )}
@@ -197,16 +179,16 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
       {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
 
       <Modal
-        title={isUploading ? 'Anuluj przesyłanie' : 'Usuń slajd'}
+        title={isUploading ? 'Anuluj wgrywanie' : 'Usuń slajd'}
         open={isConfirmingDelete}
         onClose={() => setIsConfirmingDelete(false)}
       >
         <p>
           {isUploading ? (
             <>
-              Czy na pewno chcesz anulować przesyłanie pliku „{slide.name}”? Przesłane dotąd dane zostaną odrzucone.
+              Czy na pewno chcesz anulować wgrywanie pliku „{slide.name}”? Wgrane dotąd dane zostaną odrzucone.
               {!ownUpload && (
-                <> Ten plik może właśnie przesyłać inny administrator - anulowanie przerwie jego przesyłanie.</>
+                <> Ten plik może właśnie wgrywać inny administrator - anulowanie przerwie jego wgrywanie.</>
               )}
             </>
           ) : (
@@ -220,8 +202,8 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
           <Button onClick={() => setIsConfirmingDelete(false)} disabled={isDeleting || isCancelling}>
             Wróć
           </Button>
-          <Button variant="primary" onClick={() => void confirmDelete()} disabled={isDeleting || isCancelling}>
-            {isUploading ? (isCancelling ? 'Anulowanie…' : 'Anuluj przesyłanie') : isDeleting ? 'Usuwanie…' : 'Usuń'}
+          <Button variant="danger" onClick={() => void confirmDelete()} disabled={isDeleting || isCancelling}>
+            {isUploading ? (isCancelling ? 'Anulowanie…' : 'Anuluj wgrywanie') : isDeleting ? 'Usuwanie…' : 'Usuń'}
           </Button>
         </div>
       </Modal>

@@ -36,8 +36,8 @@ function UploadQueueRow({ item }: { item: UploadItem }) {
             <Button
               variant="ghost"
               icon={<X size={14} />}
-              title="Anuluj przesyłanie"
-              aria-label={`Anuluj przesyłanie pliku ${item.file.name}`}
+              title="Anuluj wgrywanie"
+              aria-label={`Anuluj wgrywanie pliku ${item.file.name}`}
               onClick={() => void cancel(item.id)}
             />
           ) : (
@@ -56,7 +56,7 @@ function UploadQueueRow({ item }: { item: UploadItem }) {
           className="upload-queue__progress"
           value={item.status === 'completed' ? 100 : progressPercent(item)}
           max={100}
-          aria-label={`Postęp przesyłania pliku ${item.file.name}`}
+          aria-label={`Postęp wgrywania pliku ${item.file.name}`}
         />
       )}
       {item.message && <p className="upload-queue__message">{item.message}</p>}
@@ -70,7 +70,7 @@ export default function UploadQueueList() {
   const totalBytes = items.reduce((sum, item) => sum + item.file.size, 0);
 
   return (
-    <section className="upload-queue" aria-label="Kolejka przesyłania">
+    <section className="upload-queue" aria-label="Kolejka wgrywania">
       <div className="upload-queue__header">
         <h3 className="label-caps">Kolejka</h3>
         {items.length > 0 && (

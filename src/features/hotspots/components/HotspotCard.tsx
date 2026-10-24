@@ -3,17 +3,21 @@ import { getHotspotThumbnailUrl } from '../../../services/hotspotsApi';
 import type { Hotspot } from '../../../types/hotspot';
 import type { HotspotMode } from '../utils/hotspotReview';
 import { isRowControl } from '../utils/rowClick';
-import HotspotTagChips from './HotspotTagChips';
+import { useTags } from '../hooks/useTags';
+import { TAG_DIMENSIONS } from '../utils/hotspotTags';
+import { CustomTagPills, VerdictMark } from './TagMarks';
 import './Hotspots.css';
 
 interface HotspotCardProps {
   hotspot: Hotspot;
-  /** Reannotating also shows the expert's verdict; the numbers are in the details panel. */
+  /** Names what the card's link does (assess or reannotate); the numbers are in the details panel. */
   mode: HotspotMode;
   /** The catalog's URL search, handed to the viewer so it can walk the same list. */
   linkSearch: string;
   selected: boolean;
   onToggleSelect: () => void;
+  /** The verdict and tag lines; left out when no card on the page has anything to show in them. */
+  tagLines?: boolean;
   detailsOpen?: boolean;
   onShowDetails?: () => void;
 }
@@ -29,11 +33,15 @@ export default function HotspotCard({
   linkSearch,
   selected,
   onToggleSelect,
+  tagLines = true,
   detailsOpen = false,
   onShowDetails,
 }: HotspotCardProps) {
   const navigate = useNavigate();
   const reannotating = mode === 'reannotate';
+  const { data: allTags = [] } = useTags();
+  const verdicts = TAG_DIMENSIONS.flatMap(({ value }) => hotspot.tags.filter((tag) => tag.dimension === value));
+  const custom = hotspot.tags.filter((tag) => tag.dimension === null);
   const link = `/hotspots/${hotspot.id}${linkSearch}`;
 
   return (
@@ -52,6 +60,8 @@ export default function HotspotCard({
     >
       <div className="hotspot-card__thumb">
         <img src={getHotspotThumbnailUrl(hotspot.id)} alt="" loading="lazy" />
+        {/* On the thumbnail, so it never competes with the tags for room. */}
+        {hotspot.reannotated_at && <span className="hotspot-card__corrected">Poprawione</span>}
       </div>
       <div className="hotspot-card__title">
         <input
@@ -64,8 +74,19 @@ export default function HotspotCard({
           {hotspot.name}
         </Link>
       </div>
-      {hotspot.reannotated_at && <span className="hotspot-card__corrected">Poprawione</span>}
-      {reannotating && <HotspotTagChips hotspot={hotspot} />}
+      {/* Two lines of fixed height, filled or not, so every card in the grid is as tall as the others. */}
+      {tagLines && (
+        <>
+          <div className="hotspot-card__line">
+            {verdicts.map((tag) => (
+              <VerdictMark key={tag.id} tag={tag} allTags={allTags} labelled size={14} />
+            ))}
+          </div>
+          <div className="hotspot-card__line">
+            <CustomTagPills tags={custom} max={1} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -273,7 +273,7 @@
   padding: 0 var(--space-2) var(--space-2);
 }
 
-/* "New folder" pinned to the bottom of the sidebar: an Enter button inside the field once a name is typed. */
+/* "New folder" pinned to the bottom of the sidebar: a button that turns into a name field with save and cancel. */
 .hotspot-folders__new {
   display: flex;
   flex: none;
@@ -283,14 +283,24 @@
   border-top: var(--border-width) solid var(--c-border);
 }
 
+.hotspot-folders__add.btn {
+  justify-content: flex-start;
+  width: 100%;
+  height: var(--control-md);
+  gap: var(--space-2);
+}
+
 .hotspot-folders__new-field {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .hotspot-folders__new input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   height: var(--control-md);
-  padding: 0 34px 0 10px;
+  padding: 0 10px;
   border: var(--border-width) solid var(--c-border-strong);
   border-radius: var(--radius-sm);
   background: var(--c-surface);
@@ -298,15 +308,12 @@
   font-size: 13px;
 }
 
-.hotspot-folders__new .hotspot-folders__create {
-  position: absolute;
-  top: var(--space-1);
-  right: var(--space-1);
-  width: 24px;
-  height: 24px;
+.hotspot-folders__new-field .btn {
+  flex: none;
+  width: var(--control-md);
+  height: var(--control-md);
   min-width: 0;
   padding: 0;
-  border-radius: var(--radius-xs);
 }
 
 .hotspot-folders__empty {
@@ -400,11 +407,6 @@
   color: var(--c-text);
 }
 
-.hotspot-folders__item .hotspot-folders__delete:hover:not(:disabled) {
-  background: var(--c-danger-soft);
-  color: var(--c-danger-text);
-}
-
 .hotspot-folders__item--editing .btn {
   width: 26px;
   height: 26px;
@@ -471,17 +473,72 @@
   outline: none;
 }
 
-/* Upload into a catalog folder. */
-.hotspot-upload__buttons {
+/* Upload into a catalog folder: one button with a choice of images or a folder, the formats link beside it. */
+.hotspot-upload {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--space-3);
 }
 
-.hotspot-upload__buttons .btn {
+.hotspot-upload__root {
+  position: relative;
+}
+
+.hotspot-upload__root > .btn {
+  gap: 6px;
   height: var(--control-md);
-  padding: 0 14px;
+  padding: 0 10px 0 14px;
   white-space: nowrap;
+}
+
+.hotspot-upload__menu {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--c-border);
+  border-radius: var(--radius-md);
+  background: var(--c-surface);
+}
+
+.hotspot-upload__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-md);
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.hotspot-upload__item:hover {
+  background: var(--c-hover);
+}
+
+.hotspot-upload__item svg {
+  color: var(--c-text-2);
+}
+
+.hotspot-upload__guide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding-left: 18px;
+  color: var(--c-text);
+  font-size: 13px;
+  line-height: 18px;
 }
 
 /* Hotspots being created: background batches and uploads from this browser. */
@@ -605,12 +662,8 @@
   min-width: 180px;
 }
 
-.hotspot-sort .hotspot-sort__direction {
-  min-width: 0;
-}
-
 .hotspot-bulk .hotspot-sort__select {
-  max-width: 200px;
+  max-width: 170px;
 }
 
 /* Catalog selects (sort, status filter, bulk actions): 32px toolbar fields. */
@@ -660,6 +713,7 @@
 
 /* Tissue backdrop: neutral dark, the same in both themes. */
 .hotspot-card__thumb {
+  position: relative;
   display: block;
   margin-bottom: 6px;
   aspect-ratio: 1 / 1;
@@ -705,22 +759,39 @@
 }
 
 .hotspot-card__corrected {
-  color: var(--c-text-2);
-  font-size: 12px;
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--c-surface) 88%, transparent);
+  color: var(--c-text);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 18px;
 }
 
-/* Compact tag pills (cards, table, tag filter): no status dot, hairline border. */
-.hotspot-pills {
+/* Verdict line and tag line under the name: one row each, never wrapping, cut off when too long. */
+.hotspot-card__line {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0 var(--space-1);
+  gap: 6px;
+  height: 22px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.hotspot-card__line .tag-pill:first-child,
+.hotspot-card__line .tag-mark {
+  flex: 0 1 auto;
   min-width: 0;
 }
 
-.hotspot-pills > *:not(:last-child)::after {
-  content: ',';
-  color: var(--c-text-2);
+.hotspot-card__line .tag-mark__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Catalog filters and bulk tagging. */
@@ -759,7 +830,7 @@
 .hotspot-tag-filter__menu {
   position: absolute;
   top: calc(100% + var(--space-1));
-  left: 0;
+  right: 0;
   z-index: 90;
   display: flex;
   flex-direction: column;
@@ -840,7 +911,7 @@
   top: 0;
   z-index: 2;
   height: 32px;
-  padding: 0 var(--space-2);
+  padding: 0 6px;
   border-bottom: var(--border-width) solid var(--c-border);
   background: var(--c-table-head, var(--c-surface-2));
   color: var(--c-text-2);
@@ -850,9 +921,10 @@
   text-align: left;
 }
 
+/* Tight side padding: all columns fit beside the details panel on a 1440 px screen. */
 .hotspot-table td {
   height: 44px;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-1) 6px;
   border-bottom: var(--border-width) solid var(--c-border);
   vertical-align: middle;
 }
@@ -885,7 +957,7 @@
 
 /* Date over time: keeps the wide table within a laptop screen. */
 .hotspot-table td.hotspot-table__date {
-  min-width: 92px;
+  min-width: 86px;
   color: var(--c-text-2);
   font-size: 12px;
   line-height: 16px;
@@ -898,9 +970,24 @@
 }
 
 .hotspot-table__tags {
-  min-width: 64px;
-  max-width: 150px;
-  white-space: normal;
+  display: flex;
+  gap: 4px;
+  max-width: 140px;
+  overflow: hidden;
+}
+
+/* Two long names share the room, each shortened with "…"; "+N" always shows. */
+.hotspot-table__tags .tag-pill:not(.tag-pill--more) {
+  flex: 0 1 auto;
+  min-width: 36px;
+}
+
+/* Priority and accuracy columns: one centred symbol each. */
+.hotspot-table .hotspot-table__verdict {
+  width: 1%;
+  padding-inline: var(--space-1);
+  text-align: center;
+  white-space: nowrap;
 }
 
 .hotspot-table tbody tr {
@@ -968,19 +1055,20 @@
 }
 
 /* The folder name may wrap so the wide table still fits. */
+/* One line cut with "…" (the full name is in the tooltip), so every row keeps the same height. */
 .hotspot-table__text {
-  min-width: 72px;
-  max-width: 140px;
+  max-width: 90px;
   overflow: hidden;
   color: var(--c-text-2);
   font-size: 12px;
-  overflow-wrap: anywhere;
-  white-space: normal;
+  text-overflow: ellipsis;
 }
 
 /* The name takes the room left by the other columns and is cut with an ellipsis. */
+/* Takes the room left by the other columns, but never so little that the name cannot be read. */
 .hotspot-table__name {
   width: 100%;
+  min-width: 100px;
   max-width: 0;
 }
 
@@ -1059,11 +1147,6 @@
   color: var(--c-text);
 }
 
-.hotspot-table__action-row .hotspot-table__delete:hover:not(:disabled) {
-  background: var(--c-danger-soft);
-  color: var(--c-danger-text);
-}
-
 /* "Move to folder" menu under its row button. */
 .hotspot-table__move {
   position: relative;
@@ -1139,8 +1222,7 @@
   white-space: normal;
 }
 
-/* Bulk tagging of the selected hotspots. */
-/* Docked under the toolbar while hotspots are ticked. */
+/* Bulk tagging of the selected hotspots, docked under the list; tinted while hotspots are ticked. */
 .hotspot-bulk {
   display: flex;
   flex: none;
@@ -1149,16 +1231,41 @@
   gap: 6px;
   min-height: 44px;
   padding: 6px var(--space-4);
-  border-bottom: var(--border-width) solid var(--c-border);
-  background: var(--c-accent-soft);
+  border-top: var(--border-width) solid var(--c-border);
+  background: var(--c-surface);
   color: var(--c-text);
 }
 
-.hotspot-bulk__count {
+.hotspot-bulk--active {
+  background: var(--c-accent-soft);
+}
+
+.hotspot-bulk__select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-right: 6px;
+  color: var(--c-text);
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.hotspot-bulk__count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-right: var(--space-1);
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
+}
+
+.hotspot-bulk__count .btn {
+  width: 24px;
+  height: 24px;
+  min-width: 0;
+  padding: 0;
 }
 
 .hotspot-bulk .hotspot-sort__select:disabled {
@@ -1209,6 +1316,9 @@
 }
 
 .hotspot-verdict__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 0;
   height: 26px;
   padding: 0 var(--space-1);
@@ -1278,21 +1388,17 @@
   gap: var(--space-1);
 }
 
-/* Custom tag: a small bordered tag with its weight and the remove button. */
-.hotspot-tag-panel__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
+/* Custom tag: its pill with the weight and the remove button inside. */
+.hotspot-tag-panel__chips .tag-pill {
   height: 22px;
-  padding: 0 2px 0 6px;
-  border: var(--border-width) solid var(--c-border-strong);
-  border-radius: var(--radius-sm);
-  color: var(--c-text);
-  font-size: 12px;
+  padding-right: 2px;
+  line-height: 22px;
 }
 
-.hotspot-tag-panel__chip .hotspot-tag-panel__weight-label {
+.hotspot-tag-panel__chips .tag-pill .hotspot-tag-panel__weight-label {
+  color: inherit;
   font-size: 11px;
+  opacity: 0.75;
 }
 
 .hotspot-tag-panel__chip-remove {
@@ -1303,14 +1409,14 @@
   height: 18px;
   padding: 0;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 9px;
   background: transparent;
-  color: var(--c-text-3);
+  color: inherit;
   cursor: pointer;
 }
 
 .hotspot-tag-panel__chip-remove:hover:not(:disabled) {
-  color: var(--c-danger-text);
+  background: color-mix(in srgb, currentColor 15%, transparent);
 }
 
 .hotspot-tag-panel__add-wrap {
@@ -1514,38 +1620,42 @@ a.hotspot-queue__step:focus-visible {
   padding: 0 10px;
 }
 
+/* The move form: label, folder list, then cancel / confirm side by side. */
 .hotspot-details__move {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-2);
+  border: var(--border);
+  border-radius: var(--radius-md);
+}
+
+.hotspot-details__move-label {
+  color: var(--c-text-2);
+  font-size: 12px;
+}
+
+.hotspot-details__move select {
+  width: 100%;
+  min-width: 0;
+}
+
+.hotspot-details__move-buttons {
   display: flex;
   gap: 6px;
 }
 
-.hotspot-details__move select {
+.hotspot-details__move-buttons .btn {
   flex: 1;
-  min-width: 0;
 }
 
-.preview-pane__actions .btn.hotspot-details__delete {
-  width: var(--control-md);
-  height: var(--control-md);
-  min-width: 0;
-  padding: 0;
-}
-
-.hotspot-details__delete {
-  color: var(--c-danger-text);
-}
-
-.hotspot-details__delete:hover:not(:disabled) {
-  background: var(--c-danger-soft);
-  color: var(--c-danger-text);
-}
-
-/* Pages of the review cards, under the grid. */
+/* Pages of the list, at the right end of the catalog's bottom area. */
 .hotspot-pager {
   display: flex;
+  flex: none;
   align-items: center;
   gap: 2px;
-  padding: 0 var(--space-4) var(--space-4);
+  padding: 0 var(--space-4);
 }
 
 .hotspot-pager__step,
@@ -1590,8 +1700,17 @@ a.hotspot-queue__step:focus-visible {
 }
 
 .hotspot-pager__range {
-  margin-left: auto;
+  margin-left: var(--space-2);
   color: var(--c-text-2);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+}
+
+/* Custom tags in the details list: pills wrap, right-aligned like the other values. */
+.kv dd.hotspot-details__pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  white-space: normal;
 }

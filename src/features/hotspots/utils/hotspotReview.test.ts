@@ -35,8 +35,9 @@ describe('hotspot catalog params', () => {
     expect(writeCatalogParams(read(search))).toEqual(Object.fromEntries(new URLSearchParams(search)));
   });
 
-  it('lists every folder in the review modes unless one is picked', () => {
-    expect(resolveFolderId(read(''), 'first')).toBe('first');
+  it('lists every folder in every mode unless one is picked', () => {
+    expect(resolveFolderId(read(''), 'first')).toBeNull();
+    expect(resolveFolderId(read('folder=f2'), 'first')).toBe('f2');
     expect(resolveFolderId(read(`folder=${ALL_FOLDERS}`), 'first')).toBeNull();
     expect(resolveFolderId(read('mode=assess'), 'first')).toBeNull();
     expect(resolveFolderId(read('mode=assess&folder=f2'), 'first')).toBe('f2');

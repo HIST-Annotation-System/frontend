@@ -2,7 +2,7 @@ import Badge, { type BadgeTone } from '../../../components/ui/Badge';
 import type { SlideStatus } from '../../../types/slide';
 
 const STATUS_LABELS: Record<SlideStatus, { label: string; tone: BadgeTone }> = {
-  uploading: { label: 'Przesyłanie', tone: 'neutral' },
+  uploading: { label: 'Wgrywanie', tone: 'neutral' },
   processing: { label: 'Przetwarzanie', tone: 'neutral' },
   ready: { label: 'Gotowy', tone: 'neutral' },
   failed: { label: 'Błąd', tone: 'danger' },

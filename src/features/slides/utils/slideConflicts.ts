@@ -4,7 +4,7 @@ import { getErrorMessage } from '../../../utils/errors';
 export const SLIDE_MODIFIED_MESSAGE =
   'Ktoś inny zmienił ten slajd w międzyczasie. Lista została odświeżona - sprawdź zmiany i spróbuj ponownie.';
 export const SLIDE_GONE_MESSAGE = 'Ten slajd został już usunięty przez kogoś innego.';
-export const UPLOAD_ALREADY_FINISHED_MESSAGE = 'Przesyłanie tego slajdu już się zakończyło - lista została odświeżona.';
+export const UPLOAD_ALREADY_FINISHED_MESSAGE = 'Wgrywanie tego slajdu już się zakończyło - lista została odświeżona.';
 
 /** Someone else changed the slide since this user loaded it (optimistic concurrency, HTTP 409). */
 export const isSlideModified = (error: unknown): boolean =>

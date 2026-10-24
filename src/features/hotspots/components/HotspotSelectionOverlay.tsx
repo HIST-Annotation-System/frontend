@@ -420,6 +420,7 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
             </Button>
             <Button
               variant="ghost"
+              className="btn--danger-icon"
               icon={<Trash2 size={16} />}
               title="Wyczyść zaznaczenie (następne przeciągnięcie siatką zacznie nową siatkę)"
               aria-label="Wyczyść zaznaczenie"

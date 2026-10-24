@@ -1,5 +1,4 @@
 import type {
-  ImportFromStorageResponse,
   RefreshUrlsResponse,
   StartUploadRequest,
   StartUploadResponse,
@@ -45,10 +44,6 @@ export const completeMultipartUpload = async (
 ): Promise<void> => {
   await httpClient.post('/upload/complete', { slide_id: slideId, upload_id: uploadId, parts });
 };
-
-/** Registers a file already sitting in object storage as a new slide, skipping the upload step. */
-export const importFromStorage = async (key: string): Promise<ImportFromStorageResponse> =>
-  (await httpClient.post<ImportFromStorageResponse>('/upload/import-from-storage', { key })).data;
 
 /** Aborts the multipart upload in storage and deletes the slide record created for it. */
 export const cancelUpload = async (slideId: string): Promise<void> => {

@@ -11,7 +11,7 @@ export default function SlideFormatGuide() {
             <tr>
               <th scope="col">Format</th>
               <th scope="col">Rozszerzenie</th>
-              <th scope="col">Jak przesłać</th>
+              <th scope="col">Jak wgrać</th>
             </tr>
           </thead>
           <tbody>

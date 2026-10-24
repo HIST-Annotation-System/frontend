@@ -15,7 +15,9 @@ import { useAnnotations } from '../features/annotations/hooks/useAnnotations';
 import { FALLBACK_CELL_TYPE_COLOR } from '../features/annotations/utils/cellTypeColors';
 import HotspotInfoPanel from '../features/hotspots/components/HotspotInfoPanel';
 import HotspotQueueNav from '../features/hotspots/components/HotspotQueueNav';
+import HotspotReannotatedButton from '../features/hotspots/components/HotspotReannotatedButton';
 import HotspotTagPanel from '../features/hotspots/components/HotspotTagPanel';
+import HotspotTagMarks from '../features/hotspots/components/TagMarks';
 import HotspotViewer from '../features/hotspots/components/HotspotViewer';
 import { useHotspot, useHotspotFolders } from '../features/hotspots/hooks/useHotspots';
 import {
@@ -142,6 +144,12 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                   Tryb: {modeOption.label.toLowerCase()}
                 </span>
               )}
+              {/* Reannotating fixes what the expert found, so the verdict stays in sight. */}
+              {catalog.mode === 'reannotate' && hotspot.tags.length > 0 && (
+                <span className="viewer-header__verdict">
+                  <HotspotTagMarks tags={hotspot.tags} labelled strong />
+                </span>
+              )}
             </ViewerHeader>
             <div className="viewer-page">
               <div className="viewer-page__main">
@@ -200,6 +208,12 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                   <SidebarSection title="Parametry" collapsible defaultOpen={false}>
                     <HotspotInfoPanel hotspot={hotspot} folderName={folderName} onError={setError} />
                   </SidebarSection>
+                  {/* The step that ends a reannotation: pinned to the bottom of the panel, below everything else. */}
+                  {catalog.mode === 'reannotate' && (
+                    <div className="viewer-panel__footer">
+                      <HotspotReannotatedButton hotspot={hotspot} />
+                    </div>
+                  )}
                 </aside>
               )}
             </div>

@@ -31,7 +31,7 @@ export default function HotspotActivityStrip({ onSelectFolder }: HotspotActivity
             {upload.isUploading ? (
               <>
                 <Progress done={upload.done} total={upload.total} />
-                <Button variant="ghost" icon={<X size={14} />} title="Przerwij" aria-label="Przerwij przesyłanie" onClick={upload.cancel} />
+                <Button variant="ghost" icon={<X size={14} />} title="Przerwij" aria-label="Przerwij wgrywanie" onClick={upload.cancel} />
               </>
             ) : (
               <>
@@ -39,7 +39,7 @@ export default function HotspotActivityStrip({ onSelectFolder }: HotspotActivity
                   {upload.total === 0
                     ? 'Brak plików PNG/JPG do wgrania.'
                     : `Wgrano ${upload.done - upload.failures.length} z ${upload.total}${upload.done < upload.total ? ' (przerwano)' : ''}.`}
-                  {upload.skipped > 0 && ` Pominięto ${upload.skipped} plików innego typu.`}
+                  {upload.skipped > 0 && ` Pominięto pliki innego typu: ${upload.skipped}.`}
                 </span>
                 <Button variant="ghost" icon={<X size={14} />} aria-label="Zamknij" onClick={upload.reset} />
               </>

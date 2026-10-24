@@ -1,20 +1,22 @@
 import { Check, FolderInput, Pencil, Trash2, X } from 'lucide-react';
 import { useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
-import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import { getHotspotThumbnailUrl } from '../../../services/hotspotsApi';
 import type { Hotspot, HotspotFeature, HotspotFolder, HotspotSort } from '../../../types/hotspot';
+import type { Tag } from '../../../types/tag';
 import { getErrorMessage } from '../../../utils/errors';
 import { formatDateTime, formatDecimal } from '../../../utils/format';
 import { useDismiss } from '../../../hooks/useDismiss';
 import { useHotspotMutations } from '../hooks/useHotspots';
+import { useTags } from '../hooks/useTags';
 import { HOTSPOT_STATUS_OPTIONS, hotspotStatus } from '../utils/hotspotReview';
 import { isRowControl } from '../utils/rowClick';
 import { HOTSPOT_FEATURES } from '../utils/hotspotSort';
-import { TAG_DIMENSIONS, tagLabel } from '../utils/hotspotTags';
+import { TAG_DIMENSIONS } from '../utils/hotspotTags';
 import HotspotDeleteModal from './HotspotDeleteModal';
+import { CustomTagPills, VerdictMark } from './TagMarks';
 import './Hotspots.css';
 
 interface HotspotTableProps {
@@ -53,7 +55,7 @@ export default function HotspotTable({
 }: HotspotTableProps) {
   const selectedCount = hotspots.filter((hotspot) => selectedIds.has(hotspot.id)).length;
   const allSelected = hotspots.length > 0 && selectedCount === hotspots.length;
-  const tagSort = TAG_DIMENSIONS.some((dimension) => dimension.value === sort);
+  const { data: allTags = [] } = useTags();
   // Sorting by an image feature shows that one feature, so the order can be read.
   const sortFeature = HOTSPOT_FEATURES.find((feature) => feature.value === sort) ?? null;
 
@@ -86,7 +88,16 @@ export default function HotspotTable({
               </th>
             )}
             {showFolder && <th>Folder</th>}
-            <th className={tagSort ? 'hotspot-table__active' : undefined}>Tagi</th>
+            {/* Priority and accuracy get a column each, as symbols; the custom tags have their own. */}
+            {TAG_DIMENSIONS.map((dimension) => (
+              <th
+                key={dimension.value}
+                className={`hotspot-table__verdict${sort === dimension.value ? ' hotspot-table__active' : ''}`}
+              >
+                {dimension.label}
+              </th>
+            ))}
+            <th>Tagi</th>
             <th>Stan</th>
             <th className="hotspot-table__number">Anotacje</th>
             <th className={`hotspot-table__number${sort === 'score' ? ' hotspot-table__active' : ''}`}>Wynik</th>
@@ -104,6 +115,7 @@ export default function HotspotTable({
               selected={selectedIds.has(hotspot.id)}
               onToggleSelect={() => onToggleSelect(hotspot.id)}
               sortFeature={sortFeature?.value ?? null}
+              allTags={allTags}
               showFolder={showFolder}
               detailsOpen={detailId === hotspot.id}
               onShowDetails={onShowDetails ? () => onShowDetails(hotspot.id) : undefined}
@@ -122,6 +134,8 @@ interface HotspotRowProps {
   selected: boolean;
   onToggleSelect: () => void;
   sortFeature: HotspotFeature | null;
+  /** Every tag, to place a priority among its values. */
+  allTags: Tag[];
   showFolder: boolean;
   detailsOpen: boolean;
   onShowDetails?: () => void;
@@ -134,6 +148,7 @@ function HotspotRow({
   selected,
   onToggleSelect,
   sortFeature,
+  allTags,
   showFolder,
   detailsOpen,
   onShowDetails,
@@ -147,11 +162,7 @@ function HotspotRow({
   const status = HOTSPOT_STATUS_OPTIONS.find((option) => option.value === hotspotStatus(hotspot));
   const link = `/hotspots/${hotspot.id}${linkSearch}`;
   const folderName = folders.find((folder) => folder.id === hotspot.folder_id)?.name;
-  // Verdicts first, then custom tags.
-  const tags = [
-    ...TAG_DIMENSIONS.flatMap((dimension) => hotspot.tags.filter((tag) => tag.dimension === dimension.value)),
-    ...hotspot.tags.filter((tag) => tag.dimension === null),
-  ];
+  const customTags = hotspot.tags.filter((tag) => tag.dimension === null);
 
   useDismiss(isMoveOpen, moveRoot, () => setIsMoveOpen(false));
 
@@ -266,16 +277,21 @@ function HotspotRow({
           {folderName ?? '—'}
         </td>
       )}
+      {TAG_DIMENSIONS.map((dimension) => {
+        const tag = hotspot.tags.find((item) => item.dimension === dimension.value);
+        return (
+          <td key={dimension.value} className="hotspot-table__verdict">
+            {tag ? <VerdictMark tag={tag} allTags={allTags} /> : <span className="hotspot-table__none">—</span>}
+          </td>
+        );
+      })}
       <td>
-        {tags.length === 0 ? (
+        {customTags.length === 0 ? (
           <span className="hotspot-table__none">—</span>
         ) : (
-          <span className="hotspot-pills hotspot-table__tags">
-            {tags.map((tag) => (
-              <span key={tag.id} title={tagLabel(tag)}>
-                <Badge>{tag.name}</Badge>
-              </span>
-            ))}
+          // One line: two tags, then "+N" for the rest.
+          <span className="hotspot-table__tags">
+            <CustomTagPills tags={customTags} max={2} />
           </span>
         )}
       </td>
@@ -327,7 +343,7 @@ function HotspotRow({
           </div>
           <Button
             variant="ghost"
-            className="hotspot-table__delete"
+            className="btn--danger-icon"
             icon={<Trash2 size={14} />}
             title="Usuń hotspot"
             aria-label={`Usuń hotspot ${hotspot.name}`}

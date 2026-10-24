@@ -1,4 +1,5 @@
 
+import { X } from 'lucide-react';
 import { useState } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -11,10 +12,12 @@ import './Hotspots.css';
 interface HotspotBulkBarProps {
   hotspotIds: string[];
   onClear: () => void;
+  /** The review cards' "select all" for the page on screen (the browse table has it in its header). */
+  selectAll?: { checked: boolean; indeterminate: boolean; onToggle: () => void };
 }
 
-/** Tags every selected hotspot at once. */
-export default function HotspotBulkBar({ hotspotIds, onClear }: HotspotBulkBarProps) {
+/** The bar under the list: selecting every hotspot on screen, then tagging every selected one at once. */
+export default function HotspotBulkBar({ hotspotIds, onClear, selectAll }: HotspotBulkBarProps) {
   const { data: tags = [] } = useTags();
   const { bulkTag, isBulkTagging } = useHotspotTagMutations();
   const [error, setError] = useState<string | null>(null);
@@ -50,20 +53,45 @@ export default function HotspotBulkBar({ hotspotIds, onClear }: HotspotBulkBarPr
   );
 
   return (
-    <div className="hotspot-bulk" role="region" aria-label="Zaznaczone hotspoty">
-      <span className="hotspot-bulk__count">
-        Zaznaczono <span className="mono-data">{hotspotIds.length}</span>
-      </span>
-      {TAG_DIMENSIONS.map((dimension) =>
-        actionSelect(`Ustaw: ${dimension.label.toLowerCase()}`, dimensionTags(tags, dimension.value), (tagId) =>
-          void apply({ add: [tagId], remove: [] }),
-        ),
+    <div
+      className={`hotspot-bulk${hotspotIds.length > 0 ? ' hotspot-bulk--active' : ''}`}
+      role="region"
+      aria-label="Zaznaczone hotspoty"
+    >
+      {selectAll && (
+        <label className="hotspot-bulk__select-all">
+          <input
+            type="checkbox"
+            checked={selectAll.checked}
+            ref={(input) => {
+              if (input) input.indeterminate = selectAll.indeterminate;
+            }}
+            onChange={selectAll.onToggle}
+          />
+          Zaznacz wszystkie
+        </label>
       )}
-      {actionSelect('Dodaj tag', customTags(tags), (tagId) => void apply({ add: [tagId], remove: [] }))}
-      {actionSelect('Usuń tag', tags, (tagId) => void apply({ add: [], remove: [tagId] }))}
-      <Button variant="ghost" onClick={onClear}>
-        Odznacz
-      </Button>
+      {hotspotIds.length > 0 && (
+        <>
+          <span className="hotspot-bulk__count">
+            Zaznaczono <span className="mono-data">{hotspotIds.length}</span>
+            <Button
+              variant="ghost"
+              icon={<X size={14} />}
+              title="Odznacz wszystkie"
+              aria-label="Odznacz wszystkie"
+              onClick={onClear}
+            />
+          </span>
+          {TAG_DIMENSIONS.map((dimension) =>
+            actionSelect(`Ustaw: ${dimension.label.toLowerCase()}`, dimensionTags(tags, dimension.value), (tagId) =>
+              void apply({ add: [tagId], remove: [] }),
+            ),
+          )}
+          {actionSelect('Dodaj tag', customTags(tags), (tagId) => void apply({ add: [tagId], remove: [] }))}
+          {actionSelect('Usuń tag', tags, (tagId) => void apply({ add: [], remove: [tagId] }))}
+        </>
+      )}
       {error && (
         <div className="hotspot-bulk__error">
           <ErrorMessage message={error} onDismiss={() => setError(null)} />

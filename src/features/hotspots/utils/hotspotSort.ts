@@ -50,8 +50,8 @@ const TAG_SORT_OPTIONS: HotspotSortOption[] = [
   },
   {
     value: 'importance',
-    label: 'Ważność',
-    description: 'Waga tagu ważności; hotspoty bez oceny ważności są na końcu.',
+    label: 'Priorytet',
+    description: 'Waga tagu priorytetu; hotspoty bez priorytetu są na końcu.',
   },
   {
     value: 'accuracy',

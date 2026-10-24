@@ -1,0 +1,144 @@
+/* Tag marks: priority as signal bars, accuracy as a tick or cross, custom tags as outlined pills. */
+.tag-marks {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+}
+
+.tag-mark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  color: var(--tag-mark);
+  line-height: 18px;
+}
+
+/* Priority as signal bars: 3 lit for high, 2 for medium, 1 for low; the unlit ones stay faint. */
+.priority-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.priority-bars__bar {
+  width: 3px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0.22;
+}
+
+.priority-bars__bar--on {
+  opacity: 1;
+}
+
+/* High contrast mode drops backgrounds: keep the lit bars in the text colour and the unlit ones grey. */
+@media (forced-colors: active) {
+  .priority-bars__bar {
+    background: GrayText;
+    opacity: 1;
+    forced-color-adjust: none;
+  }
+
+  .priority-bars__bar--on {
+    background: CanvasText;
+  }
+}
+
+.tag-mark__label {
+  color: var(--c-text);
+}
+
+.tag-mark--correct {
+  --tag-mark: #23845f;
+}
+
+.tag-mark--wrong {
+  --tag-mark: #d0660a;
+}
+
+.tag-mark--priority-high {
+  --tag-mark: #cf3a24;
+}
+
+.tag-mark--priority-medium {
+  --tag-mark: #d0880a;
+}
+
+.tag-mark--priority-low {
+  --tag-mark: #2a6fdb;
+}
+
+:root[data-theme='dark'] .tag-mark--correct {
+  --tag-mark: #6fd3a8;
+}
+
+:root[data-theme='dark'] .tag-mark--wrong {
+  --tag-mark: #f09a4f;
+}
+
+:root[data-theme='dark'] .tag-mark--priority-high {
+  --tag-mark: #f07a66;
+}
+
+:root[data-theme='dark'] .tag-mark--priority-medium {
+  --tag-mark: #f0bf5a;
+}
+
+:root[data-theme='dark'] .tag-mark--priority-low {
+  --tag-mark: #7aa7f2;
+}
+
+/* Custom tags: outlined in the text colour (white on the dark theme), no fill. */
+.tag-pill {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--c-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "+N" for the tags that do not fit. */
+.tag-pill--more {
+  flex: none;
+}
+
+/* A long name shortens with "…"; what follows it (weight, remove button) always stays visible. */
+.tag-pill__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tag-pill > :not(.tag-pill__name) {
+  flex: none;
+}
+
+/* The reannotation queue: the verdict reads first, larger and bold. */
+.tag-marks--strong {
+  gap: 6px 10px;
+}
+
+.tag-marks--strong .tag-mark__label {
+  font-weight: 600;
+}
+
+.tag-marks--strong .tag-pill {
+  height: 22px;
+  font-size: 12.5px;
+  line-height: 22px;
+}

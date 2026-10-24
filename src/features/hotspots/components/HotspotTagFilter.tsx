@@ -1,11 +1,11 @@
 import { ChevronDown } from 'lucide-react';
 import { useRef, useState } from 'react';
-import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import type { Tag } from '../../../types/tag';
 import { useDismiss } from '../../../hooks/useDismiss';
 import { useTags } from '../hooks/useTags';
 import { customTags, dimensionTags, TAG_DIMENSIONS } from '../utils/hotspotTags';
+import { TagPill, VerdictMark } from './TagMarks';
 import './Hotspots.css';
 
 interface HotspotTagFilterProps {
@@ -59,9 +59,7 @@ export default function HotspotTagFilter({ tagIds, onChange }: HotspotTagFilterP
               {group.tags.map((tag) => (
                 <label key={tag.id} className="hotspot-tag-filter__option">
                   <input type="checkbox" checked={tagIds.includes(tag.id)} onChange={() => toggle(tag)} />
-                  <span className="hotspot-pills">
-                    <Badge>{tag.name}</Badge>
-                  </span>
+                  {tag.dimension ? <VerdictMark tag={tag} allTags={tags} labelled /> : <TagPill tag={tag} />}
                 </label>
               ))}
             </fieldset>

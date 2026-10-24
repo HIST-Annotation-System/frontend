@@ -1,4 +1,5 @@
-/* Catalog layout: folder sidebar | title and toolbar strips over a full-width scrolling list | details panel. */
+/* Catalog layout: folder sidebar | title and toolbar strips over a full-width scrolling list, the selection bar
+   under it | details panel. */
 .hotspots-layout {
   display: flex;
   flex: 1;
@@ -119,11 +120,52 @@
   opacity: 1;
 }
 
-.hotspots-page__shown {
+/* Status and tag filters on the right of the toolbar, after the count of what they let through. */
+.hotspots-page__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2) 10px;
   margin-left: auto;
+}
+
+.hotspots-page__shown {
   color: var(--c-text-3);
   font-size: 12px;
   white-space: nowrap;
+}
+
+/* Bottom area under the list (outside its scroll): the bulk bar on the left, the pager on the right. */
+.hotspots-page__footer {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 44px;
+  border-top: var(--border-width) solid var(--c-border);
+  background: var(--c-surface);
+}
+
+/* With a selection the whole area is tinted, not just the bar's part of it. */
+.hotspots-page__footer:has(.hotspot-bulk--active) {
+  background: var(--c-accent-soft);
+}
+
+/* The bar keeps its controls in a row; when the window is too narrow for both, the pager moves under it. */
+.hotspots-page__footer > .hotspot-bulk {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-top: none;
+  background: transparent;
+}
+
+.hotspots-page__footer > .hotspot-pager {
+  margin-left: auto;
+}
+
+.hotspots-page__footer-spacer {
+  flex: 1;
 }
 
 .hotspots-page__content {
@@ -210,19 +252,30 @@
   line-height: 22px;
 }
 
-/* Sorting and filtering are two groups: a wider gap between them instead of a line. */
-.hotspots-page__toolbar .hotspot-sort + * {
-  margin-left: 6px;
+/* Images dragged over the list: a dashed frame with where they will go. */
+.hotspots-page__drop {
+  position: absolute;
+  inset: var(--space-3);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--c-focus-outline);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--c-surface) 88%, transparent);
+  pointer-events: none;
 }
 
-/* The cards' "select all" at the end of the toolbar. */
-.hotspots-page__select-all {
-  display: inline-flex;
-  margin-left: auto;
+.hotspots-page__drop p {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--c-text-2);
+}
+
+.hotspots-page__drop strong {
   color: var(--c-text);
-  font-size: 13px;
-  white-space: nowrap;
-  cursor: pointer;
+  font-size: 14px;
 }

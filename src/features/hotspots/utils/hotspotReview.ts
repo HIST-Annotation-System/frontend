@@ -26,14 +26,14 @@ interface ModeDefaults {
 
 /** A mode only presets the catalog: every sort and filter stays available. */
 const MODE_DEFAULTS: Record<HotspotMode, ModeDefaults> = {
-  browse: { sort: 'created_at', order: 'desc', status: null, allFolders: false },
+  browse: { sort: 'created_at', order: 'desc', status: null, allFolders: true },
   assess: { sort: 'created_at', order: 'desc', status: 'untagged', allFolders: true },
   reannotate: { sort: 'score', order: 'desc', status: 'to_reannotate', allFolders: true },
 };
 
 export const HOTSPOT_MODES: { value: HotspotMode; label: string; description: string }[] = [
   { value: 'browse', label: 'Przeglądaj', description: 'Cały katalog: wgrywanie, zmiana nazw, przenoszenie.' },
-  { value: 'assess', label: 'Oceniaj', description: 'Nieocenione hotspoty: ustaw ważność, poprawność i tagi.' },
+  { value: 'assess', label: 'Oceniaj', description: 'Nieocenione hotspoty: ustaw priorytet, poprawność i tagi.' },
   {
     value: 'reannotate',
     label: 'Reannotuj',
@@ -50,7 +50,7 @@ export const HOTSPOT_STATUS_OPTIONS: { value: HotspotStatus; label: string }[] =
 /** The catalog's state, kept in the URL so the viewer can walk the same list. */
 export interface CatalogParams {
   mode: HotspotMode;
-  /** A folder id, `ALL_FOLDERS`, or null for the mode's default (the first folder, or every folder). */
+  /** A folder id; `ALL_FOLDERS` or null lists every folder. */
   folder: string | null;
   sort: HotspotSort;
   order: SortOrder;
@@ -99,7 +99,7 @@ export function hotspotStatus(hotspot: Pick<Hotspot, 'tags' | 'reannotated_at'>)
   return dimensions.has('importance') && dimensions.has('accuracy') ? 'to_reannotate' : 'untagged';
 }
 
-/** A freshly opened mode: its presets, every folder (or the first one when browsing), no tag filter. */
+/** A freshly opened mode: its presets, every folder, no tag filter. */
 export function catalogDefaults(mode: HotspotMode): CatalogParams {
   const { sort, order, status } = MODE_DEFAULTS[mode];
   return { mode, folder: null, sort, order, status, tagIds: [] };
@@ -118,7 +118,7 @@ export function writeCatalogParams({ mode, folder, sort, order, status, tagIds }
   return params;
 }
 
-/** The folder to list (null: every folder); `defaultFolderId` stands in when the browse mode names none. */
+/** The folder to list (null: every folder); `defaultFolderId` stands in for a mode set to start on one folder. */
 export function resolveFolderId({ mode, folder }: CatalogParams, defaultFolderId: string | null): string | null {
   if (folder === ALL_FOLDERS) return null;
   if (folder !== null) return folder;

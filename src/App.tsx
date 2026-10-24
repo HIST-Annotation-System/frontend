@@ -18,7 +18,6 @@ import SettingsPage from './pages/admin/SettingsPage';
 import CellTypesPage from './pages/admin/CellTypesPage';
 import TagsPage from './pages/admin/TagsPage';
 import ProfilePage from './pages/auth/ProfilePage';
-import StoragePage from './pages/admin/StoragePage';
 import StatsPage from './pages/admin/StatsPage';
 
 const SlideViewerPage = lazy(() => import('./pages/SlideViewerPage'));
@@ -103,7 +102,6 @@ function App() {
                       <Route path="stats" element={<StatsPage />} />
                       <Route path="users" element={<UsersPage />} />
                       <Route path="settings" element={<SettingsPage />} />
-                      <Route path="storage" element={<StoragePage />} />
                       <Route path="cell-types" element={<CellTypesPage />} />
                       <Route path="tags" element={<TagsPage />} />
                     </Route>

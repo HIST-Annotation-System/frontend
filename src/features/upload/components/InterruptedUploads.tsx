@@ -28,10 +28,10 @@ export default function InterruptedUploads() {
   };
 
   return (
-    <section className="upload-queue" aria-label="Przerwane przesyłanie">
-      <h3 className="label-caps">Przerwane przesyłania</h3>
+    <section className="upload-queue" aria-label="Przerwane wgrywanie">
+      <h3 className="label-caps">Przerwane wgrywania</h3>
       <p className="upload-queue__note">
-        Aby dokończyć przesyłanie, wybierz ponownie ten sam plik - przesyłanie zacznie się od miejsca przerwania.
+        Aby dokończyć wgrywanie, wybierz ponownie ten sam plik - wgrywanie zacznie się od miejsca przerwania.
       </p>
       <ul className="upload-queue__cards">
         {interrupted.map((upload) => (
@@ -49,7 +49,7 @@ export default function InterruptedUploads() {
                   variant="ghost"
                   icon={<X size={14} />}
                   title="Odrzuć"
-                  aria-label={`Odrzuć przerwane przesyłanie pliku ${upload.fileName}`}
+                  aria-label={`Odrzuć przerwane wgrywanie pliku ${upload.fileName}`}
                   onClick={() => void discardInterrupted(upload)}
                 />
               </span>

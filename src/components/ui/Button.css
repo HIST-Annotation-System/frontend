@@ -54,6 +54,27 @@
   color: var(--c-on-primary);
 }
 
+.btn--danger {
+  border-color: transparent;
+  background: var(--c-danger-solid);
+  color: #ffffff;
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: var(--c-danger-solid-hover);
+  color: #ffffff;
+}
+
+.btn--danger-outline {
+  border-color: var(--c-danger);
+  color: var(--c-danger-text);
+}
+
+.btn--danger-outline:hover:not(:disabled) {
+  background: var(--c-danger-soft);
+  color: var(--c-danger-text);
+}
+
 .btn--ghost {
   border-color: transparent;
   background: transparent;
@@ -85,4 +106,14 @@
   height: var(--control-sm);
   padding: 0 10px;
   font-size: 13px;
+}
+
+/* A ghost icon button that deletes something: red at rest and on hover. */
+.btn.btn--ghost.btn--danger-icon {
+  color: var(--c-danger-text);
+}
+
+.btn.btn--ghost.btn--danger-icon:hover:not(:disabled) {
+  background: var(--c-danger-soft);
+  color: var(--c-danger-text);
 }

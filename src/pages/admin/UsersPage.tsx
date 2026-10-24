@@ -202,7 +202,7 @@ export default function UsersPage() {
               <th>Nazwa użytkownika</th>
               <th>Rola</th>
               <th>Grupa</th>
-              <th>Przesyłanie</th>
+              <th>Wgrywanie</th>
               <th>Stan</th>
               <th className="admin-table__actions" aria-label="Akcje" />
             </tr>
@@ -280,7 +280,7 @@ export default function UsersPage() {
           </label>
           <label className="users-check">
             <input type="checkbox" checked={newCanUpload} onChange={(e) => setNewCanUpload(e.target.checked)} />
-            Może przesyłać pliki
+            Może wgrywać pliki
           </label>
           {createMutation.isError && (
             <p className="users-form__error" role="alert">
@@ -320,7 +320,7 @@ export default function UsersPage() {
           </label>
           <label className="users-check">
             <input type="checkbox" checked={editCanUpload} onChange={(e) => setEditCanUpload(e.target.checked)} />
-            Może przesyłać pliki
+            Może wgrywać pliki
           </label>
           {updateMutation.isError && (
             <p className="users-form__error" role="alert">

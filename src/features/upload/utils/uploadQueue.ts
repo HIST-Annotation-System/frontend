@@ -64,12 +64,12 @@ export function uploadQueueReducer(items: UploadItem[], action: UploadQueueActio
         ),
       ];
     case 'start':
-      return update(items, action.id, { status: 'uploading', message: 'Rozpoczynanie przesyłania…' });
+      return update(items, action.id, { status: 'uploading', message: 'Rozpoczynanie wgrywania…' });
     case 'started':
       return update(items, action.id, {
         slideId: action.resume.slideId,
         resume: action.resume,
-        message: 'Przesyłanie danych bezpośrednio do magazynu…',
+        message: 'Wgrywanie pliku…',
       });
     case 'progress':
       return update(items, action.id, {
@@ -84,7 +84,7 @@ export function uploadQueueReducer(items: UploadItem[], action: UploadQueueActio
         status: 'finalizing',
         bytesPerSecond: null,
         etaSeconds: null,
-        message: 'Finalizowanie przesyłania…',
+        message: 'Finalizowanie wgrywania…',
       });
     case 'completed':
       return update(items, action.id, {

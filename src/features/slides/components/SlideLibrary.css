@@ -280,15 +280,6 @@
   font-size: 12px;
 }
 
-.slide-preview__delete,
-.slide-preview__delete:hover:not(:disabled) {
-  color: var(--c-danger-text);
-}
-
-.slide-preview__delete:hover:not(:disabled) {
-  background: var(--c-danger-soft);
-}
-
 .slide-preview__confirm-actions {
   display: flex;
   justify-content: flex-end;

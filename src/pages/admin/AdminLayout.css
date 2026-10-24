@@ -417,6 +417,11 @@
   color: var(--c-text);
 }
 
+/* Delete controls are red everywhere, not only on hover. */
+.admin-icon-btn--danger {
+  color: var(--c-danger-text);
+}
+
 .admin-icon-btn--danger:hover:not(:disabled) {
   background: var(--c-danger-soft);
   color: var(--c-danger-text);

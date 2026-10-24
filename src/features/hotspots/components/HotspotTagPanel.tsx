@@ -3,7 +3,6 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import type { Hotspot } from '../../../types/hotspot';
-import { useHotspotMutations } from '../hooks/useHotspots';
 import { useHotspotTagMutations, useTagMutations, useTags } from '../hooks/useTags';
 import type { HotspotMode } from '../utils/hotspotReview';
 import {
@@ -14,22 +13,22 @@ import {
   TAG_DIMENSIONS,
   tagErrorMessage,
 } from '../utils/hotspotTags';
+import { TagPill, VerdictMark } from './TagMarks';
 import './Hotspots.css';
 
 interface HotspotTagPanelProps {
   hotspot: Hotspot;
-  /** Assessing offers moving on to reannotation; reannotating offers marking the hotspot as reannotated. */
+  /** Assessing offers moving on to reannotation (marking it reannotated is the viewer panel's footer). */
   mode: HotspotMode;
   /** Opens the hotspot for reannotation. */
   onReannotate: () => void;
 }
 
-/** The expert's verdict on a hotspot (importance, accuracy), its custom tags, and its reannotated mark. */
+/** The expert's verdict on a hotspot (importance, accuracy) and its custom tags. */
 export default function HotspotTagPanel({ hotspot, mode, onReannotate }: HotspotTagPanelProps) {
   const { data: tags = [] } = useTags();
   const { addTag, removeTag, isTagging } = useHotspotTagMutations();
   const { createTag, isCreating } = useTagMutations();
-  const { updateHotspot, isUpdating } = useHotspotMutations();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newWeight, setNewWeight] = useState(CUSTOM_TAG_DEFAULT_WEIGHT);
@@ -99,7 +98,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
                     title={ownIds.has(tag.id) ? 'Kliknij ponownie, aby usunąć ocenę' : `Waga: ${tag.weight}`}
                     onClick={() => void (ownIds.has(tag.id) ? remove(tag.id) : add(tag.id))}
                   >
-                    {tag.name}
+                    <VerdictMark tag={tag} allTags={tags} labelled size={14} />
                   </button>
                 ))}
               </div>
@@ -115,8 +114,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
         </div>
         <div className="hotspot-tag-panel__chips">
           {ownCustom.map((tag) => (
-            <span key={tag.id} className="hotspot-tag-panel__chip">
-              {tag.name}
+            <TagPill key={tag.id} tag={tag}>
               <span className="hotspot-tag-panel__weight-label">·{tag.weight}</span>
               <button
                 type="button"
@@ -128,7 +126,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
               >
                 <X size={12} />
               </button>
-            </span>
+            </TagPill>
           ))}
           <div className="hotspot-tag-panel__add-wrap">
             <button
@@ -155,7 +153,9 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
                         void add(tag.id);
                       }}
                     >
-                      <span className="hotspot-tag-panel__choice-name">{tag.name}</span>
+                      <span className="hotspot-tag-panel__choice-name">
+                        <TagPill tag={tag} />
+                      </span>
                       <span className="hotspot-tag-panel__weight-label">waga {tag.weight}</span>
                     </button>
                   ))}
@@ -177,7 +177,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
                       min={0}
                       max={weightMax}
                       aria-label="Waga nowego tagu"
-                      title={`Waga od 0 do ${weightMax}: tagi własne ważą mniej niż ważność i poprawność.`}
+                      title={`Waga od 0 do ${weightMax}: tagi własne ważą mniej niż priorytet i poprawność.`}
                       disabled={isCreating}
                       onChange={(event) => setNewWeight(Number(event.target.value))}
                     />
@@ -202,42 +202,12 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
           variant="primary"
           className="hotspot-tag-panel__action"
           disabled={!isTagged}
-          title={isTagged ? 'Otwórz hotspot w trybie „Reannotuj”' : 'Najpierw ustaw ważność i poprawność'}
+          title={isTagged ? 'Otwórz hotspot w trybie „Reannotuj”' : 'Najpierw ustaw priorytet i poprawność'}
           onClick={onReannotate}
         >
           Reannotuj obraz
         </Button>
       )}
-      {mode === 'reannotate' &&
-        (hotspot.reannotated_at ? (
-          <Button
-            variant="ghost"
-            className="hotspot-tag-panel__undo"
-            disabled={isUpdating}
-            onClick={() =>
-              void run(
-                () => updateHotspot({ hotspotId: hotspot.id, changes: { reannotated: false } }),
-                'Nie udało się zmienić oznaczenia.',
-              )
-            }
-          >
-            Cofnij „poprawione”
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            className="hotspot-tag-panel__action"
-            disabled={isUpdating}
-            onClick={() =>
-              void run(
-                () => updateHotspot({ hotspotId: hotspot.id, changes: { reannotated: true } }),
-                'Nie udało się zmienić oznaczenia.',
-              )
-            }
-          >
-            Oznacz jako poprawione
-          </Button>
-        ))}
       {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
     </div>
   );

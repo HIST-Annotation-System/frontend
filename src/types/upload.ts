@@ -20,12 +20,6 @@ export interface UploadPart {
   ETag: string;
 }
 
-export interface ImportFromStorageResponse {
-  slide_id: string;
-  /** False when the object had already been imported - the existing slide is returned. */
-  created: boolean;
-}
-
 export interface UploadedPart extends UploadPart {
   Size: number;
 }

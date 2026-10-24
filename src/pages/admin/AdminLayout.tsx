@@ -7,7 +7,6 @@ const SECTIONS = [
   { to: '/admin/settings', label: 'Kategorie i grupy' },
   { to: '/admin/cell-types', label: 'Typy komórek' },
   { to: '/admin/tags', label: 'Tagi hotspotów' },
-  { to: '/admin/storage', label: 'Magazyn' },
 ];
 
 export default function AdminLayout() {

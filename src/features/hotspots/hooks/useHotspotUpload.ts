@@ -36,6 +36,8 @@ export function useHotspotUpload() {
 
   const upload = useCallback(
     async (folderId: string, folderName: string, files: File[], skipped: number) => {
+      // One upload at a time: a second one would mix its progress into the first and could not be cancelled.
+      if (abortRef.current) return;
       const controller = new AbortController();
       abortRef.current = controller;
       const failures: HotspotUploadFailure[] = [];
@@ -49,7 +51,7 @@ export function useHotspotUpload() {
           void queryClient.invalidateQueries({ queryKey: hotspotQueryKeys.all });
         } catch (error) {
           if (controller.signal.aborted) break;
-          failures.push({ fileName: file.webkitRelativePath || file.name, message: getErrorMessage(error, 'Błąd przesyłania.') });
+          failures.push({ fileName: file.webkitRelativePath || file.name, message: getErrorMessage(error, 'Błąd wgrywania.') });
         }
         setState((previous) => ({ ...previous, done: index + 1, failures: [...failures] }));
       }

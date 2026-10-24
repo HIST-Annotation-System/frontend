@@ -1,4 +1,4 @@
-import { Check, CornerDownLeft, Folder, Folders, Pencil, Trash2, X } from 'lucide-react';
+import { Check, Folder, FolderPlus, Folders, Pencil, Trash2, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
@@ -21,19 +21,20 @@ interface HotspotFolderListProps {
 export default function HotspotFolderList({ folders, selectedId, onSelect }: HotspotFolderListProps) {
   const { createFolder, isCreatingFolder, renameFolder, isRenamingFolder, deleteFolder, isDeletingFolder } =
     useHotspotMutations();
-  const [newName, setNewName] = useState('');
+  // null: the "Nowy folder" button; a string: its name being typed.
+  const [newName, setNewName] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
   const [deleting, setDeleting] = useState<HotspotFolder | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const add = async (event: FormEvent) => {
     event.preventDefault();
-    const name = newName.trim();
+    const name = newName?.trim();
     if (!name) return;
     setError(null);
     try {
       const folder = await createFolder(name);
-      setNewName('');
+      setNewName(null);
       onSelect(folder.id);
     } catch (requestError) {
       setError(getErrorMessage(requestError, 'Nie udało się utworzyć folderu.'));
@@ -148,7 +149,7 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
                       />
                       <Button
                         variant="ghost"
-                        className="hotspot-folders__delete"
+                        className="btn--danger-icon"
                         icon={<Trash2 size={13} />}
                         title="Usuń folder"
                         aria-label={`Usuń folder ${folder.name}`}
@@ -165,27 +166,41 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
 
       <form className="hotspot-folders__new" onSubmit={(event) => void add(event)}>
         {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
-        <div className="hotspot-folders__new-field">
-          <input
-            value={newName}
-            placeholder="Nowy folder…"
-            aria-label="Nazwa nowego folderu"
-            maxLength={255}
-            disabled={isCreatingFolder}
-            onChange={(event) => setNewName(event.target.value)}
-          />
-          {newName.trim() && (
+        {newName === null ? (
+          <Button className="hotspot-folders__add" icon={<FolderPlus size={15} />} onClick={() => setNewName('')}>
+            Nowy folder
+          </Button>
+        ) : (
+          <div className="hotspot-folders__new-field">
+            <input
+              value={newName}
+              autoFocus
+              placeholder="Nazwa folderu"
+              aria-label="Nazwa nowego folderu"
+              maxLength={255}
+              disabled={isCreatingFolder}
+              onChange={(event) => setNewName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') setNewName(null);
+              }}
+            />
             <Button
               type="submit"
               variant="primary"
-              className="hotspot-folders__create"
-              icon={<CornerDownLeft size={13} />}
-              title="Utwórz (Enter)"
+              icon={<Check size={14} />}
+              title="Utwórz folder"
               aria-label="Utwórz folder"
-              disabled={isCreatingFolder}
+              disabled={isCreatingFolder || !newName.trim()}
             />
-          )}
-        </div>
+            <Button
+              variant="ghost"
+              icon={<X size={14} />}
+              title="Anuluj"
+              aria-label="Anuluj"
+              onClick={() => setNewName(null)}
+            />
+          </div>
+        )}
       </form>
 
       <Modal title="Usuń folder" open={deleting !== null} onClose={() => setDeleting(null)}>
@@ -197,7 +212,7 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
           <Button onClick={() => setDeleting(null)} disabled={isDeletingFolder}>
             Wróć
           </Button>
-          <Button variant="primary" onClick={() => void confirmDelete()} disabled={isDeletingFolder}>
+          <Button variant="danger" onClick={() => void confirmDelete()} disabled={isDeletingFolder}>
             {isDeletingFolder ? 'Usuwanie…' : 'Usuń'}
           </Button>
         </div>

@@ -66,7 +66,7 @@ export const isSameFile = (upload: ResumableUpload, file: FileIdentity): boolean
 type UploadLocks = Pick<LockManager, 'request' | 'query'>;
 
 const LOCK_PREFIX = 'hist.upload.';
-export const UPLOAD_RUNNING_ELSEWHERE_MESSAGE = 'To przesyłanie trwa już w innej karcie przeglądarki.';
+export const UPLOAD_RUNNING_ELSEWHERE_MESSAGE = 'To wgrywanie trwa już w innej karcie przeglądarki.';
 
 const uploadLockName = (slideId: string): string => `${LOCK_PREFIX}${slideId}`;
 

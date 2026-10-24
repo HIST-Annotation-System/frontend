@@ -22,7 +22,7 @@ export default function HotspotDeleteModal({ name, open, isDeleting, onConfirm, 
         <Button onClick={onClose} disabled={isDeleting}>
           Wróć
         </Button>
-        <Button variant="primary" onClick={onConfirm} disabled={isDeleting}>
+        <Button variant="danger" onClick={onConfirm} disabled={isDeleting}>
           {isDeleting ? 'Usuwanie…' : 'Usuń'}
         </Button>
       </div>

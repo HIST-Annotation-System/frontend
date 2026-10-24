@@ -11,7 +11,7 @@ interface HotspotPagerProps {
   onChange: (page: number) => void;
 }
 
-/** Pages of the review cards: "< 1 2 3 … 9 >" and the range shown; hidden when everything fits on one page. */
+/** Pages of the catalog list (cards or table): "< 1 2 3 … 9 >" and the range shown; hidden when everything fits on one page. */
 export default function HotspotPager({ page, pageCount, start, end, total, onChange }: HotspotPagerProps) {
   if (pageCount <= 1) return null;
   return (

@@ -1,3 +1,4 @@
+import { LayoutGrid, List } from 'lucide-react';
 import { useState, type DragEvent } from 'react';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import Spinner from '../components/ui/Spinner';
@@ -120,18 +121,20 @@ export default function SlidesPage() {
           <div className="segmented" role="group" aria-label="Widok">
             {(
               [
-                ['tiles', 'Kafelki'],
-                ['table', 'Tabela'],
+                ['tiles', 'Kafelki', LayoutGrid],
+                ['table', 'Tabela', List],
               ] as const
-            ).map(([value, label]) => (
+            ).map(([value, label, Icon]) => (
               <button
                 key={value}
                 type="button"
-                className={`segmented__option${view === value ? ' segmented__option--active' : ''}`}
+                className={`segmented__option segmented__option--icon${view === value ? ' segmented__option--active' : ''}`}
                 aria-pressed={view === value}
+                aria-label={label}
+                title={label}
                 onClick={() => changeView(value)}
               >
-                {label}
+                <Icon size={16} aria-hidden="true" />
               </button>
             ))}
           </div>
@@ -176,7 +179,7 @@ export default function SlidesPage() {
               <span>
                 {data.length === 0
                   ? isAdmin
-                    ? 'Brak slajdów. Prześlij pliki przyciskiem powyżej albo upuść je na tę stronę.'
+                    ? 'Brak slajdów. Wgraj pliki przyciskiem powyżej albo upuść je na tę stronę.'
                     : 'Brak slajdów.'
                   : 'Żaden slajd nie pasuje do wyszukiwania.'}
               </span>
@@ -212,7 +215,7 @@ export default function SlidesPage() {
       {isDragging && (
         <div className="slides-page__drop" aria-hidden="true">
           <p>
-            <strong>Upuść pliki, aby przesłać slajdy</strong>
+            <strong>Upuść pliki, aby wgrać slajdy</strong>
             <span>Formaty wieloplikowe jako archiwum .zip</span>
           </p>
         </div>

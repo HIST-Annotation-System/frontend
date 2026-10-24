@@ -43,9 +43,9 @@ const ABANDONED_CHECK_INTERVAL_MS = 5000;
 /** Progress is shared with other clients at most this often, and only when it moved by at least a percent. */
 const PROGRESS_REPORT_INTERVAL_MS = 2000;
 const DUPLICATE_SLIDE_CODE = 'duplicate_slide';
-const INTERRUPTED_MESSAGE = 'Połączenie zostało przerwane. Możesz wznowić przesyłanie od miejsca, w którym się zatrzymało.';
+const INTERRUPTED_MESSAGE = 'Połączenie zostało przerwane. Możesz wznowić wgrywanie od miejsca, w którym się zatrzymało.';
 const CANNOT_RESUME_MESSAGE =
-  'Nie można wznowić: przesyłanie zostało anulowane albo slajd usunięto. Wgraj plik ponownie.';
+  'Nie można wznowić: wgrywanie zostało anulowane albo slajd usunięto. Wgraj plik ponownie.';
 const WRONG_FILE_MESSAGE = 'To nie jest ten sam plik (nazwa, rozmiar lub data modyfikacji się różnią).';
 
 const newItemId = () => crypto.randomUUID();
@@ -205,7 +205,7 @@ export function useUploadQueue() {
           }
           refreshSlides();
         }
-        dispatch({ type: 'failed', id, message: getErrorMessage(error, 'Wystąpił błąd podczas przesyłania.'), resumable: false });
+        dispatch({ type: 'failed', id, message: getErrorMessage(error, 'Wystąpił błąd podczas wgrywania.'), resumable: false });
       } finally {
         release();
         controllers.current.delete(id);

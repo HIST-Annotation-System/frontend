@@ -2,6 +2,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { useState, type FormEvent, type KeyboardEvent } from 'react';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { TagPill, VerdictMark } from '../../features/hotspots/components/TagMarks';
 import { useTagMutations, useTags } from '../../features/hotspots/hooks/useTags';
 import {
   CUSTOM_TAG_DEFAULT_WEIGHT,
@@ -25,7 +26,7 @@ export default function TagsPage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const cap = customWeightCap(tags);
-  // Display order only: the core ratings by dimension (Ważność, Poprawność), then tags created by experts.
+  // Display order only: the core ratings by dimension (Priorytet, Poprawność), then tags created by experts.
   const groups = [
     ...TAG_DIMENSIONS.map((dimension) => ({
       label: dimension.label,
@@ -144,6 +145,7 @@ interface TagRowProps {
  */
 function TagRow({ tag, kind, isEditing, onStartEdit, onEndEdit, onError }: TagRowProps) {
   const { updateTag, isUpdating, deleteTag, isDeleting } = useTagMutations();
+  const { data: allTags = [] } = useTags();
   const [name, setName] = useState(tag.name);
   const [weight, setWeight] = useState(tag.weight);
   const dimension = TAG_DIMENSIONS.find((item) => item.value === tag.dimension);
@@ -241,7 +243,7 @@ function TagRow({ tag, kind, isEditing, onStartEdit, onEndEdit, onError }: TagRo
     <tr>
       <td className="admin-table__muted tags-kind">{kind}</td>
       <td className="admin-table__truncate tags-name" title={tag.name}>
-        {tag.name}
+        {dimension ? <VerdictMark tag={tag} allTags={allTags} labelled /> : <TagPill tag={tag} />}
       </td>
       <td className="admin-table__num">{tag.weight}</td>
       <td className="admin-table__actions">

@@ -12,7 +12,7 @@ const DEFAULT_RETRY = { attempts: 5, baseDelayMs: 1000 };
 /** S3 answers 404 (NoSuchUpload) once the multipart upload was aborted - e.g. someone cancelled it. */
 export const UPLOAD_GONE_CODE = 'upload_gone';
 const UPLOAD_GONE_MESSAGE =
-  'Przesyłanie zostało przerwane: slajd usunięto albo przesyłanie anulował inny administrator.';
+  'Wgrywanie zostało przerwane: slajd usunięto albo wgrywanie anulował inny administrator.';
 
 /** The backend/storage calls a transfer needs (injected, so the logic is testable without a network). */
 export interface PartTransport {

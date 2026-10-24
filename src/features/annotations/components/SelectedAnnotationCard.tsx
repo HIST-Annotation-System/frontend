@@ -98,6 +98,7 @@ export default function SelectedAnnotationCard({
       {!readOnly && (
         <Button
           variant="ghost"
+          className="btn--danger-icon"
           icon={<Trash2 size={14} />}
           title="Usuń obrys"
           aria-label="Usuń anotację"

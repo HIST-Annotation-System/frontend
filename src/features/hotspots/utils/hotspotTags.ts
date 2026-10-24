@@ -3,7 +3,7 @@ import type { Tag, TagDimension } from '../../../types/tag';
 import { getErrorMessage } from '../../../utils/errors';
 
 export const TAG_DIMENSIONS: { value: TagDimension; label: string }[] = [
-  { value: 'importance', label: 'Ważność' },
+  { value: 'importance', label: 'Priorytet' },
   { value: 'accuracy', label: 'Poprawność' },
 ];
 
@@ -47,6 +47,27 @@ export function tagTone(tag: Tag, allTags: Tag[]): BadgeTone {
   }
   return 'neutral';
 }
+
+export type PriorityLevel = 'high' | 'medium' | 'low';
+
+/** An importance value's place among all of them, as in Jira: the heaviest is high, the lightest low. */
+export function priorityLevel(tag: Tag, allTags: Tag[]): PriorityLevel {
+  const values = dimensionTags(allTags, 'importance');
+  const index = values.findIndex((item) => item.id === tag.id);
+  // Not placed yet (the tag list is still loading): neutral rather than alarming.
+  if (index === -1) return 'medium';
+  if (index === 0) return 'high';
+  if (index === values.length - 1) return 'low';
+  return 'medium';
+}
+
+/** An accuracy value that marks the annotation as wrong (it weighs something; "correct" weighs nothing). */
+export const isWrongAccuracy = (tag: Tag): boolean => tag.weight > 0;
+
+/** Custom tags get one of these pill colours, always the same for a tag. */
+export const TAG_COLOR_COUNT = 8;
+
+export const tagColorIndex = (tag: Pick<Tag, 'id'>): number => tag.id % TAG_COLOR_COUNT;
 
 /** The API's weight errors (backend services/tags.py) arrive in English; everything else as it comes. */
 export function tagErrorMessage(error: unknown, fallback: string): string {

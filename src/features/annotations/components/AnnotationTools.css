@@ -54,6 +54,11 @@
   color: var(--c-danger-text);
 }
 
+/* Delete is red at rest too (this file loads after Button.css, so it has to say so here). */
+.selected-annotation .btn.btn--danger-icon {
+  color: var(--c-danger-text);
+}
+
 .selected-annotation__class:disabled {
   opacity: 1;
   color: var(--c-text);
@@ -206,5 +211,9 @@
 
 .annotation-item .btn--ghost.btn--icon-only:hover:not(:disabled) {
   background: transparent;
+  color: var(--c-danger-text);
+}
+
+.annotation-item .btn.btn--danger-icon {
   color: var(--c-danger-text);
 }

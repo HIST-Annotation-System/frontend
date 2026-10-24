@@ -22,15 +22,19 @@
   --c-text-3: #4F4F4F;
   /* Labels of label/value lists: quieter than the values. */
   --c-label: #666666;
-  --c-primary: #111111;
-  --c-primary-hover: #363636;
-  --c-on-primary: #FCFCFC;
+  /* Main buttons: the team's green. */
+  --c-primary: #4F7A63;
+  --c-primary-hover: #436A55;
+  --c-on-primary: #FFFFFF;
   --c-accent: #111111;
   --c-accent-text: #111111;
   --c-accent-soft: #E3E3E3;
   --c-danger: #a42d15;
   --c-danger-text: #93270f;
   --c-danger-soft: #fbe4de;
+  /* Filled delete buttons (white text). */
+  --c-danger-solid: #A42D15;
+  --c-danger-solid-hover: #8B2511;
   --c-success: #2f9273;
   --c-success-text: #0b634b;
   --c-success-soft: #dcf1e8;
@@ -84,15 +88,17 @@
   --c-text-2: #CFCFCF;
   --c-text-3: #B5B5B5;
   --c-label: #A0A0A0;
-  --c-primary: #EDEDED;
-  --c-primary-hover: #CFCFCF;
-  --c-on-primary: #141414;
+  --c-primary: #3D6B52;
+  --c-primary-hover: #467A5E;
+  --c-on-primary: #F5F5F5;
   --c-accent: #EDEDED;
   --c-accent-text: #EDEDED;
   --c-accent-soft: rgba(237,237,237,0.10);
   --c-danger: #df6a55;
   --c-danger-text: #f0968a;
   --c-danger-soft: rgba(223,106,85,0.16);
+  --c-danger-solid: #C0392B;
+  --c-danger-solid-hover: #A93226;
   --c-success: #8be3c0;
   --c-success-text: #a6ecd1;
   --c-success-soft: rgba(139,227,192,0.13);
@@ -130,7 +136,7 @@
 
 /* Library screens (slides, hotspot catalog): a softer, lighter tone after the team's alternative design - white
    lists, soft grey panes, hairline row lines, a neutral grey selection and one muted green for small marks only
-   (row edge, focus, progress); it never fills text or colours it. The primary button keeps the palette colour.
+   (row edge, focus, progress); it never fills text or colours it. Main buttons are green everywhere (theme above).
    Contrast: field borders >= 3:1 on every surface, secondary text and errors >= 4.5:1 also on a selected row.
    Derived tokens are declared again so they follow these values. */
 .tone-soft {

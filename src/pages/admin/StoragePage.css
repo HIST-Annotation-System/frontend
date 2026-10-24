@@ -1,9 +1,0 @@
-/* The explorer sits in the content area like the other admin tables, at a readable width. */
-.storage-page__body {
-  max-width: 1100px;
-  padding: var(--space-4) var(--space-4) var(--space-6);
-}
-
-.storage-page .storage-browser > .error-message {
-  margin: 0;
-}

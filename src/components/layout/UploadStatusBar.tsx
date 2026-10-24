@@ -32,7 +32,7 @@ export default function UploadStatusBar() {
 
   if (VIEWER_ROUTE.test(pathname)) {
     return (
-      <div className="upload-pill" role="status" title={`Przesyłanie w tle: ${active.file.name}`}>
+      <div className="upload-pill" role="status" title={`Wgrywanie w tle: ${active.file.name}`}>
         <span className="upload-pill__track">
           <span className="upload-pill__fill" style={{ width: `${percent}%` }} />
         </span>
@@ -44,14 +44,14 @@ export default function UploadStatusBar() {
 
   return (
     <div className="upload-status-bar" role="status">
-      <span className="upload-status-bar__title">{finalizing ? 'Finalizowanie…' : 'Przesyłanie'}</span>
+      <span className="upload-status-bar__title">{finalizing ? 'Finalizowanie…' : 'Wgrywanie'}</span>
       <span className="upload-status-bar__name" title={active.file.name}>
         {active.file.name}
       </span>
       <div
         className={`upload-status-bar__track${finalizing ? ' upload-status-bar__track--indeterminate' : ''}`}
         role="progressbar"
-        aria-label="Postęp przesyłania"
+        aria-label="Postęp wgrywania"
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percent}
@@ -62,7 +62,7 @@ export default function UploadStatusBar() {
       <span className="upload-status-bar__speed">{speed}</span>
       {queuedCount > 0 && <span className="upload-status-bar__queue">+{queuedCount} w kolejce</span>}
       <button type="button" className="upload-status-bar__cancel" onClick={() => void cancel(active.id)}>
-        Anuluj przesyłanie
+        Anuluj wgrywanie
       </button>
     </div>
   );

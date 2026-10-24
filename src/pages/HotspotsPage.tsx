@@ -14,7 +14,8 @@ import HotspotModeSwitch from '../features/hotspots/components/HotspotModeSwitch
 import HotspotPager from '../features/hotspots/components/HotspotPager';
 import HotspotSortControl from '../features/hotspots/components/HotspotSortControl';
 import HotspotTable from '../features/hotspots/components/HotspotTable';
-import HotspotUploadButtons from '../features/hotspots/components/HotspotUploadButtons';
+import HotspotUploader from '../features/hotspots/components/HotspotUploader';
+import { useHotspotDrop } from '../features/hotspots/hooks/useHotspotDrop';
 import { useHotspotFolders, useHotspots } from '../features/hotspots/hooks/useHotspots';
 import {
   ALL_FOLDERS,
@@ -32,10 +33,12 @@ import { getErrorMessage } from '../utils/errors';
 import './HotspotsPage.css';
 
 const DETAILS_OPEN_KEY = 'hist.hotspotDetailsOpen';
-/** URL parameter of the review cards' page; any other change of the catalog drops it (back to page 1). */
+/** URL parameter of the catalog page (cards or table); any other change of the catalog drops it (back to page 1). */
 const PAGE_PARAM = 'strona';
 /** Cards per page: whole rows at five or six columns (1280 / 1440 px with the details panel open). */
 const PAGE_SIZE = 60;
+/** Rows per page of the browse table. */
+const TABLE_PAGE_SIZE = 100;
 
 function readDetailsOpen(): boolean {
   try {
@@ -114,7 +117,13 @@ export default function HotspotsPage() {
             modes={
               <HotspotModeSwitch
                 mode={params.mode}
-                onChange={(mode) => setSearchParams(writeCatalogParams(catalogDefaults(mode)), { replace: true })}
+                // A new mode resets its filters and order but stays in the folder being looked at (or all of them).
+                onChange={(mode) =>
+                  setSearchParams(
+                    writeCatalogParams({ ...catalogDefaults(mode), folder: folderId }),
+                    { replace: true },
+                  )
+                }
               />
             }
             activity={activity}
@@ -129,7 +138,7 @@ export default function HotspotsPage() {
               <div className="hotspots-page__no-folders">
                 <span className="hotspots-page__no-folders-title">Brak hotspotów</span>
                 <span>
-                  Hotspoty trzymane są w folderach. Utwórz folder w panelu po lewej i wgraj do niego obrazy PNG/JPG albo
+                  Hotspoty trzymane są w folderach. Utwórz folder w panelu po lewej i wgraj do niego obrazy albo
                   otwórz slajd, kliknij „Hotspoty” na pasku przeglądarki i przeciągnij po obszarze, który ma zostać
                   pocięty na hotspoty.
                 </span>
@@ -154,7 +163,7 @@ interface HotspotCatalogListProps {
   /** Hotspots being created, shown above the list. */
   activity: ReactNode;
   onChange: (changes: Partial<CatalogParams>) => void;
-  /** Page of the review cards (browsing lists everything in the table). */
+  /** Page of the review cards or of the browse table. */
   page: number;
   onPageChange: (page: number) => void;
 }
@@ -177,8 +186,8 @@ function HotspotCatalogList({
   const [detailsOpen, setDetailsOpen] = useState(readDetailsOpen);
   // Managing hotspots (upload, rename, move, delete) belongs to browsing; the review modes only work through them.
   const browsing = params.mode === 'browse';
-  // The review cards come in pages (only their thumbnails load); the browse table lists everything.
-  const slice = pageSlice(data?.length ?? 0, browsing ? 1 : requestedPage, browsing ? Infinity : PAGE_SIZE);
+  // Both the review cards and the browse table come in pages (only the cards' thumbnails load).
+  const slice = pageSlice(data?.length ?? 0, requestedPage, browsing ? TABLE_PAGE_SIZE : PAGE_SIZE);
   const visible = (data ?? []).slice(slice.start, slice.end);
   const bodyRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -195,6 +204,12 @@ function HotspotCatalogList({
   const selected = (data ?? []).filter((hotspot) => selectedIds.has(hotspot.id)).map((hotspot) => hotspot.id);
   // "Select all" covers what is on screen (the current page); ticks on other pages stay.
   const allSelected = visible.length > 0 && visible.every((hotspot) => selectedIds.has(hotspot.id));
+  // Card modes always offer "select all"; the browse table has it in its header, so there the bar waits for a tick.
+  const showBulk = selected.length > 0 || (!browsing && visible.length > 0);
+  // Assessing lists untagged hotspots, so the cards' tag lines only take room when some card on the page uses them.
+  const tagLines = visible.some((hotspot) => hotspot.tags.length > 0);
+  // Images dropped on the list go into the folder being browsed.
+  const { isDragging, dropHandlers } = useHotspotDrop(folder, browsing);
   const isEmpty = folder ? folder.hotspot_count === 0 : folders.every((item) => item.hotspot_count === 0);
   const total = folder ? folder.hotspot_count : folders.reduce((sum, item) => sum + item.hotspot_count, 0);
   const toggle = (hotspotId: string) =>
@@ -212,7 +227,7 @@ function HotspotCatalogList({
 
   return (
     <>
-      <div className="hotspots-page__main">
+      <div className="hotspots-page__main" {...dropHandlers}>
         <div className="hotspots-page__top">
           <div className="hotspots-page__header">
             <div className="hotspots-page__heading">
@@ -221,7 +236,7 @@ function HotspotCatalogList({
               {modes}
             </div>
             <div className="hotspots-page__header-actions">
-              {folder && browsing && <HotspotUploadButtons folderId={folder.id} folderName={folder.name} />}
+              {folder && browsing && <HotspotUploader folderId={folder.id} folderName={folder.name} />}
               {!detailsOpen && (
                 <Button
                   variant="ghost"
@@ -241,49 +256,35 @@ function HotspotCatalogList({
                 order={params.order}
                 onChange={(sort, order) => onChange({ sort, order })}
               />
-              {params.mode === 'assess' ? (
-                // Assessing always lists the untagged hotspots: the status is fixed and tags are not its focus.
-                <select
-                  className="hotspot-sort__select hotspots-page__status-locked"
-                  aria-label="Status oceny"
-                  title="W trybie „Oceniaj” widoczne są tylko nieocenione"
-                  disabled
-                  value="untagged"
-                >
-                  <option value="untagged">
-                    {HOTSPOT_STATUS_OPTIONS.find((option) => option.value === 'untagged')?.label}
-                  </option>
-                </select>
-              ) : (
-                <HotspotFilters mode={params.mode} status={params.status} tagIds={params.tagIds} onChange={onChange} />
-              )}
-              {data !== undefined && (
-                <span className="hotspots-page__shown">
-                  wyświetlono {data.length} z {total}
-                </span>
-              )}
-              {!browsing && visible.length > 0 && (
-                <label className="hotspots-page__select-all">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    ref={(input) => {
-                      if (input) input.indeterminate = !allSelected && visible.some((hotspot) => selectedIds.has(hotspot.id));
-                    }}
-                    onChange={toggleAll}
-                  />
-                  Zaznacz wszystkie
-                </label>
-              )}
+              {/* Filters on the right, apart from the sort order. */}
+              <div className="hotspots-page__filters">
+                <span className="hotspot-sort__label">Filtruj według</span>
+                {params.mode === 'assess' ? (
+                  // Assessing always lists the untagged hotspots: the status is fixed and tags are not its focus.
+                  <select
+                    className="hotspot-sort__select hotspots-page__status-locked"
+                    aria-label="Status oceny"
+                    title="W trybie „Oceniaj” widoczne są tylko nieocenione"
+                    disabled
+                    value="untagged"
+                  >
+                    <option value="untagged">
+                      {HOTSPOT_STATUS_OPTIONS.find((option) => option.value === 'untagged')?.label}
+                    </option>
+                  </select>
+                ) : (
+                  <HotspotFilters mode={params.mode} status={params.status} tagIds={params.tagIds} onChange={onChange} />
+                )}
+                {/* Last, so the count sits at the far right of the toolbar. */}
+                {data !== undefined && (
+                  <span className="hotspots-page__shown">
+                    wyświetlono {visible.length} z {total}
+                  </span>
+                )}
+              </div>
             </div>
           )}
         </div>
-        {data !== undefined && selected.length > 0 && (
-          <HotspotBulkBar
-            hotspotIds={selected}
-            onClear={() => setSelectedIds(new Set())}
-          />
-        )}
         <div className="hotspots-page__content">
           <div className="hotspots-page__body" ref={bodyRef}>
             {activity}
@@ -302,14 +303,14 @@ function HotspotCatalogList({
                     : !folder
                       ? 'Żaden folder nie zawiera jeszcze hotspotów.'
                       : browsing
-                        ? 'Wgraj obrazy PNG/JPG przyciskami powyżej albo utwórz hotspoty ze slajdu przyciskiem „Hotspoty” w przeglądarce slajdów.'
+                        ? 'Wgraj obrazy przyciskiem „Wgraj” albo przeciągnij je tutaj. Hotspoty można też utworzyć ze slajdu przyciskiem „Hotspoty” w przeglądarce slajdów.'
                         : 'W tym folderze nie ma jeszcze hotspotów.'}
                 </span>
               </div>
             ) : browsing ? (
               <div className={isPlaceholderData ? 'hotspots-page__list--stale' : undefined} aria-busy={isPlaceholderData}>
                 <HotspotTable
-                  hotspots={data}
+                  hotspots={visible}
                   folders={folders}
                   sort={params.sort}
                   linkSearch={linkSearch}
@@ -334,6 +335,7 @@ function HotspotCatalogList({
                       linkSearch={linkSearch}
                       selected={selectedIds.has(hotspot.id)}
                       onToggleSelect={() => toggle(hotspot.id)}
+                      tagLines={tagLines}
                       detailsOpen={detailsOpen && detailHotspot?.id === hotspot.id}
                       onShowDetails={() => showDetails(hotspot.id)}
                     />
@@ -341,18 +343,53 @@ function HotspotCatalogList({
                 ))}
               </ul>
             )}
-            {!browsing && data !== undefined && (
-              <HotspotPager
-                page={slice.page}
-                pageCount={slice.pageCount}
-                start={slice.start}
-                end={slice.end}
-                total={data.length}
-                onChange={onPageChange}
-              />
-            )}
           </div>
         </div>
+        {/* One bottom area outside the scrolling list, so it never covers the last row: selection left, pages right. */}
+        {data !== undefined && (showBulk || slice.pageCount > 1) && (
+          <div className="hotspots-page__footer">
+            {showBulk ? (
+              <HotspotBulkBar
+                hotspotIds={selected}
+                onClear={() => setSelectedIds(new Set())}
+                selectAll={
+                  browsing
+                    ? undefined
+                    : {
+                        checked: allSelected,
+                        indeterminate: !allSelected && visible.some((hotspot) => selectedIds.has(hotspot.id)),
+                        onToggle: toggleAll,
+                      }
+                }
+              />
+            ) : (
+              <span className="hotspots-page__footer-spacer" />
+            )}
+            <HotspotPager
+              page={slice.page}
+              pageCount={slice.pageCount}
+              start={slice.start}
+              end={slice.end}
+              total={data.length}
+              onChange={onPageChange}
+            />
+          </div>
+        )}
+        {isDragging && (
+          <div className="hotspots-page__drop" aria-hidden="true">
+            {folder ? (
+              <p>
+                <strong>Upuść obrazy lub foldery</strong>
+                <span>Zostaną wgrane do folderu „{folder.name}”</span>
+              </p>
+            ) : (
+              <p>
+                <strong>Najpierw wybierz folder</strong>
+                <span>Obrazy wgrywa się do folderu wybranego na liście po lewej</span>
+              </p>
+            )}
+          </div>
+        )}
       </div>
       {detailsOpen &&
         (detailHotspot ? (
