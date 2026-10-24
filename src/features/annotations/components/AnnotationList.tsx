@@ -4,28 +4,26 @@ import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Spinner from '../../../components/ui/Spinner';
 import type { AnnotationClass, AnnotationOwner } from '../../../types/annotation';
 import { getErrorMessage } from '../../../utils/errors';
-import { useAnnotationMutations, useAnnotations } from '../hooks/useAnnotations';
+import { useAnnotationActions } from '../hooks/useAnnotationActions';
+import { useAnnotations } from '../hooks/useAnnotations';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
-import { toAnnotationDraft } from '../utils/annotationAdapter';
 import AnnotationListItem from './AnnotationListItem';
 import './AnnotationTools.css';
 
 const FIT_PADDING_PX = 80;
 
-/** Filter value showing every class. */
 const ALL = '';
 
 interface AnnotationListProps {
   owner: AnnotationOwner;
   classes: AnnotationClass[];
-  /** Annotations can be shown, but not reclassified or deleted. */
   readOnly?: boolean;
   onError: (message: string) => void;
 }
 
 export default function AnnotationList({ owner, classes, readOnly = false, onError }: AnnotationListProps) {
   const { data: annotations, isPending, isError, error } = useAnnotations(owner);
-  const { updateAnnotation, deleteAnnotation } = useAnnotationMutations(owner);
+  const { changeClass, removeAnnotation } = useAnnotationActions(owner, onError);
   const anno = useSlideAnnotator();
   const selection = useSelection();
   const [filter, setFilter] = useState(ALL);
@@ -36,28 +34,8 @@ export default function AnnotationList({ owner, classes, readOnly = false, onErr
     anno?.fitBounds(annotationId, { padding: FIT_PADDING_PX });
   };
 
-  // Changes made from the list go to the API first, then to the annotator (programmatically).
-  const changeClass = async (annotationId: string, classId: string) => {
-    try {
-      const saved = await updateAnnotation({ id: annotationId, changes: { class_id: classId } });
-      anno?.updateAnnotation(toAnnotationDraft(saved));
-    } catch (requestError) {
-      onError(getErrorMessage(requestError, 'Nie udało się zmienić klasy anotacji.'));
-    }
-  };
-
-  const removeAnnotation = async (annotationId: string) => {
-    try {
-      await deleteAnnotation(annotationId);
-      anno?.removeAnnotation(annotationId);
-    } catch (requestError) {
-      onError(getErrorMessage(requestError, 'Nie udało się usunąć anotacji.'));
-    }
-  };
-
   const counts = new Map<string, number>();
   annotations?.forEach((annotation) => counts.set(annotation.class_id, (counts.get(annotation.class_id) ?? 0) + 1));
-  // A filter whose class has no outlines left falls back to all of them.
   const activeFilter = filter !== ALL && counts.has(filter) ? filter : ALL;
   const rows = (annotations ?? [])
     .map((annotation, index) => ({ annotation, number: index + 1 }))
