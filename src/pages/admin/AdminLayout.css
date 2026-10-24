@@ -194,6 +194,12 @@
   text-align: right;
 }
 
+/* A value the page already knows will be rejected (e.g. a name that is taken). */
+.admin-input--invalid,
+.admin-input--invalid:focus {
+  border-color: var(--c-danger);
+}
+
 /* An error line between the add form and the table, in red (no framed box). */
 .admin-alert {
   display: flex;
@@ -335,6 +341,12 @@
 
 .admin-table tr:has(+ .admin-table__error) td {
   border-bottom-color: transparent;
+}
+
+/* The existing row a name being typed clashes with. */
+.admin-table tbody tr.admin-table__row--duplicate,
+.admin-table tbody tr.admin-table__row--duplicate:hover {
+  background: var(--c-danger-soft);
 }
 
 /* Long values are cut with an ellipsis; the cell carries the full text in its title. */
