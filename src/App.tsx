@@ -19,6 +19,7 @@ import CellTypesPage from './pages/admin/CellTypesPage';
 import TagsPage from './pages/admin/TagsPage';
 import ProfilePage from './pages/auth/ProfilePage';
 import StoragePage from './pages/admin/StoragePage';
+import StatsPage from './pages/admin/StatsPage';
 
 const SlideViewerPage = lazy(() => import('./pages/SlideViewerPage'));
 const HotspotViewerPage = lazy(() => import('./pages/HotspotViewerPage'));
@@ -99,6 +100,7 @@ function App() {
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/admin" element={<RequireAuth role="ADMIN"><AdminLayout /></RequireAuth>}>
                       <Route index element={<Navigate to="users" replace />} />
+                      <Route path="stats" element={<StatsPage />} />
                       <Route path="users" element={<UsersPage />} />
                       <Route path="settings" element={<SettingsPage />} />
                       <Route path="storage" element={<StoragePage />} />

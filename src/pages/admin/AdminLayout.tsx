@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import './AdminLayout.css';
 
 const SECTIONS = [
+  { to: '/admin/stats', label: 'Statystyki' },
   { to: '/admin/users', label: 'Użytkownicy' },
   { to: '/admin/settings', label: 'Kategorie i grupy' },
   { to: '/admin/cell-types', label: 'Typy komórek' },
