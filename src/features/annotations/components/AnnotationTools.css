@@ -1,4 +1,3 @@
-/* Annotation tools: the shared floating .tool-column (global.css); tools, a line, then undo / redo. */
 .annotation-tools__divider {
   height: 1px;
   margin: var(--space-1) 2px;
@@ -11,7 +10,56 @@
   gap: 2px;
 }
 
-/* Annotation list of the viewer panel: header strip with count and type filter, a bordered list below. */
+.selected-annotation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: calc(100% - 24px);
+  padding: 4px 4px 4px var(--space-2);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
+  visibility: hidden;
+  pointer-events: auto;
+}
+
+.selected-annotation__number {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.selected-annotation__class {
+  min-width: 0;
+  max-width: 220px;
+  height: 24px;
+  padding: 0 18px 0 6px;
+}
+
+.selected-annotation .btn--ghost.btn--icon-only {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  color: var(--c-text-3);
+}
+
+.selected-annotation .btn--ghost.btn--icon-only:hover:not(:disabled) {
+  background: transparent;
+  color: var(--c-danger-text);
+}
+
+.selected-annotation__class:disabled {
+  opacity: 1;
+  color: var(--c-text);
+  cursor: default;
+}
+
 .annotation-panel {
   display: flex;
   flex: 1;
@@ -63,7 +111,7 @@
   padding: 0 2px 0 var(--space-2);
 }
 
-.annotation-item + .annotation-item {
+.annotation-item+.annotation-item {
   border-top: var(--border);
 }
 
@@ -116,7 +164,6 @@
   font-weight: 600;
 }
 
-/* Borderless until hovered, like an inline cell editor. */
 .annotation-item__class {
   flex: 1;
   min-width: 0;

@@ -9,6 +9,7 @@ import AnnotationStatus from '../features/annotations/components/AnnotationStatu
 import AnnotationList from '../features/annotations/components/AnnotationList';
 import AnnotationToolbar from '../features/annotations/components/AnnotationToolbar';
 import CellTypeSelector from '../features/annotations/components/CellTypeSelector';
+import SelectedAnnotationCard from '../features/annotations/components/SelectedAnnotationCard';
 import { useCellTypes, useCellTypeTool } from '../features/annotations/hooks/useCellTypes';
 import { useAnnotations } from '../features/annotations/hooks/useAnnotations';
 import { FALLBACK_CELL_TYPE_COLOR } from '../features/annotations/utils/cellTypeColors';
@@ -33,7 +34,6 @@ import type { Hotspot } from '../types/hotspot';
 import { getErrorMessage } from '../utils/errors';
 import './SlideViewerPage.css';
 
-/** Annotations live in hotspot image pixels, so the viewer and API coordinates coincide. */
 const NO_OFFSET = { x: 0, y: 0 };
 
 export default function HotspotViewerPage() {
@@ -56,8 +56,6 @@ export default function HotspotViewerPage() {
     );
   }
 
-  // Keyed by hotspot and mode: switching either mounts a fresh viewer and annotator (the mode decides whether
-  // annotations can be edited).
   return (
     <HotspotWorkspace
       key={`${hotspotQuery.data.id}:${readCatalogParams(searchParams).mode}`}
@@ -72,10 +70,6 @@ interface HotspotWorkspaceProps {
   cellTypes: CellType[];
 }
 
-/**
- * One hotspot, opened from the catalog: the catalog's mode and filters come along in the URL, so the viewer walks
- * the same list. Assessing only tags (annotations are read-only); browsing and reannotating also annotate.
- */
 function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   const [searchParams] = useSearchParams();
   const { search } = useLocation();
@@ -88,11 +82,9 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   const { data: folders } = useHotspotFolders();
   const owner: AnnotationOwner = { type: 'hotspots', id: hotspot.id };
 
-  // The saved annotations seed the colours of the cell types they use.
   const { data: annotations } = useAnnotations(owner);
   const { activeCellTypeId, colorMap, selectCellType } = useCellTypeTool(cellTypes, annotations);
 
-  // The annotation components work with classes: one per cell type, in its colour.
   const classes: AnnotationClass[] = cellTypes.map((ct) => ({
     id: String(ct.id),
     name: ct.name,
@@ -107,7 +99,6 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   const modeOption = HOTSPOT_MODES.find((option) => option.value === catalog.mode);
   const folderName = folders?.find((folder) => folder.id === hotspot.folder_id)?.name;
 
-  // Outlines per cell type, for the type list.
   const counts = new Map<number, number>();
   annotations?.forEach((annotation) => {
     const id = Number(annotation.class_id);
@@ -138,7 +129,6 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
               <HotspotQueueNav
                 hotspot={hotspot}
                 query={{
-                  // Browsing without a folder in the URL lists the first folder: the one this hotspot was opened from.
                   folderId: resolveFolderId(catalog, hotspot.folder_id),
                   sort: catalog.sort,
                   order: catalog.order,
@@ -168,6 +158,7 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                     {!assessing && (
                       <AnnotationToolbar mode={toolMode} onModeChange={setToolMode} canDraw={activeClassId !== null} />
                     )}
+                    <SelectedAnnotationCard owner={owner} classes={classes} readOnly={assessing} onError={setError} />
                   </HotspotViewer>
                 </AnnotationLayer>
                 {!panelOpen && errorMessage && <div className="viewer-page__error">{errorMessage}</div>}
@@ -189,7 +180,6 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                   <div className="viewer-panel__annotations">
                     <AnnotationList owner={owner} classes={classes} readOnly={assessing} onError={setError} />
                   </div>
-                  {/* Reviewing is the expert's job, so the verdict starts unrolled outside plain browsing. */}
                   <SidebarSection title="Ocena eksperta" collapsible defaultOpen={catalog.mode !== 'browse'}>
                     {hotspot.reannotated_at && catalog.mode !== 'reannotate' && (
                       <p className="viewer-panel__corrected">Poprawione</p>
