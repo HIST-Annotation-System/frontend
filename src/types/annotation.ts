@@ -29,6 +29,9 @@ export interface AnnotationOwner {
 /** Canvas tool: pan and zoom, draw a polygon or a smooth curve point by point, or draw freehand. */
 export type ToolMode = 'navigate' | 'polygon' | 'curve' | 'freehand';
 
+/** A cell outline, or an area left out of model training (blur, fold, dust, slide edge); areas have no class. */
+export type AnnotationKind = 'cell' | 'excluded';
+
 export interface AnnotationClass {
   id: string;
   name: string;
@@ -37,28 +40,40 @@ export interface AnnotationClass {
 
 export interface Annotation {
   id: string;
-  class_id: string;
+  kind: AnnotationKind;
+  class_id: string | null;
   geometry: PolygonGeometry;
   curve?: CurveGeometry | null;
   created_at: string;
+  /** A cell lying wholly inside an excluded area of the same hotspot. */
+  inside_excluded?: boolean;
+  /**
+   * Excluded areas merged into this one on save and deleted (or, when an older area was kept, the id of the area just
+   * sent, never stored). Only set on create/update responses.
+   */
+  absorbed_ids?: string[];
 }
 
 export interface AnnotationCreate {
   id?: string;
-  class_id: string;
+  kind: AnnotationKind;
+  class_id: string | null;
   geometry: PolygonGeometry;
   curve?: CurveGeometry | null;
 }
 
+/** Switching to `excluded` clears the class; switching to `cell` needs one. */
 export interface AnnotationUpdate {
+  kind?: AnnotationKind;
   class_id?: string;
   geometry?: PolygonGeometry;
   curve?: CurveGeometry | null;
 }
 
-/** Annotation as exchanged with the annotator; freshly drawn shapes have no class yet. */
+/** Annotation as exchanged with the annotator; freshly drawn shapes have no class (nor kind) yet. */
 export interface AnnotationDraft {
   id: string;
+  kind: AnnotationKind;
   class_id: string | null;
   geometry: PolygonGeometry;
   curve: CurveGeometry | null;

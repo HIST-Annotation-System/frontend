@@ -2,7 +2,7 @@ import { OpenSeadragonAnnotator, UserSelectAction, useSelection } from '@annotor
 import '@annotorious/react/annotorious-react.css';
 import { useEffect, useLayoutEffect, useMemo, type ReactNode } from 'react';
 import { useLatest } from '../../../hooks/useLatest';
-import type { AnnotationClass, AnnotationOwner, ToolMode } from '../../../types/annotation';
+import type { AnnotationClass, AnnotationKind, AnnotationOwner, ToolMode } from '../../../types/annotation';
 import type { Offset } from '../../../types/geometry';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { useAnnotoriousSync } from '../hooks/useAnnotoriousSync';
@@ -18,6 +18,8 @@ interface AnnotationLayerProps {
   classes: AnnotationClass[];
   mode: ToolMode;
   activeClassId: string | null;
+  /** `excluded`: new shapes are excluded areas (drawn without a class). */
+  activeKind?: AnnotationKind;
   /** Shapes can be looked at and selected, but not drawn or edited. */
   readOnly?: boolean;
   onError: (message: string) => void;
@@ -32,12 +34,13 @@ export default function AnnotationLayer({
   classes,
   mode,
   activeClassId,
+  activeKind = 'cell',
   readOnly = false,
   onError,
   children,
 }: AnnotationLayerProps) {
   const { data: annotations } = useAnnotations(owner);
-  useAnnotoriousSync({ owner, annotations, activeClassId, onError });
+  useAnnotoriousSync({ owner, annotations, activeClassId, activeKind, onError });
 
   // Layout effect: tools must be registered before <OpenSeadragonAnnotator> sets the tool.
   const anno = useSlideAnnotator();
@@ -71,15 +74,19 @@ export default function AnnotationLayer({
   const adapter = useMemo(() => createAnnotationAdapter({ x, y }), [x, y]);
   const style = useMemo(() => {
     const colors = new Map(classes.map((item) => [item.id, item.color]));
-    return createAnnotationStyle(colors, (activeClassId && colors.get(activeClassId)) || FALLBACK_ANNOTATION_COLOR);
-  }, [classes, activeClassId]);
+    return createAnnotationStyle(
+      colors,
+      (activeClassId && colors.get(activeClassId)) || FALLBACK_ANNOTATION_COLOR,
+      activeKind,
+    );
+  }, [classes, activeClassId, activeKind]);
 
   return (
     <OpenSeadragonAnnotator
       adapter={adapter}
       tool={DRAWING_TOOLS[mode === 'navigate' ? 'polygon' : mode]}
       drawingMode="click"
-      drawingEnabled={!readOnly && mode !== 'navigate' && activeClassId !== null}
+      drawingEnabled={!readOnly && mode !== 'navigate' && (activeKind === 'excluded' || activeClassId !== null)}
       userSelectAction={readOnly ? UserSelectAction.SELECT : UserSelectAction.EDIT}
       style={style}
     >

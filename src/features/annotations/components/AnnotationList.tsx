@@ -34,12 +34,30 @@ export default function AnnotationList({ owner, classes, readOnly = false, onErr
     anno?.fitBounds(annotationId, { padding: FIT_PADDING_PX });
   };
 
+  const numbered = (annotations ?? []).map((annotation, index) => ({ annotation, number: index + 1 }));
+  const cells = numbered.filter(({ annotation }) => annotation.kind !== 'excluded');
+  const areas = numbered.filter(({ annotation }) => annotation.kind === 'excluded');
   const counts = new Map<string, number>();
-  annotations?.forEach((annotation) => counts.set(annotation.class_id, (counts.get(annotation.class_id) ?? 0) + 1));
+  cells.forEach(({ annotation }) => {
+    if (annotation.class_id !== null) counts.set(annotation.class_id, (counts.get(annotation.class_id) ?? 0) + 1);
+  });
   const activeFilter = filter !== ALL && counts.has(filter) ? filter : ALL;
-  const rows = (annotations ?? [])
-    .map((annotation, index) => ({ annotation, number: index + 1 }))
-    .filter(({ annotation }) => activeFilter === ALL || annotation.class_id === activeFilter);
+  const rows = cells.filter(({ annotation }) => activeFilter === ALL || annotation.class_id === activeFilter);
+
+  const renderItems = (items: typeof numbered) =>
+    items.map(({ annotation, number }) => (
+      <AnnotationListItem
+        key={annotation.id}
+        annotation={annotation}
+        number={number}
+        classes={classes}
+        selected={selectedIds.has(annotation.id)}
+        readOnly={readOnly}
+        onSelect={showAnnotation}
+        onClassChange={(annotationId, classId) => void changeClass(annotationId, classId)}
+        onDelete={(annotationId) => void removeAnnotation(annotationId)}
+      />
+    ));
 
   let body;
   if (isPending) body = <Spinner label="Wczytywanie anotacji…" />;
@@ -47,21 +65,15 @@ export default function AnnotationList({ owner, classes, readOnly = false, onErr
   else if (annotations.length === 0) body = <p className="annotation-list__empty">Brak anotacji</p>;
   else
     body = (
-      <ul className="annotation-list">
-        {rows.map(({ annotation, number }) => (
-          <AnnotationListItem
-            key={annotation.id}
-            annotation={annotation}
-            number={number}
-            classes={classes}
-            selected={selectedIds.has(annotation.id)}
-            readOnly={readOnly}
-            onSelect={showAnnotation}
-            onClassChange={(annotationId, classId) => void changeClass(annotationId, classId)}
-            onDelete={(annotationId) => void removeAnnotation(annotationId)}
-          />
-        ))}
-      </ul>
+      <>
+        {rows.length > 0 && <ul className="annotation-list">{renderItems(rows)}</ul>}
+        {areas.length > 0 && (
+          <>
+            <h3 className="annotation-list__group">Obszary wyłączone ({areas.length})</h3>
+            <ul className="annotation-list">{renderItems(areas)}</ul>
+          </>
+        )}
+      </>
     );
 
   return (
@@ -70,10 +82,10 @@ export default function AnnotationList({ owner, classes, readOnly = false, onErr
         <span>
           Anotacje{' '}
           <span className="annotation-panel__count">
-            {annotations ? (activeFilter === ALL ? annotations.length : `${rows.length} / ${annotations.length}`) : ''}
+            {annotations ? (activeFilter === ALL ? cells.length : `${rows.length} / ${cells.length}`) : ''}
           </span>
         </span>
-        {annotations && annotations.length > 0 && (
+        {cells.length > 0 && (
           <select
             className="annotation-panel__filter"
             aria-label="Pokaż typ"

@@ -8,6 +8,7 @@ import AnnotationLayer from '../features/annotations/components/AnnotationLayer'
 import AnnotationStatus from '../features/annotations/components/AnnotationStatus';
 import AnnotationList from '../features/annotations/components/AnnotationList';
 import AnnotationToolbar from '../features/annotations/components/AnnotationToolbar';
+import ExcludedAreaHatching from '../features/annotations/components/ExcludedAreaHatching';
 import CellTypeSelector from '../features/annotations/components/CellTypeSelector';
 import SelectedAnnotationCard from '../features/annotations/components/SelectedAnnotationCard';
 import { useCellTypes, useCellTypeTool } from '../features/annotations/hooks/useCellTypes';
@@ -80,6 +81,7 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   const assessing = catalog.mode === 'assess';
   const [error, setError] = useState<string | null>(null);
   const [toolMode, setToolMode] = useState<ToolMode>('polygon');
+  const [excluding, setExcluding] = useState(false);
   const mode = assessing ? 'navigate' : toolMode;
   const { data: folders } = useHotspotFolders();
   const owner: AnnotationOwner = { type: 'hotspots', id: hotspot.id };
@@ -103,6 +105,7 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
 
   const counts = new Map<number, number>();
   annotations?.forEach((annotation) => {
+    if (annotation.class_id === null) return;
     const id = Number(annotation.class_id);
     counts.set(id, (counts.get(id) ?? 0) + 1);
   });
@@ -159,12 +162,20 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                   classes={classes}
                   mode={mode}
                   activeClassId={activeClassId}
+                  activeKind={excluding ? 'excluded' : 'cell'}
                   readOnly={assessing}
                   onError={setError}
                 >
                   <HotspotViewer hotspot={hotspot} status={<AnnotationStatus owner={owner} />}>
+                    <ExcludedAreaHatching />
                     {!assessing && (
-                      <AnnotationToolbar mode={toolMode} onModeChange={setToolMode} canDraw={activeClassId !== null} />
+                      <AnnotationToolbar
+                        mode={toolMode}
+                        onModeChange={setToolMode}
+                        canDraw={activeClassId !== null}
+                        excluding={excluding}
+                        onExcludingChange={setExcluding}
+                      />
                     )}
                     <SelectedAnnotationCard owner={owner} classes={classes} readOnly={assessing} onError={setError} />
                   </HotspotViewer>

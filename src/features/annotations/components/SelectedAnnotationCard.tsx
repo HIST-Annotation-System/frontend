@@ -1,13 +1,13 @@
 import { useSelection } from '@annotorious/react';
 import { Trash2 } from 'lucide-react';
 import OpenSeadragon from 'openseadragon';
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import Button from '../../../components/ui/Button';
 import type { AnnotationClass, AnnotationOwner } from '../../../types/annotation';
 import { useAnnotationActions } from '../hooks/useAnnotationActions';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
-import { FALLBACK_ANNOTATION_COLOR } from '../utils/annotationStyle';
+import { EXCLUDED_ANNOTATION_COLOR, FALLBACK_ANNOTATION_COLOR } from '../utils/annotationStyle';
 import './AnnotationTools.css';
 
 const GAP_PX = 10;
@@ -28,8 +28,10 @@ export default function SelectedAnnotationCard({
   const { data: annotations } = useAnnotations(owner);
   const { selected } = useSelection();
   const anno = useSlideAnnotator();
-  const { changeClass, removeAnnotation } = useAnnotationActions(owner, onError);
+  const { changeClass, markExcluded, markCell, removeAnnotation } = useAnnotationActions(owner, onError);
   const cardRef = useRef<HTMLDivElement>(null);
+  // An excluded area being turned into a cell: it stays an area until a cell type is picked.
+  const [choosingTypeFor, setChoosingTypeFor] = useState<string | null>(null);
 
   const selectedId = selected[0]?.annotation.id;
   const index = selectedId && annotations ? annotations.findIndex((annotation) => annotation.id === selectedId) : -1;
@@ -76,25 +78,69 @@ export default function SelectedAnnotationCard({
   if (!visible || !annotations) return null;
 
   const annotation = annotations[index];
-  const color = classes.find((item) => item.id === annotation.class_id)?.color ?? FALLBACK_ANNOTATION_COLOR;
+  const excluded = annotation.kind === 'excluded';
+  const choosingType = excluded && choosingTypeFor === annotation.id;
+  const color = excluded
+    ? EXCLUDED_ANNOTATION_COLOR
+    : (classes.find((item) => item.id === annotation.class_id)?.color ?? FALLBACK_ANNOTATION_COLOR);
+  const showClass = !excluded || choosingType;
 
   return (
     <div ref={cardRef} className="selected-annotation" aria-label="Zaznaczona anotacja">
-      <span className="annotation-item__swatch" style={{ background: color }} aria-hidden="true" />
+      <span
+        className={`annotation-item__swatch${excluded ? ' annotation-item__swatch--excluded' : ''}`}
+        style={{ background: color }}
+        aria-hidden="true"
+      />
       <span className="selected-annotation__number">#{index + 1}</span>
-      <select
-        className="selected-annotation__class"
-        aria-label="Typ komórki zaznaczonej anotacji"
-        value={annotation.class_id}
-        disabled={readOnly}
-        onChange={(event) => void changeClass(annotation.id, event.target.value)}
-      >
-        {classes.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.name}
-          </option>
-        ))}
-      </select>
+      {!readOnly && (
+        <div className="selected-annotation__kind" role="group" aria-label="Rodzaj anotacji">
+          <button
+            type="button"
+            aria-pressed={!excluded || choosingType}
+            onClick={() => setChoosingTypeFor(excluded ? annotation.id : null)}
+          >
+            Komórka
+          </button>
+          <button
+            type="button"
+            aria-pressed={excluded && !choosingType}
+            onClick={() => {
+              setChoosingTypeFor(null);
+              if (!excluded) void markExcluded(annotation.id);
+            }}
+          >
+            Obszar wyłączony
+          </button>
+        </div>
+      )}
+      {readOnly && excluded && <span className="selected-annotation__label">Obszar wyłączony</span>}
+      {showClass && (
+        <select
+          className="selected-annotation__class"
+          aria-label="Typ komórki zaznaczonej anotacji"
+          value={annotation.class_id ?? ''}
+          disabled={readOnly}
+          onChange={(event) => {
+            if (!event.target.value) return;
+            if (excluded) {
+              setChoosingTypeFor(null);
+              void markCell(annotation.id, event.target.value);
+            } else void changeClass(annotation.id, event.target.value);
+          }}
+        >
+          {excluded && (
+            <option value="" disabled>
+              Wybierz typ…
+            </option>
+          )}
+          {classes.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+      )}
       {!readOnly && (
         <Button
           variant="ghost"

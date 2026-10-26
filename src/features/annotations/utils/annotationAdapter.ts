@@ -7,7 +7,7 @@ import {
   type Rectangle,
   type Shape,
 } from '@annotorious/react';
-import type { Annotation, AnnotationDraft, CurvePoint } from '../../../types/annotation';
+import type { Annotation, AnnotationDraft, AnnotationKind, CurvePoint } from '../../../types/annotation';
 import type { Offset, Position } from '../../../types/geometry';
 import { imageToSlidePosition, slideToImagePosition } from '../../../utils/coordinates';
 import { polygonVertices, sameGeometry, toPolygonGeometry } from '../../../utils/geometry';
@@ -15,6 +15,8 @@ import { flattenCurve, hasSmoothPoints } from './curve';
 
 /** W3C annotation body purpose used to attach the tissue class to a shape. */
 const CLASSIFYING_PURPOSE = 'classifying';
+/** W3C annotation body purpose marking a shape as an excluded area (its value is the kind). */
+const TAGGING_PURPOSE = 'tagging';
 
 /** Point of an Annotorious path (`@annotorious/plugin-tools`). */
 export interface PolylinePoint {
@@ -37,8 +39,12 @@ export interface Polyline extends Shape {
 export const getAnnotationClassId = (annotation: ImageAnnotation): string | null =>
   annotation.bodies.find((body) => body.purpose === CLASSIFYING_PURPOSE)?.value ?? null;
 
-export const toAnnotationDraft = ({ id, class_id, geometry, curve }: Annotation): AnnotationDraft => ({
+export const getAnnotationKind = (annotation: ImageAnnotation): AnnotationKind =>
+  annotation.bodies.some((body) => body.purpose === TAGGING_PURPOSE && body.value === 'excluded') ? 'excluded' : 'cell';
+
+export const toAnnotationDraft = ({ id, kind, class_id, geometry, curve }: Annotation): AnnotationDraft => ({
   id,
+  kind,
   class_id,
   geometry,
   curve: curve ?? null,
@@ -125,9 +131,14 @@ export const createAnnotationAdapter = (offset: Offset): FormatAdapter<ImageAnno
       return {
         parsed: {
           id: draft.id,
-          bodies: draft.class_id
-            ? [{ id: `${draft.id}-class`, annotation: draft.id, purpose: CLASSIFYING_PURPOSE, value: draft.class_id }]
-            : [],
+          bodies: [
+            ...(draft.class_id
+              ? [{ id: `${draft.id}-class`, annotation: draft.id, purpose: CLASSIFYING_PURPOSE, value: draft.class_id }]
+              : []),
+            ...(draft.kind === 'excluded'
+              ? [{ id: `${draft.id}-kind`, annotation: draft.id, purpose: TAGGING_PURPOSE, value: draft.kind }]
+              : []),
+          ],
           target: { annotation: draft.id, selector },
         },
       };
@@ -137,7 +148,7 @@ export const createAnnotationAdapter = (offset: Offset): FormatAdapter<ImageAnno
   },
   serialize: (annotation) => {
     const { selector } = annotation.target;
-    const base = { id: annotation.id, class_id: getAnnotationClassId(annotation) };
+    const base = { id: annotation.id, kind: getAnnotationKind(annotation), class_id: getAnnotationClassId(annotation) };
     if (isPolyline(selector)) {
       const points = selector.geometry.points.map((point) =>
         mapCurvePoint(fromPolylinePoint(point), (position) => imageToSlidePosition(position, offset)),

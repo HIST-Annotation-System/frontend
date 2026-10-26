@@ -1,5 +1,5 @@
 import { useSelection } from '@annotorious/react';
-import { Redo2, Undo2 } from 'lucide-react';
+import { Ban, Redo2, Undo2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Button from '../../../components/ui/Button';
 import type { ToolMode } from '../../../types/annotation';
@@ -13,6 +13,9 @@ interface AnnotationToolbarProps {
   onModeChange: (mode: ToolMode) => void;
   /** A cell type is chosen, so the drawing tools can draw. */
   canDraw: boolean;
+  /** New shapes are excluded areas (any drawing tool, no cell type needed). */
+  excluding: boolean;
+  onExcludingChange: (excluding: boolean) => void;
 }
 
 /** What each tool does, for the status bar (as the tools work: see tools/ and AnnotationLayer). */
@@ -24,13 +27,20 @@ const TOOL_HINTS: Record<ToolMode, string> = {
 };
 const EDIT_HINT = 'Edycja: przeciągaj punkty; Delete usuwa zaznaczony punkt; Esc kończy edycję';
 const NO_CLASS_HINT = 'Wybierz typ komórki po prawej, aby rysować';
+const EXCLUDING_HINT = 'Rysujesz obszar wyłączony z ML';
 
 const isTextField = (target: EventTarget | null): boolean =>
   target instanceof HTMLElement &&
   (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 
 /** Tool strip on the canvas: tools, undo/redo (also Ctrl+Z / Ctrl+Y); Esc cancels drawing or editing. */
-export default function AnnotationToolbar({ mode, onModeChange, canDraw }: AnnotationToolbarProps) {
+export default function AnnotationToolbar({
+  mode,
+  onModeChange,
+  canDraw,
+  excluding,
+  onExcludingChange,
+}: AnnotationToolbarProps) {
   const anno = useSlideAnnotator();
   const { selected } = useSelection();
   const [history, setHistory] = useState({ canUndo: false, canRedo: false });
@@ -71,14 +81,23 @@ export default function AnnotationToolbar({ mode, onModeChange, canDraw }: Annot
     return () => document.removeEventListener('keydown', shieldTextFields);
   }, []);
 
-  const hint =
-    selected.length > 0 ? EDIT_HINT : mode !== 'navigate' && !canDraw ? NO_CLASS_HINT : TOOL_HINTS[mode];
+  let hint = TOOL_HINTS[mode];
+  if (selected.length > 0) hint = EDIT_HINT;
+  else if (mode !== 'navigate' && excluding) hint = EXCLUDING_HINT;
+  else if (mode !== 'navigate' && !canDraw) hint = NO_CLASS_HINT;
 
   return (
     <>
       <ViewerHint text={hint} />
       <div className="tool-column annotation-tools" role="toolbar" aria-label="Narzędzia anotacji" aria-orientation="vertical">
         <ToolModeToggle mode={mode} onChange={onModeChange} />
+        <Button
+          active={excluding}
+          icon={<Ban size={18} />}
+          title="Obszar wyłączony"
+          aria-label="Obszar wyłączony"
+          onClick={() => onExcludingChange(!excluding)}
+        />
         <span className="annotation-tools__divider" aria-hidden="true" />
         <Button
           icon={<Undo2 size={17} />}

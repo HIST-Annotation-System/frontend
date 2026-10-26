@@ -3,7 +3,7 @@
 import { ShapeType, type ImageAnnotation, type Rectangle } from '@annotorious/react';
 import { describe, expect, it } from 'vitest';
 import type { AnnotationDraft } from '../../../types/annotation';
-import { createAnnotationAdapter, getAnnotationClassId } from './annotationAdapter';
+import { createAnnotationAdapter, getAnnotationClassId, getAnnotationKind } from './annotationAdapter';
 import { createAnnotationStyle } from './annotationStyle';
 
 const offset = { x: 1000, y: 500 };
@@ -11,6 +11,7 @@ const adapter = createAnnotationAdapter(offset);
 
 const draft: AnnotationDraft = {
   id: 'annotation-1',
+  kind: 'cell',
   class_id: 'class-cancer',
   geometry: {
     type: 'Polygon',
@@ -55,6 +56,16 @@ describe('annotation adapter', () => {
     expect(adapter.serialize(parse(draft))).toEqual(draft);
   });
 
+  it('carries an excluded area (no class) both ways', () => {
+    const area: AnnotationDraft = { ...draft, kind: 'excluded', class_id: null };
+    const annotation = parse(area);
+
+    expect(getAnnotationKind(annotation)).toBe('excluded');
+    expect(getAnnotationClassId(annotation)).toBeNull();
+    expect(adapter.serialize(annotation)).toEqual(area);
+    expect(getAnnotationKind(parse(draft))).toBe('cell');
+  });
+
   it('serializes a freshly drawn shape without a class', () => {
     expect(adapter.serialize(parse({ ...draft, class_id: null })).class_id).toBeNull();
   });
@@ -86,5 +97,14 @@ describe('annotation style', () => {
 
   it('uses the pending colour for shapes without a class', () => {
     expect(style(parse({ ...draft, class_id: null }))).toMatchObject({ fill: '#22c55e' });
+  });
+
+  it('draws excluded areas grey with a heavier outline, also while one is being drawn', () => {
+    const area = parse({ ...draft, kind: 'excluded', class_id: null });
+    expect(style(area)).toMatchObject({ fill: '#6b7280', fillOpacity: 0.35, strokeWidth: 2.5 });
+    expect(style(area, { selected: true }).strokeWidth).toBeGreaterThan(2.5);
+
+    const pending = createAnnotationStyle(new Map(), '#22c55e', 'excluded');
+    expect(pending(parse({ ...draft, class_id: null }))).toMatchObject({ fill: '#6b7280' });
   });
 });
