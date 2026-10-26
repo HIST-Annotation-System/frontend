@@ -94,7 +94,6 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
                     type="button"
                     className="hotspot-verdict__option"
                     aria-pressed={ownIds.has(tag.id)}
-                    disabled={isTagging}
                     title={ownIds.has(tag.id) ? 'Kliknij ponownie, aby usunąć ocenę' : `Waga: ${tag.weight}`}
                     onClick={() => void (ownIds.has(tag.id) ? remove(tag.id) : add(tag.id))}
                   >
