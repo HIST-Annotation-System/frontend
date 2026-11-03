@@ -1,4 +1,4 @@
-import { OpenSeadragonAnnotator, UserSelectAction, useSelection } from '@annotorious/react';
+import { OpenSeadragonAnnotator, UserSelectAction, useSelection, type ImageAnnotation } from '@annotorious/react';
 import '@annotorious/react/annotorious-react.css';
 import { useEffect, useLayoutEffect, useMemo, type ReactNode } from 'react';
 import { useLatest } from '../../../hooks/useLatest';
@@ -8,7 +8,7 @@ import { useAnnotations } from '../hooks/useAnnotations';
 import { useAnnotoriousSync } from '../hooks/useAnnotoriousSync';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
 import { DRAWING_TOOLS, registerDrawingTools } from '../tools/drawingTools';
-import { createAnnotationAdapter } from '../utils/annotationAdapter';
+import { createAnnotationAdapter, getAnnotationClassId, getAnnotationKind } from '../utils/annotationAdapter';
 import { createAnnotationStyle, FALLBACK_ANNOTATION_COLOR } from '../utils/annotationStyle';
 
 interface AnnotationLayerProps {
@@ -22,6 +22,10 @@ interface AnnotationLayerProps {
   activeKind?: AnnotationKind;
   /** Shapes can be looked at and selected, but not drawn or edited. */
   readOnly?: boolean;
+  /** Cells of these types are not drawn (excluded areas always are). */
+  hiddenClassIds?: ReadonlySet<string>;
+  /** A cell of this type was just drawn, so it has to be visible. */
+  onCellDrawn?: (classId: string) => void;
   onError: (message: string) => void;
   /** The viewer the annotations are drawn on (must contain `<OpenSeadragonViewer>`). */
   children: ReactNode;
@@ -36,6 +40,8 @@ export default function AnnotationLayer({
   activeClassId,
   activeKind = 'cell',
   readOnly = false,
+  hiddenClassIds,
+  onCellDrawn,
   onError,
   children,
 }: AnnotationLayerProps) {
@@ -70,6 +76,38 @@ export default function AnnotationLayer({
     if (anno && selected.length > 0) anno.viewer.setMouseNavEnabled(true);
   }, [anno, selected]);
 
+  const latestDrawing = useLatest({ activeClassId, activeKind, onCellDrawn });
+  useEffect(() => {
+    if (!anno) return undefined;
+    const showDrawn = () => {
+      const { activeClassId: classId, activeKind: kind, onCellDrawn: notify } = latestDrawing.current;
+      if (kind === 'cell' && classId) notify?.(classId);
+    };
+    anno.on('createAnnotation', showDrawn);
+    return () => anno.off('createAnnotation', showDrawn);
+  }, [anno, latestDrawing]);
+
+  const isHidden = useMemo(
+    () => (annotation: ImageAnnotation) =>
+      getAnnotationKind(annotation) !== 'excluded' && Boolean(hiddenClassIds?.has(getAnnotationClassId(annotation) ?? '')),
+    [hiddenClassIds],
+  );
+  const filter = useMemo(
+    () => (hiddenClassIds?.size ? (annotation: ImageAnnotation) => !isHidden(annotation) : undefined),
+    [hiddenClassIds, isHidden],
+  );
+
+  // The annotator filters only when handed a filter: any shape it redraws afterwards (one that arrived, was edited or
+  // was deselected) would come back on the image, so it is handed the filter again after each of those.
+  useEffect(() => {
+    if (anno && filter) anno.setFilter(filter);
+  }, [anno, filter, annotations, selected]);
+
+  // A shape that was just hidden can't stay selected, or its card and editor would float over nothing.
+  useEffect(() => {
+    if (anno && selected.some(({ annotation }) => isHidden(annotation as ImageAnnotation))) anno.cancelSelected();
+  }, [anno, selected, isHidden]);
+
   const { x, y } = imageOffset;
   const adapter = useMemo(() => createAnnotationAdapter({ x, y }), [x, y]);
   const style = useMemo(() => {
@@ -89,6 +127,7 @@ export default function AnnotationLayer({
       drawingEnabled={!readOnly && mode !== 'navigate' && (activeKind === 'excluded' || activeClassId !== null)}
       userSelectAction={readOnly ? UserSelectAction.SELECT : UserSelectAction.EDIT}
       style={style}
+      filter={filter}
     >
       {children}
     </OpenSeadragonAnnotator>

@@ -9,7 +9,9 @@ import { useMiddleButtonPan } from '../../viewer/hooks/useMiddleButtonPan';
 import ViewerHintSlot from '../../viewer/components/ViewerHintSlot';
 import ViewerStatusBarHost from '../../viewer/components/ViewerStatusBarHost';
 import { createViewerOptions } from '../../viewer/viewerOptions';
+import HotspotImageState from './HotspotImageState';
 import '../../viewer/components/SlideViewer.css';
+import './Hotspots.css';
 
 const HOTSPOT_MAX_ZOOM_PIXEL_RATIO = 10;
 
@@ -27,13 +29,10 @@ interface HotspotViewerProps {
  * Must be rendered inside `<OpenSeadragonAnnotator>`, which owns the viewer shared with the annotation layer.
  */
 export default function HotspotViewer({ hotspot, status, children }: HotspotViewerProps) {
+  const imageUrl = getHotspotImageUrl(hotspot.id);
   const options = useMemo(
-    () =>
-      createViewerOptions(
-        { type: 'image', url: getHotspotImageUrl(hotspot.id) },
-        { maxZoomPixelRatio: HOTSPOT_MAX_ZOOM_PIXEL_RATIO },
-      ),
-    [hotspot.id],
+    () => createViewerOptions({ type: 'image', url: imageUrl }, { maxZoomPixelRatio: HOTSPOT_MAX_ZOOM_PIXEL_RATIO }),
+    [imageUrl],
   );
   const { imageZoom } = useMagnification(null);
   useMiddleButtonPan();
@@ -43,6 +42,7 @@ export default function HotspotViewer({ hotspot, status, children }: HotspotView
     <div className="slide-viewer">
       <div className="slide-viewer__frame">
         <OpenSeadragonViewer className="slide-viewer__canvas" options={options} />
+        <HotspotImageState hotspotId={hotspot.id} imageUrl={imageUrl} />
         <div className="viewer-nav" role="toolbar" aria-label="Nawigacja">
           <ZoomControls zoomLabel={<span className="viewer-nav__zoom">{zoom}</span>} />
         </div>

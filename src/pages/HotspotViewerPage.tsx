@@ -1,5 +1,5 @@
 import { Annotorious } from '@annotorious/react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import SidebarSection from '../components/ui/SidebarSection';
@@ -7,12 +7,13 @@ import Spinner from '../components/ui/Spinner';
 import AnnotationLayer from '../features/annotations/components/AnnotationLayer';
 import AnnotationStatus from '../features/annotations/components/AnnotationStatus';
 import AnnotationList from '../features/annotations/components/AnnotationList';
+import AnnotationProgress from '../features/annotations/components/AnnotationProgress';
 import AnnotationToolbar from '../features/annotations/components/AnnotationToolbar';
 import ExcludedAreaHatching from '../features/annotations/components/ExcludedAreaHatching';
 import CellTypeSelector from '../features/annotations/components/CellTypeSelector';
 import SelectedAnnotationCard from '../features/annotations/components/SelectedAnnotationCard';
 import { useCellTypes, useCellTypeTool } from '../features/annotations/hooks/useCellTypes';
-import { useAnnotations } from '../features/annotations/hooks/useAnnotations';
+import { useAnnotations, useModelCellsRefresh } from '../features/annotations/hooks/useAnnotations';
 import { FALLBACK_CELL_TYPE_COLOR } from '../features/annotations/utils/cellTypeColors';
 import HotspotInfoPanel from '../features/hotspots/components/HotspotInfoPanel';
 import HotspotQueueNav from '../features/hotspots/components/HotspotQueueNav';
@@ -87,13 +88,38 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   const owner: AnnotationOwner = { type: 'hotspots', id: hotspot.id };
 
   const { data: annotations } = useAnnotations(owner);
+  const loadingModelCells = useModelCellsRefresh(owner, hotspot.segmentation_status);
   const { activeCellTypeId, colorMap, selectCellType } = useCellTypeTool(cellTypes, annotations);
 
-  const classes: AnnotationClass[] = cellTypes.map((ct) => ({
-    id: String(ct.id),
-    name: ct.name,
-    color: colorMap.get(ct.id) ?? FALLBACK_CELL_TYPE_COLOR,
-  }));
+  // Memoized: a new array here would restyle every shape on the image, on every change to any annotation.
+  const classes: AnnotationClass[] = useMemo(
+    () =>
+      cellTypes.map((ct) => ({
+        id: String(ct.id),
+        name: ct.name,
+        color: colorMap.get(ct.id) ?? FALLBACK_CELL_TYPE_COLOR,
+      })),
+    [cellTypes, colorMap],
+  );
+
+  // Cell types unchecked in the filter. Hidden rather than shown, so a type that appears later is visible.
+  const [hiddenClassIds, setHiddenClassIds] = useState<ReadonlySet<string>>(new Set<string>());
+  const toggleClass = useCallback((classId: string) => {
+    setHiddenClassIds((current) => {
+      const next = new Set(current);
+      if (!next.delete(classId)) next.add(classId);
+      return next;
+    });
+  }, []);
+  const showClass = useCallback((classId: string) => {
+    setHiddenClassIds((current) => {
+      if (!current.has(classId)) return current;
+      const next = new Set(current);
+      next.delete(classId);
+      return next;
+    });
+  }, []);
+  const showAllClasses = useCallback(() => setHiddenClassIds(new Set<string>()), []);
 
   const activeClassId = activeCellTypeId !== null ? String(activeCellTypeId) : null;
   const [panelOpen, setPanelOpen] = useState(true);
@@ -164,10 +190,17 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                   activeClassId={activeClassId}
                   activeKind={excluding ? 'excluded' : 'cell'}
                   readOnly={assessing}
+                  hiddenClassIds={hiddenClassIds}
+                  onCellDrawn={showClass}
                   onError={setError}
                 >
                   <HotspotViewer hotspot={hotspot} status={<AnnotationStatus owner={owner} />}>
                     <ExcludedAreaHatching />
+                    <AnnotationProgress
+                      owner={owner}
+                      segmentationStatus={hotspot.segmentation_status}
+                      loadingModelCells={loadingModelCells}
+                    />
                     {!assessing && (
                       <AnnotationToolbar
                         mode={toolMode}
@@ -191,34 +224,47 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                         cellTypes={cellTypes}
                         activeCellTypeId={activeCellTypeId}
                         colorMap={colorMap}
-                        onSelect={selectCellType}
+                        onSelect={(id) => {
+                          selectCellType(id);
+                          showClass(String(id));
+                        }}
                         counts={counts}
                       />
                     </SidebarSection>
                   )}
                   <div className="viewer-panel__annotations">
-                    <AnnotationList owner={owner} classes={classes} readOnly={assessing} onError={setError} />
-                  </div>
-                  <SidebarSection title="Ocena eksperta" collapsible defaultOpen={catalog.mode !== 'browse'}>
-                    {hotspot.reannotated_at && catalog.mode !== 'reannotate' && (
-                      <p className="viewer-panel__corrected">Poprawione</p>
-                    )}
-                    <HotspotTagPanel
-                      hotspot={hotspot}
-                      mode={catalog.mode}
-                      onReannotate={() =>
-                        navigate({
-                          pathname: `/hotspots/${hotspot.id}`,
-                          search: new URLSearchParams(
-                            writeCatalogParams({ ...catalogDefaults('reannotate'), folder: catalog.folder }),
-                          ).toString(),
-                        })
-                      }
+                    <AnnotationList
+                      owner={owner}
+                      classes={classes}
+                      readOnly={assessing}
+                      hiddenClassIds={hiddenClassIds}
+                      onToggleClass={toggleClass}
+                      onShowAllClasses={showAllClasses}
+                      onError={setError}
                     />
-                  </SidebarSection>
-                  <SidebarSection title="Parametry" collapsible defaultOpen={false}>
-                    <HotspotInfoPanel hotspot={hotspot} folderName={folderName} onError={setError} />
-                  </SidebarSection>
+                  </div>
+                  <div className="viewer-panel__dock">
+                    <SidebarSection title="Ocena eksperta" collapsible defaultOpen={catalog.mode !== 'browse'}>
+                      {hotspot.reannotated_at && catalog.mode !== 'reannotate' && (
+                        <p className="viewer-panel__corrected">Poprawione</p>
+                      )}
+                      <HotspotTagPanel
+                        hotspot={hotspot}
+                        mode={catalog.mode}
+                        onReannotate={() =>
+                          navigate({
+                            pathname: `/hotspots/${hotspot.id}`,
+                            search: new URLSearchParams(
+                              writeCatalogParams({ ...catalogDefaults('reannotate'), folder: catalog.folder }),
+                            ).toString(),
+                          })
+                        }
+                      />
+                    </SidebarSection>
+                    <SidebarSection title="Parametry" collapsible defaultOpen={false}>
+                      <HotspotInfoPanel hotspot={hotspot} folderName={folderName} onError={setError} />
+                    </SidebarSection>
+                  </div>
                   {/* The step that ends a reannotation: pinned to the bottom of the panel, below everything else. */}
                   {catalog.mode === 'reannotate' && (
                     <div className="viewer-panel__footer">

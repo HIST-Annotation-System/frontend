@@ -20,6 +20,9 @@ export type HotspotStatus = 'untagged' | 'to_reannotate' | 'reannotated';
 
 export type SortOrder = 'asc' | 'desc';
 
+/** The model's run on a hotspot; `skipped`: someone started annotating by hand first. */
+export type SegmentationStatus = 'pending' | 'done' | 'failed' | 'skipped';
+
 /**
  * An image to annotate: a square captured from a slide (it outlives the slide), or an uploaded PNG/JPEG
  * (all slide fields null).
@@ -52,7 +55,10 @@ export interface Hotspot {
   reannotated_at: string | null;
   /** Who set the latest importance/accuracy verdict. */
   assessed_by: string | null;
+  /** Cells annotated by people; untouched model cells don't count. */
   annotation_count: number;
+  segmentation_status: SegmentationStatus;
+  segmentation_error: string | null;
   created_at: string;
 }
 

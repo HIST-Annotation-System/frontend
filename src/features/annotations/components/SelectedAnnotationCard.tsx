@@ -84,6 +84,7 @@ export default function SelectedAnnotationCard({
     ? EXCLUDED_ANNOTATION_COLOR
     : (classes.find((item) => item.id === annotation.class_id)?.color ?? FALLBACK_ANNOTATION_COLOR);
   const showClass = !excluded || choosingType;
+  const author = annotation.source === 'model' ? 'Model' : (annotation.created_by_name ?? 'Nieznany');
 
   return (
     <div ref={cardRef} className="selected-annotation" aria-label="Zaznaczona anotacja">
@@ -92,7 +93,9 @@ export default function SelectedAnnotationCard({
         style={{ background: color }}
         aria-hidden="true"
       />
-      <span className="selected-annotation__number">#{index + 1}</span>
+      <span className="selected-annotation__author" title={author}>
+        {author}
+      </span>
       {!readOnly && (
         <div className="selected-annotation__kind" role="group" aria-label="Rodzaj anotacji">
           <button

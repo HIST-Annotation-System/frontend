@@ -1,7 +1,6 @@
 import { Origin } from '@annotorious/react';
 import { useEffect, useRef } from 'react';
 import { useLatest } from '../../../hooks/useLatest';
-import { ApiError } from '../../../services/httpClient';
 import type { Annotation, AnnotationDraft, AnnotationKind, AnnotationOwner } from '../../../types/annotation';
 import { getErrorMessage } from '../../../utils/errors';
 import { hasArea, sameGeometry } from '../../../utils/geometry';
@@ -26,7 +25,7 @@ interface AnnotoriousSyncOptions {
  *
  * Note: Annotorious' addAnnotation/setAnnotations are silent, but removeAnnotation/updateAnnotation
  * emit lifecycle events like user edits. Updates are therefore compared with the server's copy (no
- * redundant PATCH), and repeated deletes of an already-deleted annotation (404) are ignored.
+ * redundant PATCH), and deleting an annotation that is already gone sends nothing.
  */
 export function useAnnotoriousSync({
   owner,
@@ -39,11 +38,23 @@ export function useAnnotoriousSync({
   const mutations = useAnnotationMutations(owner);
   const latest = useLatest({ mutations, activeClassId, activeKind, onError });
   const loadedInto = useRef<SlideAnnotator | null>(null);
+  const shownModelCells = useRef(new Set<string>());
 
   useEffect(() => {
     if (!anno || !annotations || loadedInto.current === anno) return;
     anno.setAnnotations(annotations.map(toAnnotationDraft), true);
     loadedInto.current = anno;
+    shownModelCells.current = new Set(annotations.filter((item) => item.source === 'model').map((item) => item.id));
+  }, [anno, annotations]);
+
+  // Model cells arrive while the hotspot is open. Remembered once shown, so one the user deletes never comes back.
+  useEffect(() => {
+    if (!anno || !annotations || loadedInto.current !== anno) return;
+    const arrived = annotations.filter((item) => item.source === 'model' && !shownModelCells.current.has(item.id));
+    if (arrived.length === 0) return;
+    arrived.forEach((item) => shownModelCells.current.add(item.id));
+    // A REMOTE upsert: no event, so no request and no undo step.
+    anno.setAnnotations(arrived.map(toAnnotationDraft), false);
   }, [anno, annotations]);
 
   useEffect(() => {
@@ -164,7 +175,6 @@ export function useAnnotoriousSync({
         try {
           await latest.current.mutations.deleteAnnotation(draft.id);
         } catch (error) {
-          if (error instanceof ApiError && error.status === 404) return;
           anno.addAnnotation(draft);
           report(error, 'Nie udało się usunąć anotacji.');
         }

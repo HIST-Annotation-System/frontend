@@ -5,6 +5,7 @@ import type { Hotspot } from '../../../types/hotspot';
 import { formatDateTime, formatDecimal, formatDimensions } from '../../../utils/format';
 import ExportAnnotationsButton from '../../annotations/components/ExportAnnotationsButton';
 import { formatSquareSize } from '../utils/hotspotFormat';
+import { segmentationLabel } from '../utils/hotspotSegmentation';
 import HotspotSource from './HotspotSource';
 import './Hotspots.css';
 
@@ -26,6 +27,7 @@ export default function HotspotInfoPanel({ hotspot, folderName, onError }: Hotsp
         ] satisfies [string, string][])
       : []),
     ['MPP', hotspot.mpp ? `${formatDecimal(hotspot.mpp, 4)} µm/px` : '—'],
+    ['Model', segmentationLabel(hotspot)],
     ['Dodano', formatDateTime(hotspot.created_at)],
   ];
 

@@ -1,4 +1,5 @@
 import { Trash2, TriangleAlert } from 'lucide-react';
+import { memo } from 'react';
 import Button from '../../../components/ui/Button';
 import type { Annotation, AnnotationClass } from '../../../types/annotation';
 import { formatDateTime } from '../../../utils/format';
@@ -16,7 +17,8 @@ interface AnnotationListItemProps {
   onDelete: (annotationId: string) => void;
 }
 
-export default function AnnotationListItem({
+/** Memoized: a hotspot can hold thousands of rows, and a change to one annotation should re-render only that row. */
+const AnnotationListItem = memo(function AnnotationListItem({
   annotation,
   number,
   classes,
@@ -87,4 +89,6 @@ export default function AnnotationListItem({
       )}
     </li>
   );
-}
+});
+
+export default AnnotationListItem;
