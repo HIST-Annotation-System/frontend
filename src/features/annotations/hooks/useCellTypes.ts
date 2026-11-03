@@ -5,6 +5,9 @@ import type { CellType } from '../../../types/cellType';
 import type { Annotation } from '../../../types/annotation';
 import { assignCellTypeColors } from '../utils/cellTypeColors';
 
+/** The type of the model's cells (seeded by the backend), which nobody has classified yet. */
+const UNCLASSIFIED_CELL_TYPE_NAME = 'Unclassified';
+
 /** Fetch all cell types, sorted by name. */
 export function useCellTypes() {
   return useQuery({
@@ -51,7 +54,8 @@ export function useCellTypeTool(cellTypes: CellType[], annotations: Annotation[]
   // Auto-select first cell type when the list loads (if nothing chosen yet)
   useEffect(() => {
     if (activeCellTypeId == null && cellTypes.length > 0) {
-      selectCellType(cellTypes[0].id);
+      const first = cellTypes.find((type) => type.name !== UNCLASSIFIED_CELL_TYPE_NAME) ?? cellTypes[0];
+      selectCellType(first.id);
     }
   }, [cellTypes, activeCellTypeId, selectCellType]);
 

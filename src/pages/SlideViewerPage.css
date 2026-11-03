@@ -168,12 +168,24 @@
   color: var(--c-text);
 }
 
-/* The annotation list takes its own height; the sections follow right under it (the pane scrolls). */
+/* Takes all the height the other sections leave, whatever the number of annotations: the list scrolls inside. */
 .viewer-panel__annotations {
   display: flex;
-  flex: none;
+  flex: 1 1 0;
   flex-direction: column;
-  border-bottom: var(--border);
+  min-height: 160px;
+}
+
+/*
+ * The rarely opened sections, at the bottom of the pane: opening one grows it upwards, taking height from the list.
+ * Past its maximum it scrolls inside; its minimum keeps both rolled-up headers (26px each) in sight on a short screen.
+ */
+.viewer-panel__dock {
+  flex: 0 1 auto;
+  min-height: 52px;
+  max-height: 60%;
+  overflow-y: auto;
+  border-top: var(--border);
 }
 
 /* Slide not available (loading error, still processing, failed). */

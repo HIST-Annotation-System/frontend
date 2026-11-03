@@ -11,6 +11,7 @@ import { formatDateTime, formatDecimal, formatDimensions } from '../../../utils/
 import { useHotspotMutations } from '../hooks/useHotspots';
 import { useTags } from '../hooks/useTags';
 import { formatLength } from '../utils/hotspotFormat';
+import { segmentationLabel } from '../utils/hotspotSegmentation';
 import { HOTSPOT_STATUS_OPTIONS, hotspotStatus } from '../utils/hotspotReview';
 import { HOTSPOT_FEATURES } from '../utils/hotspotSort';
 import { TAG_DIMENSIONS } from '../utils/hotspotTags';
@@ -181,6 +182,8 @@ export default function HotspotDetails({ hotspot, folders, linkSearch, manage, o
           )}
           <dt>Anotacje</dt>
           <dd>{hotspot.annotation_count}</dd>
+          <dt>Model</dt>
+          <dd title={segmentationLabel(hotspot)}>{segmentationLabel(hotspot)}</dd>
           <dt>Dodano</dt>
           <dd>{formatDateTime(hotspot.created_at)}</dd>
         </dl>

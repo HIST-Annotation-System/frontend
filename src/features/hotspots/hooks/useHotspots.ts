@@ -19,6 +19,7 @@ import {
 import type { HotspotBatch, HotspotBatchCreate, HotspotListQuery, HotspotUpdate } from '../../../types/hotspot';
 
 const BATCH_POLL_INTERVAL_MS = 3000;
+const SEGMENTATION_POLL_INTERVAL_MS = 10_000;
 
 export function useHotspotFolders() {
   return useQuery({
@@ -87,6 +88,9 @@ export function useHotspot(hotspotId: string) {
   return useQuery({
     queryKey: hotspotQueryKeys.detail(hotspotId),
     queryFn: ({ signal }) => getHotspot(hotspotId, signal),
+    // So the model's cells show up while the hotspot is open. A stopped worker only costs this one light request.
+    refetchInterval: (current) =>
+      current.state.data?.segmentation_status === 'pending' ? SEGMENTATION_POLL_INTERVAL_MS : false,
   });
 }
 

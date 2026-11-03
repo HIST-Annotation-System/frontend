@@ -1714,3 +1714,40 @@ a.hotspot-queue__step:focus-visible {
   gap: 4px;
   white-space: normal;
 }
+
+/* Over the viewer until the full image is on screen: above the canvas, under the toolbar and the zoom controls. */
+.hotspot-image-state {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-viewer);
+}
+
+.hotspot-image-state__thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hotspot-image-state__message {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 320px;
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  box-shadow: 0 1px 6px rgb(0 0 0 / 35%);
+}
+
+.hotspot-image-state__message:has(button) {
+  padding: var(--space-3);
+}
+
+.hotspot-image-state__message .spinner {
+  padding: var(--space-2) var(--space-3);
+}

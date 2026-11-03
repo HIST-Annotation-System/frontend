@@ -32,6 +32,9 @@ export type ToolMode = 'navigate' | 'polygon' | 'curve' | 'freehand';
 /** A cell outline, or an area left out of model training (blur, fold, dust, slide edge); areas have no class. */
 export type AnnotationKind = 'cell' | 'excluded';
 
+/** `model`: an outline as the model drew it, a starting point for the annotator; editing it makes it `human`. */
+export type AnnotationSource = 'human' | 'model';
+
 export interface AnnotationClass {
   id: string;
   name: string;
@@ -41,9 +44,12 @@ export interface AnnotationClass {
 export interface Annotation {
   id: string;
   kind: AnnotationKind;
+  source?: AnnotationSource;
   class_id: string | null;
   geometry: PolygonGeometry;
   curve?: CurveGeometry | null;
+  /** Username of whoever drew or last changed it; null when nobody has (e.g. an untouched model cell). */
+  created_by_name?: string | null;
   created_at: string;
   /** A cell lying wholly inside an excluded area of the same hotspot. */
   inside_excluded?: boolean;

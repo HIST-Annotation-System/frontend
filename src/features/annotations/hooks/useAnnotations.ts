@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import {
   annotationQueryKeys,
   createAnnotation,
@@ -6,13 +7,51 @@ import {
   listAnnotations,
   updateAnnotation,
 } from '../../../services/annotationsApi';
+import { ApiError } from '../../../services/httpClient';
 import type { Annotation, AnnotationCreate, AnnotationOwner, AnnotationUpdate } from '../../../types/annotation';
+import type { SegmentationStatus } from '../../../types/hotspot';
 
 export function useAnnotations(owner: AnnotationOwner) {
   return useQuery({
     queryKey: annotationQueryKeys.forOwner(owner),
     queryFn: ({ signal }) => listAnnotations(owner, signal),
   });
+}
+
+/**
+ * When the model finishes while the hotspot is open, adds its cells to the cache. Only cells not held yet are added,
+ * so edits still in progress in the annotator are never overwritten.
+ *
+ * @returns whether those cells are still on their way.
+ */
+export function useModelCellsRefresh(owner: AnnotationOwner, status: SegmentationStatus): boolean {
+  const queryClient = useQueryClient();
+  const [previous, setPrevious] = useState(status);
+  const [refreshing, setRefreshing] = useState(false);
+  const { type, id } = owner;
+
+  if (status !== previous) {
+    setPrevious(status);
+    if (previous === 'pending' && status === 'done') setRefreshing(true);
+  }
+
+  useEffect(() => {
+    if (!refreshing) return;
+    const current: AnnotationOwner = { type, id };
+    void listAnnotations(current)
+      .then((fresh) => {
+        queryClient.setQueryData<Annotation[]>(annotationQueryKeys.forOwner(current), (held) => {
+          const heldIds = new Set((held ?? []).map((item) => item.id));
+          return [...(held ?? []), ...fresh.filter((item) => !heldIds.has(item.id))];
+        });
+      })
+      .catch(() => {
+        // The cells are saved; they appear on the next visit.
+      })
+      .finally(() => setRefreshing(false));
+  }, [refreshing, type, id, queryClient]);
+
+  return refreshing;
 }
 
 /** Latest flag refresh per owner, so an older response never overwrites a newer one. */
@@ -23,9 +62,34 @@ interface UpdateVariables {
   changes: AnnotationUpdate;
 }
 
+interface RemoveVariables {
+  id: string;
+  /** The cached copy and its place in the list, to put back if the request fails. */
+  previous: Annotation | undefined;
+  index: number;
+}
+
+/** An annotation as it will be once `changes` are saved. */
+export function applyAnnotationChanges(annotation: Annotation, changes: AnnotationUpdate): Annotation {
+  const updated = { ...annotation, ...changes };
+  return changes.kind === 'excluded' ? { ...updated, class_id: null } : updated;
+}
+
+/** The server's copy in its place in the list, so saving never renumbers or reorders the others. */
+function withSaved(current: Annotation[], saved: Annotation): Annotation[] {
+  const absorbed = new Set((saved.absorbed_ids ?? []).filter((id) => id !== saved.id));
+  const kept = current.filter((item) => !absorbed.has(item.id));
+  return kept.some((item) => item.id === saved.id)
+    ? kept.map((item) => (item.id === saved.id ? saved : item))
+    : [...kept, saved];
+}
+
 /**
  * Create/update/delete requests for one slide or hotspot. Results are written straight into the query cache
  * instead of refetching, so edits still in progress in the annotator are never overwritten.
+ *
+ * Updates and deletes change the cache before the request and are undone if it fails: the screen never waits for the
+ * server. All requests of one owner share a scope, so they reach the server one at a time, in the order made.
  */
 export function useAnnotationMutations(owner: AnnotationOwner) {
   const queryClient = useQueryClient();
@@ -60,32 +124,68 @@ export function useAnnotationMutations(owner: AnnotationOwner) {
     }
   };
 
+  const scope = { id: annotationQueryKeys.forOwner(owner).join('/') };
+
   const { mutateAsync: create } = useMutation({
+    scope,
     mutationFn: (payload: AnnotationCreate) => createAnnotation(owner, payload),
     onSuccess: (saved) => {
-      const gone = new Set([saved.id, ...(saved.absorbed_ids ?? [])]);
-      updateCache((current) => [...current.filter((item) => !gone.has(item.id)), saved]);
+      updateCache((current) => withSaved(current, saved));
       if (saved.kind === 'excluded') void refreshExcludedFlags();
     },
   });
   const { mutateAsync: update } = useMutation({
+    scope,
     mutationFn: ({ id, changes }: UpdateVariables) => updateAnnotation(owner, id, changes),
-    onSuccess: (saved) => {
-      const wasExcluded = getSavedAnnotation(saved.id)?.kind === 'excluded';
+    onMutate: ({ id, changes }) => {
+      const previous = getSavedAnnotation(id);
+      updateCache((current) =>
+        current.map((item) => (item.id === id ? applyAnnotationChanges(item, changes) : item)),
+      );
+      return { previous };
+    },
+    onError: (_error, { id }, context) => {
+      const previous = context?.previous;
+      if (previous) updateCache((current) => current.map((item) => (item.id === id ? previous : item)));
+    },
+    onSuccess: (saved, { id }, context) => {
+      // A newer edit or a delete of it is still queued (this request counts too): what the screen shows is already
+      // ahead of this response, which must not undo that edit or bring the deleted annotation back.
+      const queued = queryClient.isMutating({
+        predicate: (mutation) =>
+          mutation.options.scope?.id === scope.id && (mutation.state.variables as { id?: string } | undefined)?.id === id,
+      });
       // A merged excluded area may come back under an older area's id, with the edited one among those absorbed.
-      const gone = new Set([saved.id, ...(saved.absorbed_ids ?? [])]);
-      updateCache((current) => [...current.filter((item) => !gone.has(item.id)), saved]);
-      if (wasExcluded || saved.kind === 'excluded') void refreshExcludedFlags();
+      if (queued <= 1) updateCache((current) => withSaved(current, saved));
+      if (context?.previous?.kind === 'excluded' || saved.kind === 'excluded') void refreshExcludedFlags();
     },
   });
   const { mutateAsync: remove } = useMutation({
-    mutationFn: (id: string) => deleteAnnotation(owner, id),
-    onSuccess: (_result, id) => {
-      const wasExcluded = getSavedAnnotation(id)?.kind === 'excluded';
-      updateCache((current) => current.filter((item) => item.id !== id));
-      if (wasExcluded) void refreshExcludedFlags();
+    scope,
+    mutationFn: async ({ id }: RemoveVariables) => {
+      try {
+        await deleteAnnotation(owner, id);
+      } catch (error) {
+        // Already gone is what was asked for (a second click, or a teammate deleted it first).
+        if (!(error instanceof ApiError && error.status === 404)) throw error;
+      }
+    },
+    onError: (_error, { previous, index }) => {
+      if (!previous) return;
+      updateCache((current) => [...current.slice(0, index), previous, ...current.slice(index)]);
+    },
+    onSuccess: (_result, { previous }) => {
+      if (previous?.kind === 'excluded') void refreshExcludedFlags();
     },
   });
 
-  return { createAnnotation: create, updateAnnotation: update, deleteAnnotation: remove, getSavedAnnotation };
+  /** Takes the annotation off the list right away (not after a tick), and resolves once the server has deleted it. */
+  const removeNow = (id: string) => {
+    const current = queryClient.getQueryData<Annotation[]>(annotationQueryKeys.forOwner(owner)) ?? [];
+    const index = current.findIndex((item) => item.id === id);
+    updateCache((items) => items.filter((item) => item.id !== id));
+    return remove({ id, previous: current[index], index });
+  };
+
+  return { createAnnotation: create, updateAnnotation: update, deleteAnnotation: removeNow, getSavedAnnotation };
 }

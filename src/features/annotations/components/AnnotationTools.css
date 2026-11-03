@@ -28,9 +28,12 @@
   pointer-events: auto;
 }
 
-.selected-annotation__number {
+.selected-annotation__author {
+  max-width: 120px;
+  overflow: hidden;
   font-size: 12px;
   font-weight: 600;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -78,11 +81,62 @@
   color: var(--c-text-3);
 }
 
-.annotation-panel__filter {
-  max-width: 160px;
+.annotation-panel__show-all {
   height: 20px;
-  padding: 0 18px 0 6px;
+  padding: 0 6px;
+  border: none;
+  background: transparent;
+  color: var(--c-text-2);
   font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.annotation-panel__show-all:hover {
+  color: var(--c-text);
+  text-decoration: underline;
+}
+
+/* A hotspot usually has a few cell types; many of them scroll here and leave the list its room. */
+.annotation-filter {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  max-height: 92px;
+  margin: 0;
+  padding: 4px 10px;
+  overflow-y: auto;
+  border: none;
+  border-bottom: var(--border);
+}
+
+.annotation-filter__option {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 21px;
+  color: var(--c-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.annotation-filter__option input {
+  flex: none;
+  margin: 0;
+}
+
+.annotation-filter__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.annotation-filter__count {
+  flex: none;
+  color: var(--c-text-3);
 }
 
 .annotation-panel__body {
@@ -114,6 +168,9 @@
   gap: 6px;
   height: 26px;
   padding: 0 2px 0 var(--space-2);
+  /* The browser skips the rows scrolled out of the list: a hotspot can hold thousands. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 26px;
 }
 
 .annotation-item+.annotation-item {
@@ -300,4 +357,25 @@
 .selected-annotation__label {
   font-size: 12px;
   white-space: nowrap;
+}
+
+/* Top centre of the image, clear of the toolbar and the zoom controls. Clicks pass through: annotating goes on. */
+.annotation-progress {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 65;
+  padding: 6px var(--space-3);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  color: var(--c-text-2);
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.annotation-progress .spinner {
+  padding: 0;
 }
