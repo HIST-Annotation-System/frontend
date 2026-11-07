@@ -16,9 +16,10 @@ const PATTERN_ID = 'excluded-area-hatch';
  * Diagonal hatching over the excluded areas, the usual mark of a no-go zone. Annotorious draws shapes with
  * PixiJS (plain fills only), so the stripes are an SVG layer that ignores the mouse, placed right above its canvas
  * and below its editor (handles stay on top). The areas' outlines (image pixels) are rebuilt only when the
- * annotations change; panning or zooming just moves one transform.
+ * annotations change; panning or zooming just moves one transform. `hidden`: the excluded-areas layer is switched
+ * off, so the stripes go too.
  */
-export default function ExcludedAreaHatching() {
+export default function ExcludedAreaHatching({ hidden = false }: { hidden?: boolean }) {
   const anno = useSlideAnnotator();
   const groupRef = useRef<SVGGElement>(null);
   const patternRef = useRef<SVGPatternElement>(null);
@@ -86,9 +87,9 @@ export default function ExcludedAreaHatching() {
       viewer.removeHandler('resize', follow);
       viewer.world.removeHandler('add-item', follow);
     };
-  }, [anno, host]);
+  }, [anno, host, hidden]);
 
-  if (!host) return null;
+  if (!host || hidden) return null;
   return createPortal(
     <svg aria-hidden="true">
       <defs>

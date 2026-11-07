@@ -106,3 +106,17 @@ export interface HotspotUpdate {
   folder_id?: string;
   reannotated?: boolean;
 }
+
+/** Slide squares whose image stats to compute before they are cut out. */
+export interface BoxFeaturesRequest {
+  slide_id: string;
+  /** Level-0 [x, y] top-left corner of each box. */
+  boxes: [number, number][];
+}
+
+/** The stats a hotspot cut from this square would get (read at thumbnail size, so they may differ by a hair). */
+export interface BoxFeatures {
+  x: number;
+  y: number;
+  features: Partial<Record<HotspotFeature, number>>;
+}

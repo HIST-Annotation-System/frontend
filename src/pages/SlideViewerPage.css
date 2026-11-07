@@ -250,3 +250,22 @@
   background: var(--c-scrim);
 }
 
+
+/* The mode switch in the hotspot header: the catalog's switch, compact. */
+.viewer-header__mode .segmented__option {
+  height: 26px;
+  padding: 0 var(--space-2);
+  font-size: 12px;
+}
+
+/* The annotation list rolled up: the panel shrinks to its headers. */
+.viewer-panel__annotations:has(.annotation-panel--collapsed) {
+  flex: none;
+  min-height: 0;
+}
+
+/* A list with a dragged height: the annotations part is only as tall as its content. */
+.viewer-panel__annotations:has(.annotation-panel__body--sized) {
+  flex: none;
+  min-height: 0;
+}

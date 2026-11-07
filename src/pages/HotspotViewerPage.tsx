@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import ErrorMessage from '../components/ui/ErrorMessage';
 import SidebarSection from '../components/ui/SidebarSection';
 import Spinner from '../components/ui/Spinner';
+import { useAuth } from '../context/AuthContext';
 import AnnotationLayer from '../features/annotations/components/AnnotationLayer';
 import AnnotationStatus from '../features/annotations/components/AnnotationStatus';
 import AnnotationList from '../features/annotations/components/AnnotationList';
@@ -14,7 +15,9 @@ import CellTypeSelector from '../features/annotations/components/CellTypeSelecto
 import SelectedAnnotationCard from '../features/annotations/components/SelectedAnnotationCard';
 import { useCellTypes, useCellTypeTool } from '../features/annotations/hooks/useCellTypes';
 import { useAnnotations, useModelCellsRefresh } from '../features/annotations/hooks/useAnnotations';
+import { authorLayer, EXCLUDED_LAYER } from '../features/annotations/utils/annotationLayers';
 import { FALLBACK_CELL_TYPE_COLOR } from '../features/annotations/utils/cellTypeColors';
+import HotspotModeSwitch from '../features/hotspots/components/HotspotModeSwitch';
 import HotspotInfoPanel from '../features/hotspots/components/HotspotInfoPanel';
 import HotspotQueueNav from '../features/hotspots/components/HotspotQueueNav';
 import HotspotReannotatedButton from '../features/hotspots/components/HotspotReannotatedButton';
@@ -24,7 +27,6 @@ import HotspotViewer from '../features/hotspots/components/HotspotViewer';
 import { useHotspot, useHotspotFolders } from '../features/hotspots/hooks/useHotspots';
 import {
   catalogDefaults,
-  HOTSPOT_MODES,
   readCatalogParams,
   resolveFolderId,
   writeCatalogParams,
@@ -32,7 +34,7 @@ import {
 import ViewerHeader from '../features/viewer/components/ViewerHeader';
 import { HintSlotContext } from '../features/viewer/hintSlot';
 import { StatusSlotContext } from '../features/viewer/statusSlot';
-import type { AnnotationClass, AnnotationOwner, ToolMode } from '../types/annotation';
+import type { AnnotationClass, AnnotationKind, AnnotationOwner, ToolMode } from '../types/annotation';
 import type { CellType } from '../types/cellType';
 import type { Hotspot } from '../types/hotspot';
 import { getErrorMessage } from '../utils/errors';
@@ -81,7 +83,8 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   const catalog = readCatalogParams(searchParams);
   const assessing = catalog.mode === 'assess';
   const [error, setError] = useState<string | null>(null);
-  const [toolMode, setToolMode] = useState<ToolMode>('polygon');
+  // Every mode starts by looking around (pan and zoom); a drawing tool is picked from the tool panel.
+  const [toolMode, setToolMode] = useState<ToolMode>('navigate');
   const [excluding, setExcluding] = useState(false);
   const mode = assessing ? 'navigate' : toolMode;
   const { data: folders } = useHotspotFolders();
@@ -121,12 +124,35 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   }, []);
   const showAllClasses = useCallback(() => setHiddenClassIds(new Set<string>()), []);
 
+  // Layers switched off: the model's cells, one author's cells, the excluded areas.
+  const [hiddenLayers, setHiddenLayers] = useState<ReadonlySet<string>>(new Set<string>());
+  const toggleLayer = useCallback((layer: string) => {
+    setHiddenLayers((current) => {
+      const next = new Set(current);
+      if (!next.delete(layer)) next.add(layer);
+      return next;
+    });
+  }, []);
+  // What the user draws lands in their own layer (or the areas'), so that layer is switched on.
+  const username = useAuth().user?.username;
+  const showDrawnLayer = useCallback(
+    (kind: AnnotationKind) => {
+      const layer = kind === 'excluded' ? EXCLUDED_LAYER : authorLayer(username);
+      setHiddenLayers((current) => {
+        if (!current.has(layer)) return current;
+        const next = new Set(current);
+        next.delete(layer);
+        return next;
+      });
+    },
+    [username],
+  );
+
   const activeClassId = activeCellTypeId !== null ? String(activeCellTypeId) : null;
   const [panelOpen, setPanelOpen] = useState(true);
   const [statusSlot, setStatusSlot] = useState<HTMLDivElement | null>(null);
   const [hintSlot, setHintSlot] = useState<HTMLElement | null>(null);
   const hint = useMemo(() => ({ slot: hintSlot, setSlot: setHintSlot }), [hintSlot]);
-  const modeOption = HOTSPOT_MODES.find((option) => option.value === catalog.mode);
   const folderName = folders?.find((folder) => folder.id === hotspot.folder_id)?.name;
 
   const counts = new Map<number, number>();
@@ -168,11 +194,23 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                 }}
                 search={search}
               />
-              {modeOption && (
-                <span className="viewer-header__mode" title={modeOption.description}>
-                  Tryb: {modeOption.label.toLowerCase()}
-                </span>
-              )}
+              {/* Switching the mode keeps this hotspot open; the queue (prev/next) follows the new mode. */}
+              <div className="viewer-header__mode">
+                <HotspotModeSwitch
+                  mode={catalog.mode}
+                  onChange={(next) =>
+                    navigate(
+                      {
+                        pathname: `/hotspots/${hotspot.id}`,
+                        search: new URLSearchParams(
+                          writeCatalogParams({ ...catalogDefaults(next), folder: catalog.folder }),
+                        ).toString(),
+                      },
+                      { replace: true },
+                    )
+                  }
+                />
+              </div>
               {/* Reannotating fixes what the expert found, so the verdict stays in sight. */}
               {catalog.mode === 'reannotate' && hotspot.tags.length > 0 && (
                 <span className="viewer-header__verdict">
@@ -191,11 +229,13 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                   activeKind={excluding ? 'excluded' : 'cell'}
                   readOnly={assessing}
                   hiddenClassIds={hiddenClassIds}
+                  hiddenLayers={hiddenLayers}
                   onCellDrawn={showClass}
+                  onShapeDrawn={showDrawnLayer}
                   onError={setError}
                 >
                   <HotspotViewer hotspot={hotspot} status={<AnnotationStatus owner={owner} />}>
-                    <ExcludedAreaHatching />
+                    <ExcludedAreaHatching hidden={hiddenLayers.has(EXCLUDED_LAYER)} />
                     <AnnotationProgress
                       owner={owner}
                       segmentationStatus={hotspot.segmentation_status}
@@ -240,6 +280,8 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                       hiddenClassIds={hiddenClassIds}
                       onToggleClass={toggleClass}
                       onShowAllClasses={showAllClasses}
+                      hiddenLayers={hiddenLayers}
+                      onToggleLayer={toggleLayer}
                       onError={setError}
                     />
                   </div>

@@ -1,4 +1,6 @@
 import type {
+  BoxFeatures,
+  BoxFeaturesRequest,
   Hotspot,
   HotspotBatch,
   HotspotBatchCreate,
@@ -61,6 +63,10 @@ export const getHotspot = async (hotspotId: string, signal?: AbortSignal): Promi
 /** Starts cutting the boxes out in the background; a retry with the same id returns the same batch. */
 export const createHotspotBatch = async (payload: HotspotBatchCreate): Promise<HotspotBatch> =>
   (await httpClient.post<HotspotBatch>('/hotspot-batches', payload)).data;
+
+/** Image stats of slide boxes not cut out yet (at most `HOTSPOT_BATCH_MAX_BOXES` per request). */
+export const getBoxFeatures = async (payload: BoxFeaturesRequest, signal?: AbortSignal): Promise<BoxFeatures[]> =>
+  (await httpClient.post<BoxFeatures[]>('/hotspot-boxes/features', payload, { signal })).data;
 
 /** Running batches and recently failed ones. */
 export const listHotspotBatches = async (signal?: AbortSignal): Promise<HotspotBatch[]> =>

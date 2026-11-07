@@ -379,3 +379,85 @@
 .annotation-progress .spinner {
   padding: 0;
 }
+
+/* Layers above the cell-type filter: the model's cells, each author's cells, excluded areas; an eye shows or hides
+   one. Rows look like the filter's, as plain buttons. */
+.annotation-layers__option {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+
+.annotation-layers__option:hover .annotation-filter__name {
+  text-decoration: underline;
+}
+
+.annotation-layers__option--hidden {
+  color: var(--c-text-3);
+}
+
+.annotation-layers__icon {
+  flex: none;
+  color: var(--c-text-2);
+}
+
+/* Layers at the top of the annotation panel, above its header, the type filter and the list. */
+.annotation-layers {
+  flex: none;
+  border-bottom: var(--border);
+}
+
+.annotation-layers__list {
+  border-bottom: none;
+}
+
+/* Cell types and layers scroll inside a box whose height the user drags with the bar under it. */
+.annotation-filter-box {
+  flex: none;
+  overflow-y: auto;
+}
+
+.annotation-filter--free {
+  max-height: none;
+  overflow: visible;
+  border-bottom: none;
+}
+
+.resize-handle {
+  position: relative;
+  flex: none;
+  height: 7px;
+  border-bottom: var(--border);
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+/* A short grip in the middle, darker while hovered or dragged. */
+.resize-handle::after {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  width: 28px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--c-border-strong);
+  content: '';
+  transform: translateX(-50%);
+}
+
+.resize-handle:hover::after,
+.resize-handle:active::after {
+  background: var(--c-text-2);
+}
+
+/* The list keeps the height the user dragged it to (the sections below move up) instead of filling the pane. */
+.annotation-panel__body--sized {
+  flex: none;
+}
+
+.annotation-panel:has(.annotation-panel__body--sized) {
+  flex: none;
+}

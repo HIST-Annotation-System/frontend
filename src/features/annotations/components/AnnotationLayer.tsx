@@ -9,6 +9,7 @@ import { useAnnotoriousSync } from '../hooks/useAnnotoriousSync';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
 import { DRAWING_TOOLS, registerDrawingTools } from '../tools/drawingTools';
 import { createAnnotationAdapter, getAnnotationClassId, getAnnotationKind } from '../utils/annotationAdapter';
+import { layerOf } from '../utils/annotationLayers';
 import { createAnnotationStyle, FALLBACK_ANNOTATION_COLOR } from '../utils/annotationStyle';
 
 interface AnnotationLayerProps {
@@ -24,8 +25,12 @@ interface AnnotationLayerProps {
   readOnly?: boolean;
   /** Cells of these types are not drawn (excluded areas always are). */
   hiddenClassIds?: ReadonlySet<string>;
+  /** Layers switched off (see `annotationLayers`): their shapes are not drawn. */
+  hiddenLayers?: ReadonlySet<string>;
   /** A cell of this type was just drawn, so it has to be visible. */
   onCellDrawn?: (classId: string) => void;
+  /** A shape of this kind was just drawn, so its layer has to be visible. */
+  onShapeDrawn?: (kind: AnnotationKind) => void;
   onError: (message: string) => void;
   /** The viewer the annotations are drawn on (must contain `<OpenSeadragonViewer>`). */
   children: ReactNode;
@@ -41,7 +46,9 @@ export default function AnnotationLayer({
   activeKind = 'cell',
   readOnly = false,
   hiddenClassIds,
+  hiddenLayers,
   onCellDrawn,
+  onShapeDrawn,
   onError,
   children,
 }: AnnotationLayerProps) {
@@ -76,25 +83,37 @@ export default function AnnotationLayer({
     if (anno && selected.length > 0) anno.viewer.setMouseNavEnabled(true);
   }, [anno, selected]);
 
-  const latestDrawing = useLatest({ activeClassId, activeKind, onCellDrawn });
+  const latestDrawing = useLatest({ activeClassId, activeKind, onCellDrawn, onShapeDrawn });
   useEffect(() => {
     if (!anno) return undefined;
     const showDrawn = () => {
-      const { activeClassId: classId, activeKind: kind, onCellDrawn: notify } = latestDrawing.current;
+      const { activeClassId: classId, activeKind: kind, onCellDrawn: notify, onShapeDrawn } = latestDrawing.current;
+      onShapeDrawn?.(kind);
       if (kind === 'cell' && classId) notify?.(classId);
     };
     anno.on('createAnnotation', showDrawn);
     return () => anno.off('createAnnotation', showDrawn);
   }, [anno, latestDrawing]);
 
+  // The layer of each saved shape; one just drawn (not saved yet) is in none, so it stays visible.
+  const layers = useMemo(
+    () => (hiddenLayers?.size ? new Map((annotations ?? []).map((item) => [item.id, layerOf(item)])) : null),
+    [annotations, hiddenLayers],
+  );
   const isHidden = useMemo(
-    () => (annotation: ImageAnnotation) =>
-      getAnnotationKind(annotation) !== 'excluded' && Boolean(hiddenClassIds?.has(getAnnotationClassId(annotation) ?? '')),
-    [hiddenClassIds],
+    () => (annotation: ImageAnnotation) => {
+      const layer = layers?.get(annotation.id);
+      if (layer !== undefined && hiddenLayers?.has(layer)) return true;
+      return (
+        getAnnotationKind(annotation) !== 'excluded' && Boolean(hiddenClassIds?.has(getAnnotationClassId(annotation) ?? ''))
+      );
+    },
+    [hiddenClassIds, hiddenLayers, layers],
   );
   const filter = useMemo(
-    () => (hiddenClassIds?.size ? (annotation: ImageAnnotation) => !isHidden(annotation) : undefined),
-    [hiddenClassIds, isHidden],
+    () =>
+      hiddenClassIds?.size || hiddenLayers?.size ? (annotation: ImageAnnotation) => !isHidden(annotation) : undefined,
+    [hiddenClassIds, hiddenLayers, isHidden],
   );
 
   // The annotator filters only when handed a filter: any shape it redraws afterwards (one that arrived, was edited or

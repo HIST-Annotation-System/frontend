@@ -1,14 +1,16 @@
 import { Brush, Grid3x3, MousePointer2, Trash2 } from 'lucide-react';
 import OpenSeadragon from 'openseadragon';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '../../../components/ui/Button';
 import { useLatest } from '../../../hooks/useLatest';
 import type { Offset, Position, Rect } from '../../../types/geometry';
-import type { HotspotBatch } from '../../../types/hotspot';
+import type { HotspotBatch, HotspotFeature } from '../../../types/hotspot';
 import type { SlideDetail } from '../../../types/slide';
 import ViewerHint from '../../viewer/components/ViewerHint';
 import { useOsdViewer } from '../../viewer/hooks/useOsdViewer';
+import { useBoxFeatures } from '../hooks/useBoxFeatures';
 import { useSlideHotspots } from '../hooks/useHotspots';
+import { heatColor, normalize, summarizeFeature } from '../utils/boxStats';
 import { formatSquareSize } from '../utils/hotspotFormat';
 import {
   boxKey,
@@ -29,6 +31,7 @@ import {
   type GridRange,
   type HotspotTool,
 } from '../utils/hotspotBoxes';
+import BoxStatsPanel from './BoxStatsPanel';
 import CreateHotspotBatchModal from './CreateHotspotBatchModal';
 import './Hotspots.css';
 
@@ -94,6 +97,43 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
   const [preview, setPreview] = useState<GridPreview | null>(null);
   const [isOverLimit, setIsOverLimit] = useState(false);
   const [pendingBoxes, setPendingBoxes] = useState<Box[] | null>(null);
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  const [colorBy, setColorBy] = useState<HotspotFeature | null>(null);
+  // A box clicked while navigating: its stats stay in the panel until it is clicked again or unpinned there.
+  const [pinnedBox, setPinnedBox] = useState<Box | null>(null);
+  // Boxes a grid drag would add, for finding the box under the pointer outside React.
+  const previewBoxesRef = useRef<Box[]>([]);
+  useEffect(() => {
+    previewBoxesRef.current = preview?.boxes ?? [];
+  }, [preview]);
+
+  // The boxes as they will be once the drag in progress ends: their stats are shown live.
+  const statBoxes = useMemo(() => {
+    if (!preview) return [...chosen.values()];
+    if (preview.remove) return [...chosen.values()].filter((box) => !isCentredIn(box, preview.area));
+    const merged = new Map(chosen);
+    preview.boxes?.forEach((box) => merged.set(boxKey(box), box));
+    return [...merged.values()];
+  }, [chosen, preview]);
+  const boxFeatures = useBoxFeatures(slide.id, statBoxes);
+  // The box under the pointer (a chosen one, or the one the active tool would place): its stats follow the pointer.
+  const hoveredBox = useMemo(() => {
+    if (!hoveredKey) return null;
+    const [x, y] = hoveredKey.split(',').map(Number);
+    return { x, y };
+  }, [hoveredKey]);
+  const hoveredFeatures = useBoxFeatures(slide.id, hoveredBox ? [hoveredBox] : []);
+  const pinnedFeatures = useBoxFeatures(slide.id, pinnedBox ? [pinnedBox] : []);
+  const pinnedValues = pinnedBox ? (pinnedFeatures.features.get(boxKey(pinnedBox)) ?? null) : null;
+  const statValues = statBoxes.flatMap((box) => boxFeatures.features.get(boxKey(box)) ?? []);
+  const hoveredValues = hoveredKey ? (boxFeatures.features.get(hoveredKey) ?? null) : null;
+  const colorRange = colorBy ? summarizeFeature(statValues, colorBy) : null;
+  /** The heatmap fill of a box, when boxes are coloured by a feature and its stats are known. */
+  const heatFill = (box: Box): string | undefined => {
+    const value = colorBy ? boxFeatures.features.get(boxKey(box))?.[colorBy] : undefined;
+    if (value === undefined || !colorRange) return undefined;
+    return heatColor(normalize(value, colorRange.min, colorRange.max));
+  };
 
   const slideSize = { width: slide.width ?? 0, height: slide.height ?? 0 };
   const latest = useLatest({ tool, pendingBoxes, slideSize, offset: slide.image_offset });
@@ -243,7 +283,20 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
     };
     const onClick = (event: OpenSeadragon.CanvasClickEvent) => {
       const current = activeTool();
-      if (!current || !event.quick) return;
+      if (!event.quick) return;
+      if (!current) {
+        // Navigating: a click pins the box under it (a chosen one, else where the grid or brush would place one).
+        const point = toSlide(event.position);
+        if (!point || latest.current.pendingBoxes) return;
+        const origin = gridOriginRef.current;
+        const box =
+          [...chosenRef.current.values()].find((item) => contains(item, point)) ??
+          (origin && isInside(gridBoxAt(origin, point), latest.current.slideSize)
+            ? gridBoxAt(origin, point)
+            : brushBoxAt(point, latest.current.slideSize));
+        if (box) setPinnedBox((pinned) => (pinned && boxKey(pinned) === boxKey(box) ? null : box));
+        return;
+      }
       // The brush already painted on press.
       event.preventDefaultAction = true;
       const point = toSlide(event.position);
@@ -256,9 +309,20 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
       latestChoose.current(next);
     };
 
+    /** The box the active tool would place at a point: centred by the brush, on the grid once one is anchored. */
+    const toolBoxAt = (point: Position | null): Box | null => {
+      const current = activeTool();
+      if (!point || !current) return null;
+      const origin = gridOriginRef.current;
+      if (current === 'grid' && origin) {
+        const box = gridBoxAt(origin, point);
+        return isInside(box, latest.current.slideSize) ? box : null;
+      }
+      return brushBoxAt(point, latest.current.slideSize);
+    };
     const showCursor = (point: Position | null) => {
       const cursor = cursorRef.current;
-      const box = point && activeTool() === 'brush' ? brushBoxAt(point, latest.current.slideSize) : null;
+      const box = toolBoxAt(point);
       if (!cursor) return;
       cursor.style.visibility = box ? 'visible' : 'hidden';
       if (box) {
@@ -269,9 +333,18 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
     const onPointerMove = (event: PointerEvent) => {
       const point = clientToSlide(event);
       showCursor(point);
+      const over = point && event.target instanceof Node && viewer.canvas.contains(event.target) ? point : null;
+      const hovered = over
+        ? ([...chosenRef.current.values(), ...previewBoxesRef.current].find((box) => contains(box, over)) ??
+          toolBoxAt(over))
+        : null;
+      setHoveredKey(hovered ? boxKey(hovered) : null);
       if (dragRef.current?.remove) move(point);
     };
-    const onPointerLeave = () => showCursor(null);
+    const onPointerLeave = () => {
+      showCursor(null);
+      setHoveredKey(null);
+    };
     const onPointerUp = (event: PointerEvent) => {
       if (event.button === RIGHT_BUTTON && dragRef.current?.remove) finish();
     };
@@ -309,7 +382,7 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
   }, [viewer, latest, latestChoose]);
 
   useEffect(() => {
-    if (tool !== 'brush') cursorRef.current?.style.setProperty('visibility', 'hidden');
+    if (!tool) cursorRef.current?.style.setProperty('visibility', 'hidden');
   }, [tool]);
 
   // Esc goes back to panning; the chosen boxes stay (the dialog handles its own Esc while open).
@@ -322,10 +395,11 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [tool, pendingBoxes, onToolChange]);
 
-  const rect = (key: string, area: Rect, className: string) => (
+  const rect = (key: string, area: Rect, className: string, fill?: string) => (
     <rect
       key={key}
       className={className}
+      style={fill ? { fill } : undefined}
       x={area.x}
       y={area.y}
       width={area.width}
@@ -345,7 +419,7 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
       ? `Pędzel: maluj, aby stawiać pola ${size}; prawy przycisk usuwa; Esc kończy`
       : tool === 'grid'
         ? `Siatka: przeciągnij, aby zaznaczyć pola ${size}; klik dodaje lub usuwa pole; prawy przycisk usuwa; Esc kończy`
-        : 'Nawigacja: przeciągnij, aby przesunąć; kółko przybliża';
+        : 'Nawigacja: przeciągnij, aby przesunąć; kółko przybliża; klik przypina statystyki kwadratu';
 
   return (
     <>
@@ -366,13 +440,17 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
                 square(box),
                 preview?.remove && isCentredIn(box, preview.area)
                   ? 'hotspot-grid__box hotspot-grid__box--removing'
-                  : 'hotspot-grid__box',
+                  : `hotspot-grid__box${key === hoveredKey ? ' hotspot-grid__box--hovered' : ''}`,
+                preview?.remove && isCentredIn(box, preview.area) ? undefined : heatFill(box),
               ),
             )}
             {preview?.boxes?.map(
-              (box) => !chosen.has(boxKey(box)) && rect(`add-${boxKey(box)}`, square(box), 'hotspot-grid__box hotspot-grid__box--adding'),
+              (box) =>
+                !chosen.has(boxKey(box)) &&
+                rect(`add-${boxKey(box)}`, square(box), 'hotspot-grid__box hotspot-grid__box--adding', heatFill(box)),
             )}
             {tooManyInDrag && rect('too-many', preview.area, 'hotspot-grid__box hotspot-grid__box--too-many')}
+            {pinnedBox && rect('pinned', square(pinnedBox), 'hotspot-grid__pinned')}
             <rect
               ref={cursorRef}
               className="hotspot-grid__cursor"
@@ -408,6 +486,21 @@ export default function HotspotSelectionOverlay({ slide, tool, onToolChange, onC
           />
         </div>
         <ViewerHint text={hint} error={Boolean(overLimit)} />
+        {(statBoxes.length > 0 || tool !== null || pinnedBox !== null) && (
+          <BoxStatsPanel
+            values={statValues}
+            total={statBoxes.length}
+            pending={boxFeatures.pending}
+            failed={boxFeatures.failed}
+            hovered={hoveredValues}
+            hoveredPending={hoveredFeatures.pending}
+            pinned={pinnedBox ? { values: pinnedValues, pending: pinnedFeatures.pending } : null}
+            onUnpin={() => setPinnedBox(null)}
+            mpp={slide.mpp_x}
+            colorBy={colorBy}
+            onColorByChange={setColorBy}
+          />
+        )}
         {count > 0 && (
           <div className="floating-panel hotspot-grid__panel" role="status">
             <span className="hotspot-grid__status">{fieldCount(count)}</span>

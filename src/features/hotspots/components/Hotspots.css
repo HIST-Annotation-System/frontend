@@ -1751,3 +1751,120 @@ a.hotspot-queue__step:focus-visible {
 .hotspot-image-state__message .spinner {
   padding: var(--space-2) var(--space-3);
 }
+
+/* The box under the pointer while its stats are shown in the stats panel. */
+.hotspot-grid__box--hovered {
+  stroke-width: 4px;
+  stroke: #ffb020;
+}
+
+/* Live stats of the boxes: bottom left of the image, never reaching the save panel (bottom centre, ~260 px wide). */
+.hotspot-stats {
+  position: absolute;
+  bottom: var(--space-3);
+  left: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* As wide as its columns (from 1 to 4 of them), never wider than the left half of the image. */
+  width: max-content;
+  min-width: 240px;
+  max-width: calc(50% - var(--space-3) - 140px);
+  overflow-x: auto;
+  padding: var(--space-2) var(--space-3);
+  pointer-events: auto;
+  font-size: 12px;
+}
+
+.hotspot-stats__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.hotspot-stats__title {
+  color: var(--c-text);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.hotspot-stats__state {
+  color: var(--c-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.hotspot-stats__state--error {
+  color: var(--c-danger-text);
+}
+
+.hotspot-stats__size {
+  margin: 0;
+  color: var(--c-text-2);
+}
+
+.hotspot-stats__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.hotspot-stats__table th,
+.hotspot-stats__table td {
+  padding: 2px 0 2px var(--space-3);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.hotspot-stats__table th:first-child {
+  padding-left: 0;
+  text-align: left;
+}
+
+.hotspot-stats__table thead th {
+  color: var(--c-text-2);
+  font-weight: 500;
+}
+
+.hotspot-stats__table tbody th {
+  color: var(--c-text);
+  font-weight: 500;
+}
+
+.hotspot-stats__own {
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+.hotspot-stats__color {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--c-text-2);
+}
+
+/* A box pinned by a click while navigating: its stats stay in the panel. */
+.hotspot-grid__pinned {
+  fill: rgb(255 176 32 / 0.12);
+  stroke: #ffb020;
+  stroke-width: 3px;
+}
+
+.hotspot-stats__pinned {
+  color: #d97706;
+}
+
+.hotspot-stats__unpin {
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--c-text-2);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hotspot-stats__unpin:hover {
+  color: var(--c-text);
+}
