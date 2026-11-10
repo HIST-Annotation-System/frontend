@@ -292,8 +292,28 @@
 
 .hotspot-folders__new-field {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1);
+}
+
+/* The system admin's organization picker gets a row of its own above the name. */
+.hotspot-folders__new-field .organization-select {
+  flex-basis: 100%;
+}
+
+.hotspot-folders__new-field .organization-select select {
+  flex: 1;
+  max-width: none;
+}
+
+.hotspot-folders__group {
+  padding: var(--space-3) var(--space-2) var(--space-1);
+  color: var(--c-label);
+}
+
+.hotspot-folders__group:first-child {
+  padding-top: var(--space-1);
 }
 
 .hotspot-folders__new input {
@@ -1867,4 +1887,69 @@ a.hotspot-queue__step:focus-visible {
 
 .hotspot-stats__unpin:hover {
   color: var(--c-text);
+}
+
+/* Number of ratings; fewer than a full team is marked. */
+.rating-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+.rating-count--few {
+  color: var(--c-warn-text);
+}
+
+/* The team in the expert verdict panel: one line per rater, their marks on the right; the average last. */
+.hotspot-team {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hotspot-team__member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 24px;
+  border-bottom: var(--border-width) solid var(--c-border);
+  font-size: 12px;
+}
+
+.hotspot-team__member:last-child {
+  border-bottom: none;
+}
+
+.hotspot-team__member--verdict {
+  font-weight: 600;
+}
+
+.hotspot-team__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--c-text);
+}
+
+.hotspot-team__you {
+  color: var(--c-text-3);
+  font-weight: 400;
+}
+
+.hotspot-team__marks {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.hotspot-team__none {
+  width: 14px;
+  color: var(--c-text-3);
+  text-align: center;
 }

@@ -1,5 +1,5 @@
 import type { HotspotStatus } from '../../../types/hotspot';
-import { HOTSPOT_STATUS_OPTIONS, type HotspotMode } from '../utils/hotspotReview';
+import { HOTSPOT_STATUS_OPTIONS, MIN_RATINGS, type HotspotMode } from '../utils/hotspotReview';
 import HotspotTagFilter from './HotspotTagFilter';
 import './Hotspots.css';
 
@@ -8,11 +8,37 @@ interface HotspotFiltersProps {
   mode: HotspotMode;
   status: HotspotStatus | null;
   tagIds: number[];
-  onChange: (changes: { status?: HotspotStatus | null; tagIds?: number[] }) => void;
+  ratingCount: number | undefined;
+  onChange: (changes: { status?: HotspotStatus | null; tagIds?: number[]; ratingCount?: number }) => void;
 }
 
-/** Narrows the catalog by review status and by tags (a hotspot must carry every ticked tag). */
-export default function HotspotFilters({ mode, status, tagIds, onChange }: HotspotFiltersProps) {
+const RATING_COUNTS = Array.from({ length: MIN_RATINGS + 3 }, (_, count) => count);
+
+interface RatingCountFilterProps {
+  value: number | undefined;
+  onChange: (ratingCount: number | undefined) => void;
+}
+
+export function RatingCountFilter({ value, onChange }: RatingCountFilterProps) {
+  return (
+    <select
+      className="hotspot-sort__select"
+      aria-label="Liczba ocen"
+      value={value ?? ''}
+      onChange={(event) => onChange(event.target.value === '' ? undefined : Number(event.target.value))}
+    >
+      <option value="">Dowolna liczba ocen</option>
+      {RATING_COUNTS.map((count) => (
+        <option key={count} value={count}>
+          Ocen: {count}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** Narrows the catalog by review status, number of ratings and tags (a hotspot must carry every ticked tag). */
+export default function HotspotFilters({ mode, status, tagIds, ratingCount, onChange }: HotspotFiltersProps) {
   const statuses = HOTSPOT_STATUS_OPTIONS.filter((option) => mode !== 'reannotate' || option.value !== 'untagged');
 
   return (
@@ -30,6 +56,7 @@ export default function HotspotFilters({ mode, status, tagIds, onChange }: Hotsp
           </option>
         ))}
       </select>
+      <RatingCountFilter value={ratingCount} onChange={(next) => onChange({ ratingCount: next })} />
       <HotspotTagFilter tagIds={tagIds} onChange={(next) => onChange({ tagIds: next })} />
     </div>
   );

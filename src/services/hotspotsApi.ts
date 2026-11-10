@@ -30,8 +30,8 @@ export const hotspotBatchQueryKeys = {
 export const listHotspotFolders = async (signal?: AbortSignal): Promise<HotspotFolder[]> =>
   (await httpClient.get<HotspotFolder[]>('/hotspot-folders', { signal })).data;
 
-export const createHotspotFolder = async (name: string): Promise<HotspotFolder> =>
-  (await httpClient.post<HotspotFolder>('/hotspot-folders', { name })).data;
+export const createHotspotFolder = async (name: string, organizationId?: number): Promise<HotspotFolder> =>
+  (await httpClient.post<HotspotFolder>('/hotspot-folders', { name, organization_id: organizationId })).data;
 
 export const renameHotspotFolder = async (folderId: string, name: string): Promise<HotspotFolder> =>
   (await httpClient.patch<HotspotFolder>(`/hotspot-folders/${folderId}`, { name })).data;
@@ -41,12 +41,20 @@ export const deleteHotspotFolder = async (folderId: string): Promise<void> => {
 };
 
 export const listHotspots = async (
-  { folderId, sort, order, status, tagIds }: HotspotListQuery,
+  { folderId, sort, order, status, tagIds, ratingCount, ratedByMe }: HotspotListQuery,
   signal?: AbortSignal,
 ): Promise<Hotspot[]> =>
   (
     await httpClient.get<Hotspot[]>('/hotspots', {
-      params: { folder_id: folderId ?? undefined, sort, order, status: status ?? undefined, tag_ids: tagIds },
+      params: {
+        folder_id: folderId ?? undefined,
+        sort,
+        order,
+        status: status ?? undefined,
+        tag_ids: tagIds,
+        rating_count: ratingCount ?? undefined,
+        rated_by_me: ratedByMe ?? undefined,
+      },
       // `tag_ids=1&tag_ids=2`, as FastAPI expects (not `tag_ids[]=1`).
       paramsSerializer: { indexes: null },
       signal,

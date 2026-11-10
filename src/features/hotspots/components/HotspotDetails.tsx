@@ -19,6 +19,8 @@ import HotspotDeleteModal from './HotspotDeleteModal';
 import HotspotSource from './HotspotSource';
 import { TagPill, VerdictMark } from './TagMarks';
 import './Hotspots.css';
+import { sameOrganizationFolders } from '../utils/folderOrganization';
+import RatingCount from './RatingCount';
 
 function PaneStrip({ onCollapse }: { onCollapse: () => void }) {
   return (
@@ -174,9 +176,13 @@ export default function HotspotDetails({ hotspot, folders, linkSearch, manage, o
           <dd>{hotspot.score}</dd>
           <dt>Stan</dt>
           <dd>{status?.label ?? '—'}</dd>
+          <dt>Oceny</dt>
+          <dd>
+            <RatingCount count={hotspot.rating_count} />
+          </dd>
           {hotspot.assessed_by && (
             <>
-              <dt>Ocenił</dt>
+              <dt>Ostatnio ocenił</dt>
               <dd>{hotspot.assessed_by}</dd>
             </>
           )}
@@ -233,7 +239,7 @@ export default function HotspotDetails({ hotspot, folders, linkSearch, manage, o
                     disabled={isUpdating}
                     onChange={(event) => setMoveTarget(event.target.value)}
                   >
-                    {folders.map((folder) => (
+                    {sameOrganizationFolders(folders, hotspot.folder_id).map((folder) => (
                       <option key={folder.id} value={folder.id}>
                         {folder.id === hotspot.folder_id ? `${folder.name} (obecny)` : folder.name}
                       </option>

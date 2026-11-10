@@ -3,12 +3,12 @@ import { useAuth } from '../../context/AuthContext';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { usersApi } from '../../services/usersApi';
 import { dictionariesApi } from '../../services/dictionariesApi';
-import type { ProfileUpdate, Role } from '../../types/user';
+import type { ProfileUpdate } from '../../types/user';
+import { ROLE_LABELS } from '../../utils/roles';
 import Button from '../../components/ui/Button';
 import { Pencil, Lock, X } from 'lucide-react';
 import './ProfilePage.css';
 
-const ROLE_LABELS: Record<Role, string> = { ADMIN: 'Administrator', ANNOTATOR: 'Anotator' };
 
 interface InlineFieldProps {
   label: string;
@@ -206,12 +206,9 @@ export default function ProfilePage() {
             onSave={() => {}}
             disabled
           />
-          <InlineField
-            label="Grupa anotatorów"
-            value={user.profile?.group?.name || 'Brak'}
-            onSave={() => {}}
-            disabled
-          />
+          {user.organization && (
+            <InlineField label="Organizacja" value={user.organization.name} onSave={() => {}} disabled />
+          )}
           <InlineField
             label="Hasło"
             value=""

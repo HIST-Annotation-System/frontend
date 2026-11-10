@@ -28,6 +28,7 @@ import { useHotspot, useHotspotFolders } from '../features/hotspots/hooks/useHot
 import {
   catalogDefaults,
   readCatalogParams,
+  catalogQuery,
   resolveFolderId,
   writeCatalogParams,
 } from '../features/hotspots/utils/hotspotReview';
@@ -185,13 +186,7 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
               </nav>
               <HotspotQueueNav
                 hotspot={hotspot}
-                query={{
-                  folderId: resolveFolderId(catalog, hotspot.folder_id),
-                  sort: catalog.sort,
-                  order: catalog.order,
-                  status: catalog.status,
-                  tagIds: catalog.tagIds,
-                }}
+                query={catalogQuery(catalog, resolveFolderId(catalog, hotspot.folder_id))}
                 search={search}
               />
               {/* Switching the mode keeps this hotspot open; the queue (prev/next) follows the new mode. */}

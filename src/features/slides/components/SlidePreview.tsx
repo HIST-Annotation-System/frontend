@@ -7,6 +7,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useUpload } from '../../../context/UploadProvider';
 import { getThumbnailUrl } from '../../../services/slidesApi';
 import type { Slide } from '../../../types/slide';
+import { isManager } from '../../../utils/roles';
 import { useSlideMutations } from '../hooks/useSlideMutations';
 import { useSlideProgress } from '../hooks/useSlideProgress';
 import { describeSlideMutationError, isSlideGone, isSlideModified } from '../utils/slideConflicts';
@@ -41,7 +42,7 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
   const isSavingName = useRef(false);
   const isUploading = slide.status === 'uploading';
   const isProcessing = slide.status === 'processing';
-  const canManage = user?.role === 'ADMIN';
+  const canManage = isManager(user);
   const progress = progressOf(slide);
   // An upload running in this browser is cancelled through its queue (which also stops the transfer).
   const ownUpload = upload.items.find((item) => item.slideId === slide.id && item.status !== 'completed');

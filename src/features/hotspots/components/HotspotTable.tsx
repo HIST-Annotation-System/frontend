@@ -18,6 +18,8 @@ import { TAG_DIMENSIONS } from '../utils/hotspotTags';
 import HotspotDeleteModal from './HotspotDeleteModal';
 import { CustomTagPills, VerdictMark } from './TagMarks';
 import './Hotspots.css';
+import { sameOrganizationFolders } from '../utils/folderOrganization';
+import RatingCount from './RatingCount';
 
 interface HotspotTableProps {
   hotspots: Hotspot[];
@@ -99,6 +101,9 @@ export default function HotspotTable({
             ))}
             <th>Tagi</th>
             <th>Stan</th>
+            <th className={`hotspot-table__number${sort === 'rating_count' ? ' hotspot-table__active' : ''}`}>
+              Oceny
+            </th>
             <th className="hotspot-table__number">Anotacje</th>
             <th className={`hotspot-table__number${sort === 'score' ? ' hotspot-table__active' : ''}`}>Wynik</th>
             <th className={`hotspot-table__date${sort === 'created_at' ? ' hotspot-table__active' : ''}`}>Dodano</th>
@@ -296,6 +301,9 @@ function HotspotRow({
         )}
       </td>
       <td className="hotspot-table__status">{status?.label}</td>
+      <td className="hotspot-table__number mono-data">
+        <RatingCount count={hotspot.rating_count} />
+      </td>
       <td className="hotspot-table__number mono-data">{hotspot.annotation_count}</td>
       <td className="hotspot-table__number mono-data hotspot-table__strong">{hotspot.score}</td>
       <td className="mono-data hotspot-table__date">{formatDateTime(hotspot.created_at)}</td>
@@ -322,7 +330,7 @@ function HotspotRow({
             {isMoveOpen && (
               <div className="hotspot-table__menu" role="menu" aria-label="Przenieś do folderu">
                 <span className="hotspot-table__menu-label">Przenieś do folderu</span>
-                {folders.map((folder) => (
+                {sameOrganizationFolders(folders, hotspot.folder_id).map((folder) => (
                   <button
                     key={folder.id}
                     type="button"

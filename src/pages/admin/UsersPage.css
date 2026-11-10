@@ -9,8 +9,15 @@
   width: 16%;
 }
 
-.users-table td.users-group {
-  width: 18%;
+.users-table td.users-org {
+  width: 14%;
+}
+
+.users-org-filter {
+  height: var(--control-md);
+  max-width: 200px;
+  padding: 0 var(--space-2);
+  font-size: 13px;
 }
 
 /* ---- Dialogs (built on the shared Modal) ---- */
