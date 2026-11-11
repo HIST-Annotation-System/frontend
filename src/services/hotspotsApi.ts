@@ -41,20 +41,12 @@ export const deleteHotspotFolder = async (folderId: string): Promise<void> => {
 };
 
 export const listHotspots = async (
-  { folderId, sort, order, status, tagIds, ratingCount, ratedByMe }: HotspotListQuery,
+  { folderId, sort, order, status, tagIds }: HotspotListQuery,
   signal?: AbortSignal,
 ): Promise<Hotspot[]> =>
   (
     await httpClient.get<Hotspot[]>('/hotspots', {
-      params: {
-        folder_id: folderId ?? undefined,
-        sort,
-        order,
-        status: status ?? undefined,
-        tag_ids: tagIds,
-        rating_count: ratingCount ?? undefined,
-        rated_by_me: ratedByMe ?? undefined,
-      },
+      params: { folder_id: folderId ?? undefined, sort, order, status: status ?? undefined, tag_ids: tagIds },
       // `tag_ids=1&tag_ids=2`, as FastAPI expects (not `tag_ids[]=1`).
       paramsSerializer: { indexes: null },
       signal,

@@ -20,7 +20,6 @@ import HotspotSource from './HotspotSource';
 import { TagPill, VerdictMark } from './TagMarks';
 import './Hotspots.css';
 import { sameOrganizationFolders } from '../utils/folderOrganization';
-import RatingCount from './RatingCount';
 
 function PaneStrip({ onCollapse }: { onCollapse: () => void }) {
   return (
@@ -176,13 +175,9 @@ export default function HotspotDetails({ hotspot, folders, linkSearch, manage, o
           <dd>{hotspot.score}</dd>
           <dt>Stan</dt>
           <dd>{status?.label ?? '—'}</dd>
-          <dt>Oceny</dt>
-          <dd>
-            <RatingCount count={hotspot.rating_count} />
-          </dd>
           {hotspot.assessed_by && (
             <>
-              <dt>Ostatnio ocenił</dt>
+              <dt>Ocenił</dt>
               <dd>{hotspot.assessed_by}</dd>
             </>
           )}

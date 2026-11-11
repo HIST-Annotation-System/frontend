@@ -7,7 +7,7 @@ import Spinner from '../components/ui/Spinner';
 import HotspotActivityStrip from '../features/hotspots/components/HotspotActivityStrip';
 import HotspotBulkBar from '../features/hotspots/components/HotspotBulkBar';
 import HotspotCard from '../features/hotspots/components/HotspotCard';
-import HotspotFilters, { RatingCountFilter } from '../features/hotspots/components/HotspotFilters';
+import HotspotFilters from '../features/hotspots/components/HotspotFilters';
 import HotspotFolderList from '../features/hotspots/components/HotspotFolderList';
 import HotspotDetails, { HotspotDetailsPlaceholder } from '../features/hotspots/components/HotspotDetails';
 import HotspotModeSwitch from '../features/hotspots/components/HotspotModeSwitch';
@@ -20,6 +20,7 @@ import { useHotspotFolders, useHotspots } from '../features/hotspots/hooks/useHo
 import {
   ALL_FOLDERS,
   catalogDefaults,
+  HOTSPOT_STATUS_OPTIONS,
   readCatalogParams,
   catalogQuery,
   resolveFolderId,
@@ -260,30 +261,20 @@ function HotspotCatalogList({
               <div className="hotspots-page__filters">
                 <span className="hotspot-sort__label">Filtruj według</span>
                 {params.mode === 'assess' ? (
-                  // Assessing always lists what the user has not rated: that is fixed and tags are not its focus.
-                  <>
-                    <select
-                      className="hotspot-sort__select hotspots-page__status-locked"
-                      aria-label="Status oceny"
-                      title="W trybie „Oceniaj” widoczne są tylko hotspoty bez Twojej oceny"
-                      disabled
-                      value="untagged"
-                    >
-                      <option value="untagged">Bez mojej oceny</option>
-                    </select>
-                    <RatingCountFilter
-                      value={params.ratingCount}
-                      onChange={(ratingCount) => onChange({ ratingCount })}
-                    />
-                  </>
+                  // Assessing always lists the untagged hotspots: the status is fixed and tags are not its focus.
+                  <select
+                    className="hotspot-sort__select hotspots-page__status-locked"
+                    aria-label="Status oceny"
+                    title="W trybie „Oceniaj” widoczne są tylko nieocenione"
+                    disabled
+                    value="untagged"
+                  >
+                    <option value="untagged">
+                      {HOTSPOT_STATUS_OPTIONS.find((option) => option.value === 'untagged')?.label}
+                    </option>
+                  </select>
                 ) : (
-                  <HotspotFilters
-                    mode={params.mode}
-                    status={params.status}
-                    tagIds={params.tagIds}
-                    ratingCount={params.ratingCount}
-                    onChange={onChange}
-                  />
+                  <HotspotFilters mode={params.mode} status={params.status} tagIds={params.tagIds} onChange={onChange} />
                 )}
                 {/* Last, so the count sits at the far right of the toolbar. */}
                 {data !== undefined && (

@@ -15,10 +15,6 @@ const SORT_PARAM = 'sort';
 const ORDER_PARAM = 'order';
 const STATUS_PARAM = 'status';
 const TAGS_PARAM = 'tags';
-const RATINGS_PARAM = 'ratings';
-
-/** A hotspot is reviewed well enough once this many annotators rated it; fewer is marked in the catalog. */
-export const MIN_RATINGS = 3;
 
 interface ModeDefaults {
   sort: HotspotSort;
@@ -37,7 +33,7 @@ const MODE_DEFAULTS: Record<HotspotMode, ModeDefaults> = {
 
 export const HOTSPOT_MODES: { value: HotspotMode; label: string; description: string }[] = [
   { value: 'browse', label: 'Przeglądaj', description: 'Cały katalog: wgrywanie, zmiana nazw, przenoszenie.' },
-  { value: 'assess', label: 'Oceniaj', description: 'Hotspoty bez Twojej oceny: ustaw priorytet, poprawność i tagi.' },
+  { value: 'assess', label: 'Oceniaj', description: 'Nieocenione hotspoty: ustaw priorytet, poprawność i tagi.' },
   {
     value: 'reannotate',
     label: 'Reannotuj',
@@ -61,7 +57,6 @@ export interface CatalogParams {
   /** null: any status. */
   status: HotspotStatus | null;
   tagIds: number[];
-  ratingCount?: number;
 }
 
 const parseMode = (value: string | null): HotspotMode =>
@@ -77,11 +72,6 @@ const parseTagIds = (value: string | null): number[] =>
     .split(',')
     .map(Number)
     .filter((id) => Number.isInteger(id) && id > 0);
-
-const parseRatingCount = (value: string | null): number | undefined => {
-  const count = value === null || value === '' ? NaN : Number(value);
-  return Number.isInteger(count) && count >= 0 ? count : undefined;
-};
 
 /**
  * Missing, unknown or (for the mode) unavailable values fall back to the mode's defaults. Assessing always lists
@@ -99,35 +89,16 @@ export function readCatalogParams(params: URLSearchParams): CatalogParams {
     order: order === 'asc' || order === 'desc' ? order : defaults.order,
     status: assessing ? defaults.status : parseStatus(params.get(STATUS_PARAM), defaults.status),
     tagIds: assessing ? [] : parseTagIds(params.get(TAGS_PARAM)),
-    ...withRatingCount(parseRatingCount(params.get(RATINGS_PARAM))),
   };
 }
 
-// Only present when set, so the params stay comparable to plain defaults.
-const withRatingCount = (ratingCount: number | undefined) => (ratingCount === undefined ? {} : { ratingCount });
-
-// Assessing lists what the user has not rated yet: others' ratings must not take a hotspot out of their queue.
-export function catalogQuery(
-  { mode, sort, order, status, tagIds, ratingCount }: CatalogParams,
-  folderId: string | null,
-): HotspotListQuery {
-  const assessing = mode === 'assess';
-  return {
-    folderId,
-    sort,
-    order,
-    status: assessing ? null : status,
-    tagIds,
-    ratingCount: ratingCount ?? null,
-    ratedByMe: assessing ? false : null,
-  };
+/** The hotspot list request for the catalog state. */
+export function catalogQuery({ sort, order, status, tagIds }: CatalogParams, folderId: string | null): HotspotListQuery {
+  return { folderId, sort, order, status, tagIds };
 }
 
-/** Where the hotspot is in the review: the API's, from everyone's ratings (the visible tags may not show them). */
-export function hotspotStatus(
-  hotspot: Pick<Hotspot, 'tags' | 'reannotated_at'> & Partial<Pick<Hotspot, 'status'>>,
-): HotspotStatus {
-  if (hotspot.status) return hotspot.status;
+/** Where the hotspot is in the review (mirrors the API's status filter). */
+export function hotspotStatus(hotspot: Pick<Hotspot, 'tags' | 'reannotated_at'>): HotspotStatus {
   if (hotspot.reannotated_at !== null) return 'reannotated';
   const dimensions = new Set(hotspot.tags.map((tag) => tag.dimension));
   return dimensions.has('importance') && dimensions.has('accuracy') ? 'to_reannotate' : 'untagged';
@@ -140,15 +111,7 @@ export function catalogDefaults(mode: HotspotMode): CatalogParams {
 }
 
 /** URL search params for the catalog state; the mode's defaults are left out. */
-export function writeCatalogParams({
-  mode,
-  folder,
-  sort,
-  order,
-  status,
-  tagIds,
-  ratingCount,
-}: CatalogParams): Record<string, string> {
+export function writeCatalogParams({ mode, folder, sort, order, status, tagIds }: CatalogParams): Record<string, string> {
   const defaults = MODE_DEFAULTS[mode];
   const params: Record<string, string> = {};
   if (mode !== 'browse') params[MODE_PARAM] = mode;
@@ -157,7 +120,6 @@ export function writeCatalogParams({
   if (order !== defaults.order) params[ORDER_PARAM] = order;
   if (status !== defaults.status) params[STATUS_PARAM] = status ?? ANY_STATUS;
   if (tagIds.length > 0) params[TAGS_PARAM] = tagIds.join(',');
-  if (ratingCount !== undefined) params[RATINGS_PARAM] = String(ratingCount);
   return params;
 }
 

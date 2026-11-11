@@ -2,9 +2,7 @@ import { Plus, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
-import { useAuth } from '../../../context/AuthContext';
-import { isManager } from '../../../utils/roles';
-import type { Hotspot, HotspotRating } from '../../../types/hotspot';
+import type { Hotspot } from '../../../types/hotspot';
 import { useHotspotTagMutations, useTagMutations, useTags } from '../hooks/useTags';
 import type { HotspotMode } from '../utils/hotspotReview';
 import {
@@ -15,7 +13,6 @@ import {
   TAG_DIMENSIONS,
   tagErrorMessage,
 } from '../utils/hotspotTags';
-import RatingCount from './RatingCount';
 import { TagPill, VerdictMark } from './TagMarks';
 import './Hotspots.css';
 
@@ -27,11 +24,8 @@ interface HotspotTagPanelProps {
   onReannotate: () => void;
 }
 
-const raterName = (rating: HotspotRating) => rating.full_name ?? rating.username;
-
-/** The user's own rating and the shared custom tags; the group's ratings once the API shows them (`ratings`). */
+/** The expert's verdict on a hotspot (importance, accuracy) and its custom tags. */
 export default function HotspotTagPanel({ hotspot, mode, onReannotate }: HotspotTagPanelProps) {
-  const { user } = useAuth();
   const { data: tags = [] } = useTags();
   const { addTag, removeTag, isTagging } = useHotspotTagMutations();
   const { createTag, isCreating } = useTagMutations();
@@ -39,18 +33,12 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
   const [newName, setNewName] = useState('');
   const [newWeight, setNewWeight] = useState(CUSTOM_TAG_DEFAULT_WEIGHT);
   const [error, setError] = useState<string | null>(null);
-  const myRating = hotspot.my_rating;
+  const ownIds = new Set(hotspot.tags.map((tag) => tag.id));
   const ownCustom = hotspot.tags.filter((tag) => tag.dimension === null);
-  const ownIds = new Set(
-    [...ownCustom, myRating?.importance, myRating?.accuracy].flatMap((tag) => (tag ? [tag.id] : [])),
-  );
   const otherCustom = customTags(tags).filter((tag) => !ownIds.has(tag.id));
   const weightMax = maxCustomWeight(tags);
-  // Administrators need not rate themselves, so for them the group's ratings count.
-  const isTagged =
-    Boolean(myRating?.importance && myRating.accuracy) || (isManager(user) && hotspot.status !== 'untagged');
-  const teamVerdict = hotspot.tags.filter((tag) => tag.dimension !== null);
-  // Browsing only looks: ratings and tags change while assessing and reannotating.
+  const isTagged = TAG_DIMENSIONS.every(({ value }) => hotspot.tags.some((tag) => tag.dimension === value));
+  // Browsing only looks: the verdict and tags change while assessing and reannotating.
   const locked = mode === 'browse';
 
   useEffect(() => {
@@ -119,52 +107,6 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
             </div>
           );
         })}
-      </div>
-
-      <div className="hotspot-tag-panel__row">
-        <div className="hotspot-tag-panel__row-head">
-          <span className="hotspot-tag-panel__label">Grupa</span>
-          <span className="hotspot-tag-panel__score">
-            ocen <RatingCount count={hotspot.rating_count} />
-          </span>
-        </div>
-        {hotspot.ratings && hotspot.ratings.length > 0 && (
-          <ul className="hotspot-team">
-            {hotspot.ratings.map((rating) => (
-              <li key={rating.account_id} className="hotspot-team__member">
-                <span className="hotspot-team__name" title={rating.username}>
-                  {raterName(rating)}
-                  {rating.account_id === user?.id && <span className="hotspot-team__you"> (Ty)</span>}
-                </span>
-                <span className="hotspot-team__marks">
-                  {TAG_DIMENSIONS.map(({ value }) => {
-                    const tag = rating[value];
-                    return tag ? (
-                      <VerdictMark key={value} tag={tag} allTags={tags} size={14} />
-                    ) : (
-                      <span key={value} className="hotspot-team__none">—</span>
-                    );
-                  })}
-                </span>
-              </li>
-            ))}
-            {teamVerdict.length > 0 && (
-              <li className="hotspot-team__member hotspot-team__member--verdict">
-                <span className="hotspot-team__name">Średnio</span>
-                <span className="hotspot-team__marks">
-                  {TAG_DIMENSIONS.map(({ value }) => {
-                    const tag = teamVerdict.find((item) => item.dimension === value);
-                    return tag ? (
-                      <VerdictMark key={value} tag={tag} allTags={tags} size={14} />
-                    ) : (
-                      <span key={value} className="hotspot-team__none">—</span>
-                    );
-                  })}
-                </span>
-              </li>
-            )}
-          </ul>
-        )}
       </div>
 
       <div className="hotspot-tag-panel__row">
@@ -264,7 +206,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
           variant="primary"
           className="hotspot-tag-panel__action"
           disabled={!isTagged}
-          title={isTagged ? 'Otwórz hotspot w trybie „Reannotuj”' : 'Najpierw ustaw swój priorytet i poprawność'}
+          title={isTagged ? 'Otwórz hotspot w trybie „Reannotuj”' : 'Najpierw ustaw priorytet i poprawność'}
           onClick={onReannotate}
         >
           Reannotuj obraz

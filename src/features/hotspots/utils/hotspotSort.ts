@@ -46,36 +46,25 @@ const TAG_SORT_OPTIONS: HotspotSortOption[] = [
   {
     value: 'score',
     label: 'Wynik tagów',
-    description: 'Suma wag tagów i uśrednionych ocen: im wyższa, tym pilniej trzeba go poprawić.',
+    description: 'Suma wag tagów hotspotu: im wyższa, tym pilniej trzeba go poprawić.',
   },
   {
     value: 'importance',
     label: 'Priorytet',
-    description: 'Średnia ocen priorytetu; hotspoty bez priorytetu są na końcu.',
+    description: 'Waga tagu priorytetu; hotspoty bez priorytetu są na końcu.',
   },
   {
     value: 'accuracy',
     label: 'Poprawność',
-    description: 'Średnia ocen poprawności (błędna waży więcej); hotspoty bez oceny poprawności są na końcu.',
+    description: 'Waga tagu poprawności (błędna waży więcej); hotspoty bez oceny poprawności są na końcu.',
   },
 ];
 
-const RATING_COUNT_OPTION: HotspotSortOption = {
-  value: 'rating_count',
-  label: 'Liczba ocen',
-  description: 'Ilu anotatorów oceniło hotspot.',
-};
+const HOTSPOT_SORT_OPTIONS: HotspotSortOption[] = [CREATED_AT_OPTION, ...HOTSPOT_FEATURES, ...TAG_SORT_OPTIONS];
 
-const HOTSPOT_SORT_OPTIONS: HotspotSortOption[] = [
-  CREATED_AT_OPTION,
-  ...HOTSPOT_FEATURES,
-  ...TAG_SORT_OPTIONS,
-  RATING_COUNT_OPTION,
-];
-
-/** Assessing picks among hotspots the user has not rated, so the verdict-based orders make no sense there. */
+/** Assessing picks among untagged hotspots, so the tag-based orders make no sense there. */
 export const sortOptionsFor = (mode: HotspotMode): HotspotSortOption[] => {
-  if (mode === 'assess') return [CREATED_AT_OPTION, ...HOTSPOT_FEATURES, RATING_COUNT_OPTION];
-  if (mode === 'reannotate') return [...TAG_SORT_OPTIONS, RATING_COUNT_OPTION, CREATED_AT_OPTION, ...HOTSPOT_FEATURES];
+  if (mode === 'assess') return [CREATED_AT_OPTION, ...HOTSPOT_FEATURES];
+  if (mode === 'reannotate') return [...TAG_SORT_OPTIONS, CREATED_AT_OPTION, ...HOTSPOT_FEATURES];
   return HOTSPOT_SORT_OPTIONS;
 };

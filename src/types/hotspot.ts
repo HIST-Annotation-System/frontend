@@ -15,25 +15,16 @@ export type HotspotImageType = 'png' | 'jpeg';
 /** Image descriptors computed on a hotspot's thumbnail; the catalog can be sorted by any of them. */
 export type HotspotFeature = 'entropy' | 'glcm_contrast' | 'edge_density' | 'colorfulness';
 
-/** Creation time, an image feature, the score, the average importance/accuracy rating, or how many rated it. */
-export type HotspotSort = 'created_at' | HotspotFeature | 'score' | 'importance' | 'accuracy' | 'rating_count';
+/** Creation time, an image feature, the summed tag weights, or the weight of the importance/accuracy tag. */
+export type HotspotSort = 'created_at' | HotspotFeature | 'score' | 'importance' | 'accuracy';
 
-/** Where a hotspot is in the review; tagged means its ratings set both importance and accuracy. */
+/** Where a hotspot is in the review; tagged means both importance and accuracy are set. */
 export type HotspotStatus = 'untagged' | 'to_reannotate' | 'reannotated';
 
 export type SortOrder = 'asc' | 'desc';
 
 /** The model's run on a hotspot; `skipped`: someone started annotating by hand first. */
 export type SegmentationStatus = 'pending' | 'done' | 'failed' | 'skipped';
-
-export interface HotspotRating {
-  account_id: number;
-  username: string;
-  full_name: string | null;
-  importance: Tag | null;
-  accuracy: Tag | null;
-  updated_at: string;
-}
 
 /**
  * An image to annotate: a square captured from a slide (it outlives the slide), or an uploaded PNG/JPEG
@@ -59,24 +50,17 @@ export interface Hotspot {
   mpp: number | null;
   /** Feature values; null (or a key missing) when they could not be computed. */
   features: Partial<Record<HotspotFeature, number>> | null;
-  /**
-   * The team's verdict (the core tag nearest to the average rating of each dimension) first, then the custom tags
-   * by name. The verdict is left out for an annotator who has not rated the hotspot yet.
-   */
+  /** Core tags first (by dimension), then the rest by name. */
   tags: Tag[];
-  /** Custom tag weights plus the rounded average ratings (the custom tags only, while the verdict is hidden). */
+  /** The summed weights of the tags. */
   score: number;
   /** When it was marked reannotated, by hand or (in layers) once enough annotators agreed; cleared when that stops. */
   reannotated_at: string | null;
-  /** Who changed a rating last (hidden with the verdict). */
+  /** Who set the latest importance/accuracy verdict. */
   assessed_by: string | null;
   status: HotspotStatus;
-  rating_count: number;
   /** Where the reannotation stands, for this viewer. */
   reannotation: ReannotationSummary;
-  my_rating: HotspotRating | null;
-  /** Everyone's ratings (the team); null while the user may not see them (an annotator who has not rated it). */
-  ratings: HotspotRating[] | null;
   /** Cells annotated by people; untouched model cells don't count. */
   annotation_count: number;
   segmentation_status: SegmentationStatus;
@@ -94,10 +78,6 @@ export interface HotspotListQuery {
   status: HotspotStatus | null;
   /** Hotspots must carry all of them. */
   tagIds: number[];
-  /** null: any number of ratings. */
-  ratingCount?: number | null;
-  /** false: only those the user has not rated (both parts) yet; null/undefined: all. */
-  ratedByMe?: boolean | null;
 }
 
 /** Fixed-size slide squares to cut out into hotspots, each named `{name_prefix} ({x}, {y})`. */
