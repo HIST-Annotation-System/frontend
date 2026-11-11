@@ -47,3 +47,8 @@
 .sidebar-section .pane-strip:last-child {
   border-bottom: none;
 }
+
+/* The last section of BottomSections needs no divider under it. */
+.bottom-sections .sidebar-section:last-child {
+  border-bottom: none;
+}

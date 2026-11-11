@@ -69,16 +69,7 @@
 }
 
 .annotation-panel {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.annotation-panel__count {
-  margin-left: 2px;
-  font-weight: 400;
-  color: var(--c-text-3);
+  flex: none;
 }
 
 .annotation-panel__show-all {
@@ -97,17 +88,16 @@
   text-decoration: underline;
 }
 
-/* A hotspot usually has a few cell types; many of them scroll here and leave the list its room. */
+/* The cell types and the layers: a hotspot has a few of each; more scroll here. */
 .annotation-filter {
   display: flex;
   flex: none;
   flex-direction: column;
-  max-height: 92px;
+  max-height: 150px;
   margin: 0;
   padding: 4px 10px;
   overflow-y: auto;
   border: none;
-  border-bottom: var(--border);
 }
 
 .annotation-filter__option {
@@ -132,58 +122,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.annotation-filter__count {
-  flex: none;
-  color: var(--c-text-3);
-}
-
-.annotation-panel__body {
-  flex: 1;
-  min-height: 0;
-  padding: 10px;
-  overflow-y: auto;
-}
-
-.annotation-list {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  border: var(--border);
-  border-radius: var(--radius-md);
-  background: var(--c-input);
-  list-style: none;
-}
-
-.annotation-list__empty {
-  color: var(--c-text-3);
-}
-
-.annotation-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 26px;
-  padding: 0 2px 0 var(--space-2);
-  /* The browser skips the rows scrolled out of the list: a hotspot can hold thousands. */
-  content-visibility: auto;
-  contain-intrinsic-size: auto 26px;
-}
-
-.annotation-item+.annotation-item {
-  border-top: var(--border);
-}
-
-.annotation-item:hover {
-  background: var(--c-hover);
-}
-
-.annotation-item--selected,
-.annotation-item--selected:hover {
-  background: var(--c-accent-soft);
 }
 
 .annotation-item__swatch {
@@ -214,108 +152,7 @@
   overflow: visible;
 }
 
-.annotation-item__main {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: var(--space-2);
-  height: 100%;
-  padding: 0;
-  border: none;
-  background: none;
-  color: inherit;
-  cursor: pointer;
-  text-align: left;
-}
-
-.annotation-item__main:focus-visible {
-  outline: 2px solid var(--c-focus-outline);
-  outline-offset: 1px;
-}
-
-.annotation-item__number {
-  width: 28px;
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--c-text-3);
-  white-space: nowrap;
-}
-
-.annotation-item--selected .annotation-item__number {
-  color: var(--c-text);
-  font-weight: 600;
-}
-
-.annotation-item__class {
-  flex: 1;
-  min-width: 0;
-  height: 20px;
-  padding: 0 18px 0 4px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background-color: transparent;
-  color: var(--c-text);
-  cursor: pointer;
-}
-
-.annotation-item__class:hover:not(:disabled) {
-  border-color: var(--c-border-strong);
-}
-
-.annotation-item__class:disabled {
-  background-color: transparent;
-  opacity: 1;
-  color: var(--c-text);
-  cursor: default;
-}
-
-.annotation-item__points {
-  flex: none;
-  min-width: 36px;
-  font-size: 12px;
-  color: var(--c-text-3);
-  text-align: right;
-  white-space: nowrap;
-}
-
-.annotation-item .btn--ghost.btn--icon-only {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  border-radius: var(--radius-sm);
-  color: var(--c-text-3);
-}
-
-.annotation-item .btn--ghost.btn--icon-only:hover:not(:disabled) {
-  background: transparent;
-  color: var(--c-danger-text);
-}
-
-.annotation-item .btn.btn--danger-icon {
-  color: var(--c-danger-text);
-}
-.annotation-list__group {
-  margin: var(--space-3) 0 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--c-text-2);
-}
-
-.annotation-list+.annotation-list__group {
-  margin-top: var(--space-3);
-}
-
-.annotation-item__label {
-  flex: 1;
-  min-width: 0;
-  padding-left: 5px;
-  overflow: hidden;
-  color: var(--c-text);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.annotation-item__warning {
+.selected-annotation__warning {
   display: inline-flex;
   flex-shrink: 0;
   color: var(--c-warn-text);
@@ -461,54 +298,9 @@
   border-bottom: var(--border);
 }
 
-.annotation-layers__list {
-  border-bottom: none;
-}
 
-/* Cell types and layers scroll inside a box whose height the user drags with the bar under it. */
-.annotation-filter-box {
-  flex: none;
-  overflow-y: auto;
-}
-
-.annotation-filter--free {
-  max-height: none;
-  overflow: visible;
-  border-bottom: none;
-}
-
-.resize-handle {
-  position: relative;
-  flex: none;
-  height: 7px;
-  border-bottom: var(--border);
-  cursor: ns-resize;
-  touch-action: none;
-}
-
-/* A short grip in the middle, darker while hovered or dragged. */
-.resize-handle::after {
-  position: absolute;
-  top: 2px;
-  left: 50%;
-  width: 28px;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--c-border-strong);
-  content: '';
-  transform: translateX(-50%);
-}
-
-.resize-handle:hover::after,
-.resize-handle:active::after {
-  background: var(--c-text-2);
-}
-
-/* The list keeps the height the user dragged it to (the sections below move up) instead of filling the pane. */
-.annotation-panel__body--sized {
-  flex: none;
-}
-
-.annotation-panel:has(.annotation-panel__body--sized) {
-  flex: none;
+.annotation-filter__empty {
+  margin: 0;
+  padding: 4px 10px;
+  color: var(--c-text-3);
 }

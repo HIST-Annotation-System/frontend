@@ -28,7 +28,7 @@ export default function AgreementSummary({ hotspot, onOpenDetails }: AgreementSu
           </>
         )}
       </dl>
-      <Button variant="ghost" onClick={onOpenDetails}>
+      <Button variant="primary" onClick={onOpenDetails}>
         Szczegóły
       </Button>
     </div>
