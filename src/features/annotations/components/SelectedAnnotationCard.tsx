@@ -7,6 +7,7 @@ import type { AnnotationClass, AnnotationOwner } from '../../../types/annotation
 import { useAnnotationActions } from '../hooks/useAnnotationActions';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
+import { isLocked } from '../utils/annotationLayers';
 import { EXCLUDED_ANNOTATION_COLOR, FALLBACK_ANNOTATION_COLOR } from '../utils/annotationStyle';
 import './AnnotationTools.css';
 
@@ -17,12 +18,15 @@ interface SelectedAnnotationCardProps {
   owner: AnnotationOwner;
   classes: AnnotationClass[];
   readOnly?: boolean;
+  /** In layers: shapes this user may not change (the model's, other people's) show read-only. */
+  editableBy?: string;
   onError: (message: string) => void;
 }
 export default function SelectedAnnotationCard({
   owner,
   classes,
-  readOnly = false,
+  readOnly: allReadOnly = false,
+  editableBy,
   onError,
 }: SelectedAnnotationCardProps) {
   const { data: annotations } = useAnnotations(owner);
@@ -78,6 +82,7 @@ export default function SelectedAnnotationCard({
   if (!visible || !annotations) return null;
 
   const annotation = annotations[index];
+  const readOnly = allReadOnly || isLocked(annotation, editableBy);
   const excluded = annotation.kind === 'excluded';
   const choosingType = excluded && choosingTypeFor === annotation.id;
   const color = excluded

@@ -1381,6 +1381,13 @@
   cursor: progress;
 }
 
+/* Browsing only looks at the ratings. */
+.hotspot-tag-panel[data-locked] .hotspot-verdict__option:disabled,
+.hotspot-tag-panel[data-locked] .hotspot-tag-panel__add:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
 .hotspot-verdict__option[aria-pressed='true'],
 .hotspot-verdict__option[aria-pressed='true']:hover:not(:disabled) {
   background: var(--c-accent-soft);

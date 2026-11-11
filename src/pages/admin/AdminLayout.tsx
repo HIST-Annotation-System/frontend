@@ -8,6 +8,7 @@ const SECTIONS = [
   { to: '/admin/stats', label: 'Statystyki', systemOnly: true },
   { to: '/admin/organizations', label: 'Organizacje', systemOnly: true },
   { to: '/admin/users', label: 'Użytkownicy', systemOnly: false },
+  { to: '/admin/agreement', label: 'Zgodność reannotacji', systemOnly: false },
   { to: '/admin/settings', label: 'Kategorie', systemOnly: true },
   { to: '/admin/cell-types', label: 'Typy komórek', systemOnly: true },
   { to: '/admin/tags', label: 'Tagi hotspotów', systemOnly: true },

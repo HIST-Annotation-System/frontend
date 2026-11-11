@@ -404,6 +404,57 @@
   color: var(--c-text-2);
 }
 
+/* An arrow after the eye row rolls out the layer's opacity slider underneath it. */
+.annotation-layers__line {
+  display: flex;
+  align-items: center;
+}
+
+.annotation-layers__line .annotation-layers__option {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+.annotation-layers__expand {
+  flex: none;
+  width: 22px;
+  height: 21px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--c-text-3);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.annotation-layers__expand:hover {
+  color: var(--c-text);
+}
+
+.annotation-layers__opacity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 0 4px 19px;
+  color: var(--c-text-2);
+  font-size: 12px;
+}
+
+.annotation-layers__opacity input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--c-primary);
+}
+
+.annotation-layers__percent {
+  flex: none;
+  min-width: 32px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Layers at the top of the annotation panel, above its header, the type filter and the list. */
 .annotation-layers {
   flex: none;

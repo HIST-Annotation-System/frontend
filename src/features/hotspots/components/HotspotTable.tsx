@@ -10,6 +10,7 @@ import { getErrorMessage } from '../../../utils/errors';
 import { formatDateTime, formatDecimal } from '../../../utils/format';
 import { useDismiss } from '../../../hooks/useDismiss';
 import { useHotspotMutations } from '../hooks/useHotspots';
+import ReannotationBadge from '../../reannotation/components/ReannotationBadge';
 import { useTags } from '../hooks/useTags';
 import { HOTSPOT_STATUS_OPTIONS, hotspotStatus } from '../utils/hotspotReview';
 import { isRowControl } from '../utils/rowClick';
@@ -300,7 +301,13 @@ function HotspotRow({
           </span>
         )}
       </td>
-      <td className="hotspot-table__status">{status?.label}</td>
+      <td className="hotspot-table__status">
+        {hotspot.reannotation.layered && hotspot.status !== 'untagged' ? (
+          <ReannotationBadge hotspot={hotspot} />
+        ) : (
+          status?.label
+        )}
+      </td>
       <td className="hotspot-table__number mono-data">
         <RatingCount count={hotspot.rating_count} />
       </td>

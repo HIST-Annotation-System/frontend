@@ -20,6 +20,7 @@ import TagsPage from './pages/admin/TagsPage';
 import ProfilePage from './pages/auth/ProfilePage';
 import StatsPage from './pages/admin/StatsPage';
 import OrganizationsPage from './pages/admin/OrganizationsPage';
+import AgreementPage from './pages/admin/AgreementPage';
 import type { Role } from './types/user';
 
 const SlideViewerPage = lazy(() => import('./pages/SlideViewerPage'));
@@ -105,6 +106,7 @@ function App() {
                     <Route path="/admin" element={<RequireAuth roles={MANAGERS}><AdminLayout /></RequireAuth>}>
                       <Route index element={<Navigate to="users" replace />} />
                       <Route path="users" element={<UsersPage />} />
+                      <Route path="agreement" element={<AgreementPage />} />
                       {/* Shared by every organization, so managed by the system admin only. */}
                       <Route path="stats" element={<RequireAuth roles={SYSTEM_ADMIN}><StatsPage /></RequireAuth>} />
                       <Route

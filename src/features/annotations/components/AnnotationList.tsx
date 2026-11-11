@@ -9,7 +9,7 @@ import { getErrorMessage } from '../../../utils/errors';
 import { useAnnotationActions } from '../hooks/useAnnotationActions';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
-import { EXCLUDED_LAYER, layerOf, listLayers, type AnnotationLayerKind } from '../utils/annotationLayers';
+import { EXCLUDED_LAYER, isLocked, layerOf, listLayers, type AnnotationLayerKind } from '../utils/annotationLayers';
 import ResizableBox from './ResizableBox';
 import AnnotationListItem from './AnnotationListItem';
 import '../../../components/ui/SidebarSection.css';
@@ -59,6 +59,8 @@ interface AnnotationListProps {
   owner: AnnotationOwner;
   classes: AnnotationClass[];
   readOnly?: boolean;
+  /** In layers: shapes this user may not change (the model's, other people's) show read-only. */
+  editableBy?: string;
   /** Cell types unchecked in the filter: hidden here and on the image. */
   hiddenClassIds: ReadonlySet<string>;
   onToggleClass: (classId: string) => void;
@@ -66,6 +68,9 @@ interface AnnotationListProps {
   /** Layers switched off (model cells, one author's cells, excluded areas): hidden here and on the image. */
   hiddenLayers: ReadonlySet<string>;
   onToggleLayer: (layer: string) => void;
+  /** How opaque each layer is drawn, 0 to 1 (a layer missing here is fully opaque). */
+  layerOpacity: ReadonlyMap<string, number>;
+  onLayerOpacity: (layer: string, opacity: number) => void;
   onError: (message: string) => void;
 }
 
@@ -73,11 +78,14 @@ export default function AnnotationList({
   owner,
   classes,
   readOnly = false,
+  editableBy,
   hiddenClassIds,
   onToggleClass,
   onShowAllClasses,
   hiddenLayers,
   onToggleLayer,
+  layerOpacity,
+  onLayerOpacity,
   onError,
 }: AnnotationListProps) {
   const { data: annotations, isPending, isError, error } = useAnnotations(owner);
@@ -87,10 +95,12 @@ export default function AnnotationList({
   const selectedIds = new Set(selection.selected.map(({ annotation }) => annotation.id));
 
   // Stable, so a change to one annotation re-renders only its own row: a hotspot can hold thousands.
-  const latest = useLatest({ anno, readOnly, changeClass, removeAnnotation });
+  const latest = useLatest({ anno, readOnly, editableBy, annotations, changeClass, removeAnnotation });
   const showAnnotation = useCallback(
     (annotationId: string) => {
-      latest.current.anno?.setSelected(annotationId, !latest.current.readOnly);
+      const { readOnly: all, editableBy: by, annotations: held } = latest.current;
+      const found = held?.find((item) => item.id === annotationId);
+      latest.current.anno?.setSelected(annotationId, !all && !(found && isLocked(found, by)));
       latest.current.anno?.fitBounds(annotationId, { padding: FIT_PADDING_PX });
     },
     [latest],
@@ -105,6 +115,14 @@ export default function AnnotationList({
   );
 
   const { collapsed, toggle } = useCollapsed();
+  // Layers whose opacity slider is rolled out.
+  const [openSliders, setOpenSliders] = useState<ReadonlySet<string>>(new Set<string>());
+  const toggleSlider = (layer: string) =>
+    setOpenSliders((current) => {
+      const next = new Set(current);
+      if (!next.delete(layer)) next.add(layer);
+      return next;
+    });
   // Excluded areas are switched with the cell types, the other layers (model, authors) in their own block.
   const allLayers = listLayers(annotations ?? []);
   const layers = allLayers.filter((layer) => layer.key !== EXCLUDED_LAYER);
@@ -136,7 +154,7 @@ export default function AnnotationList({
         number={number}
         classes={classes}
         selected={selectedIds.has(annotation.id)}
-        readOnly={readOnly}
+        readOnly={readOnly || isLocked(annotation, editableBy)}
         onSelect={showAnnotation}
         onClassChange={handleClassChange}
         onDelete={handleDelete}
@@ -186,20 +204,49 @@ export default function AnnotationList({
               <div className="annotation-filter annotation-filter--free annotation-layers__list">
                 {layers.map((layer) => {
                   const shown = !hiddenLayers.has(layer.key);
+                  const slider = openSliders.has(layer.key);
+                  const percent = Math.round((layerOpacity.get(layer.key) ?? 1) * 100);
                   return (
-                    <button
-                      key={layer.key}
-                      type="button"
-                      className={`annotation-filter__option annotation-layers__option${shown ? '' : ' annotation-layers__option--hidden'}`}
-                      aria-pressed={shown}
-                      title={`${shown ? 'Ukryj' : 'Pokaż'} warstwę: ${layer.label}`}
-                      onClick={() => onToggleLayer(layer.key)}
-                    >
-                      {shown ? <Eye size={13} aria-hidden="true" /> : <EyeOff size={13} aria-hidden="true" />}
-                      {LAYER_ICONS[layer.kind]}
-                      <span className="annotation-filter__name">{layer.label}</span>
-                      <span className="annotation-filter__count">{layer.count}</span>
-                    </button>
+                    <div key={layer.key} className="annotation-layers__row">
+                      <div className="annotation-layers__line">
+                        <button
+                          type="button"
+                          className={`annotation-filter__option annotation-layers__option${shown ? '' : ' annotation-layers__option--hidden'}`}
+                          aria-pressed={shown}
+                          title={`${shown ? 'Ukryj' : 'Pokaż'} warstwę: ${layer.label}`}
+                          onClick={() => onToggleLayer(layer.key)}
+                        >
+                          {shown ? <Eye size={13} aria-hidden="true" /> : <EyeOff size={13} aria-hidden="true" />}
+                          {LAYER_ICONS[layer.kind]}
+                          <span className="annotation-filter__name">{layer.label}</span>
+                          <span className="annotation-filter__count">{layer.count}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="annotation-layers__expand"
+                          aria-expanded={slider}
+                          title={`Przezroczystość warstwy: ${layer.label}`}
+                          aria-label={`Przezroczystość warstwy: ${layer.label}`}
+                          onClick={() => toggleSlider(layer.key)}
+                        >
+                          {caret(slider)}
+                        </button>
+                      </div>
+                      {slider && (
+                        <label className="annotation-layers__opacity">
+                          <span>Krycie</span>
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={percent}
+                            aria-label={`Krycie warstwy: ${layer.label}`}
+                            onChange={(event) => onLayerOpacity(layer.key, Number(event.target.value) / 100)}
+                          />
+                          <span className="annotation-layers__percent">{percent}%</span>
+                        </label>
+                      )}
+                    </div>
                   );
                 })}
               </div>

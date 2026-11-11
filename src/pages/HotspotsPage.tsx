@@ -361,6 +361,7 @@ function HotspotCatalogList({
             {showBulk ? (
               <HotspotBulkBar
                 hotspotIds={selected}
+                canTag={!browsing}
                 onClear={() => setSelectedIds(new Set())}
                 selectAll={
                   browsing

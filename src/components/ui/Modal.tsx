@@ -7,10 +7,12 @@ interface ModalProps {
   title: string;
   open: boolean;
   onClose: () => void;
+  /** Extra class, e.g. to widen the dialog. */
+  className?: string;
   children: ReactNode;
 }
 
-export default function Modal({ title, open, onClose, children }: ModalProps) {
+export default function Modal({ title, open, onClose, className, children }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export default function Modal({ title, open, onClose, children }: ModalProps) {
   return (
     <dialog
       ref={ref}
-      className="modal"
+      className={className ? `modal ${className}` : 'modal'}
       onClose={onClose}
       onClick={(event) => {
         if (event.target === ref.current) onClose();

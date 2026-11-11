@@ -1,3 +1,4 @@
+import type { ReannotationSummary } from './reannotation';
 import type { Tag } from './tag';
 
 export interface HotspotFolder {
@@ -65,12 +66,14 @@ export interface Hotspot {
   tags: Tag[];
   /** Custom tag weights plus the rounded average ratings (the custom tags only, while the verdict is hidden). */
   score: number;
-  /** When an annotator marked it as reannotated; cleared when the team's verdict changes. */
+  /** When it was marked reannotated, by hand or (in layers) once enough annotators agreed; cleared when that stops. */
   reannotated_at: string | null;
   /** Who changed a rating last (hidden with the verdict). */
   assessed_by: string | null;
   status: HotspotStatus;
   rating_count: number;
+  /** Where the reannotation stands, for this viewer. */
+  reannotation: ReannotationSummary;
   my_rating: HotspotRating | null;
   /** Everyone's ratings (the team); null while the user may not see them (an annotator who has not rated it). */
   ratings: HotspotRating[] | null;

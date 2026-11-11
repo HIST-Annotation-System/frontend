@@ -14,6 +14,12 @@ export interface AnnotationLayerInfo {
   count: number;
 }
 
+/** In layers, only the author changes a shape: the model's cells and other people's are locked for `editableBy`. */
+export const isLocked = (
+  annotation: Pick<Annotation, 'source' | 'created_by_name'>,
+  editableBy: string | undefined,
+): boolean => editableBy !== undefined && (annotation.source === 'model' || annotation.created_by_name !== editableBy);
+
 export const authorLayer = (username: string | null | undefined): string => `${AUTHOR_PREFIX}${username ?? ''}`;
 
 /** The layer an annotation is shown in. A model cell someone edited is theirs (the server marks it `human`). */

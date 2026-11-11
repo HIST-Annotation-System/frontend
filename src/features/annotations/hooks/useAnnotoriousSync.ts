@@ -38,21 +38,22 @@ export function useAnnotoriousSync({
   const mutations = useAnnotationMutations(owner);
   const latest = useLatest({ mutations, activeClassId, activeKind, onError });
   const loadedInto = useRef<SlideAnnotator | null>(null);
-  const shownModelCells = useRef(new Set<string>());
+  const shownIds = useRef(new Set<string>());
 
   useEffect(() => {
     if (!anno || !annotations || loadedInto.current === anno) return;
     anno.setAnnotations(annotations.map(toAnnotationDraft), true);
     loadedInto.current = anno;
-    shownModelCells.current = new Set(annotations.filter((item) => item.source === 'model').map((item) => item.id));
+    shownIds.current = new Set(annotations.map((item) => item.id));
   }, [anno, annotations]);
 
-  // Model cells arrive while the hotspot is open. Remembered once shown, so one the user deletes never comes back.
+  // Annotations arrive while the hotspot is open: the model's cells, or the copy of them that starting a reannotation
+  // makes. Remembered once shown, so one the user deletes never comes back.
   useEffect(() => {
     if (!anno || !annotations || loadedInto.current !== anno) return;
-    const arrived = annotations.filter((item) => item.source === 'model' && !shownModelCells.current.has(item.id));
+    const arrived = annotations.filter((item) => !shownIds.current.has(item.id));
     if (arrived.length === 0) return;
-    arrived.forEach((item) => shownModelCells.current.add(item.id));
+    arrived.forEach((item) => shownIds.current.add(item.id));
     // A REMOTE upsert: no event, so no request and no undo step.
     anno.setAnnotations(arrived.map(toAnnotationDraft), false);
   }, [anno, annotations]);
@@ -82,6 +83,7 @@ export function useAnnotoriousSync({
     // overlapping ones): show what it stored, silently (REMOTE: no event, no undo step), so the next edit starts
     // from the saved shape.
     const showStored = (saved: Annotation, draft: AnnotationDraft) => {
+      shownIds.current.add(saved.id);
       (saved.absorbed_ids ?? []).forEach((id) => {
         absorbed.add(id);
         knownShapes.delete(id);
@@ -111,6 +113,7 @@ export function useAnnotoriousSync({
         return;
       }
       knownShapes.set(draft.id, { kind, classId });
+      shownIds.current.add(draft.id);
       // Attach the kind and class silently: setAnnotations(..., false) is a REMOTE upsert, so it neither emits an
       // event nor adds an undo step (updateAnnotation would do both and break redo).
       anno.setAnnotations([{ ...draft, kind, class_id: classId }], false);

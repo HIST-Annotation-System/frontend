@@ -2,15 +2,21 @@ import { OpenSeadragonAnnotator, UserSelectAction, useSelection, type ImageAnnot
 import '@annotorious/react/annotorious-react.css';
 import { useEffect, useLayoutEffect, useMemo, type ReactNode } from 'react';
 import { useLatest } from '../../../hooks/useLatest';
-import type { AnnotationClass, AnnotationKind, AnnotationOwner, ToolMode } from '../../../types/annotation';
+import type {
+  AnnotationClass,
+  AnnotationDraft,
+  AnnotationKind,
+  AnnotationOwner,
+  ToolMode,
+} from '../../../types/annotation';
 import type { Offset } from '../../../types/geometry';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { useAnnotoriousSync } from '../hooks/useAnnotoriousSync';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
 import { DRAWING_TOOLS, registerDrawingTools } from '../tools/drawingTools';
 import { createAnnotationAdapter, getAnnotationClassId, getAnnotationKind } from '../utils/annotationAdapter';
-import { layerOf } from '../utils/annotationLayers';
-import { createAnnotationStyle, FALLBACK_ANNOTATION_COLOR } from '../utils/annotationStyle';
+import { isLocked, layerOf } from '../utils/annotationLayers';
+import { createAnnotationStyle, FALLBACK_ANNOTATION_COLOR, type StyleAdjustment } from '../utils/annotationStyle';
 
 interface AnnotationLayerProps {
   owner: AnnotationOwner;
@@ -27,6 +33,12 @@ interface AnnotationLayerProps {
   hiddenClassIds?: ReadonlySet<string>;
   /** Layers switched off (see `annotationLayers`): their shapes are not drawn. */
   hiddenLayers?: ReadonlySet<string>;
+  /** How opaque each layer is drawn, 0 to 1 (a layer missing here is fully opaque). */
+  layerOpacity?: ReadonlyMap<string, number>;
+  /** Colour that singles out shapes by id (the trace of one annotator's changes). */
+  highlights?: ReadonlyMap<string, string>;
+  /** In layers, only this author's shapes can be edited: the model's and everyone else's are only selected. */
+  editableBy?: string;
   /** A cell of this type was just drawn, so it has to be visible. */
   onCellDrawn?: (classId: string) => void;
   /** A shape of this kind was just drawn, so its layer has to be visible. */
@@ -47,6 +59,9 @@ export default function AnnotationLayer({
   readOnly = false,
   hiddenClassIds,
   hiddenLayers,
+  layerOpacity,
+  highlights,
+  editableBy,
   onCellDrawn,
   onShapeDrawn,
   onError,
@@ -97,8 +112,28 @@ export default function AnnotationLayer({
 
   // The layer of each saved shape; one just drawn (not saved yet) is in none, so it stays visible.
   const layers = useMemo(
-    () => (hiddenLayers?.size ? new Map((annotations ?? []).map((item) => [item.id, layerOf(item)])) : null),
-    [annotations, hiddenLayers],
+    () =>
+      hiddenLayers?.size || layerOpacity?.size
+        ? new Map((annotations ?? []).map((item) => [item.id, layerOf(item)]))
+        : null,
+    [annotations, hiddenLayers, layerOpacity],
+  );
+  // Saved shapes only the author may change (an unsaved one is being drawn by the user).
+  const locked = useMemo(
+    () =>
+      editableBy === undefined
+        ? null
+        : new Set((annotations ?? []).filter((item) => isLocked(item, editableBy)).map((item) => item.id)),
+    [annotations, editableBy],
+  );
+  const userSelectAction = useMemo(
+    () =>
+      readOnly
+        ? UserSelectAction.SELECT
+        : locked
+          ? (annotation: AnnotationDraft) => (locked.has(annotation.id) ? UserSelectAction.SELECT : UserSelectAction.EDIT)
+          : UserSelectAction.EDIT,
+    [readOnly, locked],
   );
   const isHidden = useMemo(
     () => (annotation: ImageAnnotation) => {
@@ -131,12 +166,19 @@ export default function AnnotationLayer({
   const adapter = useMemo(() => createAnnotationAdapter({ x, y }), [x, y]);
   const style = useMemo(() => {
     const colors = new Map(classes.map((item) => [item.id, item.color]));
+    const adjust = (id: string): StyleAdjustment | undefined => {
+      const layer = layers?.get(id);
+      const opacity = layer === undefined ? undefined : layerOpacity?.get(layer);
+      const color = highlights?.get(id);
+      return opacity === undefined && color === undefined ? undefined : { opacity, color };
+    };
     return createAnnotationStyle(
       colors,
       (activeClassId && colors.get(activeClassId)) || FALLBACK_ANNOTATION_COLOR,
       activeKind,
+      adjust,
     );
-  }, [classes, activeClassId, activeKind]);
+  }, [classes, activeClassId, activeKind, layers, layerOpacity, highlights]);
 
   return (
     <OpenSeadragonAnnotator
@@ -144,7 +186,7 @@ export default function AnnotationLayer({
       tool={DRAWING_TOOLS[mode === 'navigate' ? 'polygon' : mode]}
       drawingMode="click"
       drawingEnabled={!readOnly && mode !== 'navigate' && (activeKind === 'excluded' || activeClassId !== null)}
-      userSelectAction={readOnly ? UserSelectAction.SELECT : UserSelectAction.EDIT}
+      userSelectAction={userSelectAction}
       style={style}
       filter={filter}
     >
