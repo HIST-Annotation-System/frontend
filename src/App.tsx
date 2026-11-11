@@ -19,11 +19,17 @@ import CellTypesPage from './pages/admin/CellTypesPage';
 import TagsPage from './pages/admin/TagsPage';
 import ProfilePage from './pages/auth/ProfilePage';
 import StatsPage from './pages/admin/StatsPage';
+import OrganizationsPage from './pages/admin/OrganizationsPage';
+import AgreementPage from './pages/admin/AgreementPage';
+import type { Role } from './types/user';
 
 const SlideViewerPage = lazy(() => import('./pages/SlideViewerPage'));
 const HotspotViewerPage = lazy(() => import('./pages/HotspotViewerPage'));
 
-function RequireAuth({ children, role }: { children: ReactElement; role?: 'ADMIN' | 'ANNOTATOR' }) {
+const MANAGERS: Role[] = ['ADMIN', 'ORG_ADMIN'];
+const SYSTEM_ADMIN: Role[] = ['ADMIN'];
+
+function RequireAuth({ children, roles }: { children: ReactElement; roles?: Role[] }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -38,7 +44,7 @@ function RequireAuth({ children, role }: { children: ReactElement; role?: 'ADMIN
     return <Navigate to="/setup" replace />;
   }
 
-  if (role && user.role !== role) {
+  if (roles && !roles.includes(user.role)) {
     return <Navigate to="/" replace />;
   }
 
@@ -97,13 +103,19 @@ function App() {
                       }
                     />
                     <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/admin" element={<RequireAuth role="ADMIN"><AdminLayout /></RequireAuth>}>
+                    <Route path="/admin" element={<RequireAuth roles={MANAGERS}><AdminLayout /></RequireAuth>}>
                       <Route index element={<Navigate to="users" replace />} />
-                      <Route path="stats" element={<StatsPage />} />
                       <Route path="users" element={<UsersPage />} />
-                      <Route path="settings" element={<SettingsPage />} />
-                      <Route path="cell-types" element={<CellTypesPage />} />
-                      <Route path="tags" element={<TagsPage />} />
+                      <Route path="agreement" element={<AgreementPage />} />
+                      {/* Shared by every organization, so managed by the system admin only. */}
+                      <Route path="stats" element={<RequireAuth roles={SYSTEM_ADMIN}><StatsPage /></RequireAuth>} />
+                      <Route
+                        path="organizations"
+                        element={<RequireAuth roles={SYSTEM_ADMIN}><OrganizationsPage /></RequireAuth>}
+                      />
+                      <Route path="settings" element={<RequireAuth roles={SYSTEM_ADMIN}><SettingsPage /></RequireAuth>} />
+                      <Route path="cell-types" element={<RequireAuth roles={SYSTEM_ADMIN}><CellTypesPage /></RequireAuth>} />
+                      <Route path="tags" element={<RequireAuth roles={SYSTEM_ADMIN}><TagsPage /></RequireAuth>} />
                     </Route>
                     <Route path="*" element={<NotFound />} />
                   </Route>

@@ -1,8 +1,11 @@
+import type { ReannotationSummary } from './reannotation';
 import type { Tag } from './tag';
 
 export interface HotspotFolder {
   id: string;
   name: string;
+  /** Hotspots belong to the organization of their folder. */
+  organization_id: number;
   hotspot_count: number;
   created_at: string;
 }
@@ -51,10 +54,13 @@ export interface Hotspot {
   tags: Tag[];
   /** The summed weights of the tags. */
   score: number;
-  /** When an annotator marked it as reannotated; cleared when an expert changes its verdict. */
+  /** When it was marked reannotated, by hand or (in layers) once enough annotators agreed; cleared when that stops. */
   reannotated_at: string | null;
   /** Who set the latest importance/accuracy verdict. */
   assessed_by: string | null;
+  status: HotspotStatus;
+  /** Where the reannotation stands, for this viewer. */
+  reannotation: ReannotationSummary;
   /** Cells annotated by people; untouched model cells don't count. */
   annotation_count: number;
   segmentation_status: SegmentationStatus;

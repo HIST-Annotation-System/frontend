@@ -11,8 +11,6 @@ import './AnnotationTools.css';
 interface AnnotationToolbarProps {
   mode: ToolMode;
   onModeChange: (mode: ToolMode) => void;
-  /** A cell type is chosen, so the drawing tools can draw. */
-  canDraw: boolean;
   /** New shapes are excluded areas (any drawing tool, no cell type needed). */
   excluding: boolean;
   onExcludingChange: (excluding: boolean) => void;
@@ -26,7 +24,6 @@ const TOOL_HINTS: Record<ToolMode, string> = {
   freehand: 'Rysowanie ręczne: przeciągnij, aby narysować obrys; prawy przycisk przesuwa; Esc anuluje',
 };
 const EDIT_HINT = 'Edycja: przeciągaj punkty; Delete usuwa zaznaczony punkt; Esc kończy edycję';
-const NO_CLASS_HINT = 'Wybierz typ komórki po prawej, aby rysować';
 const EXCLUDING_HINT = 'Rysujesz obszar wyłączony z ML';
 
 const isTextField = (target: EventTarget | null): boolean =>
@@ -37,7 +34,6 @@ const isTextField = (target: EventTarget | null): boolean =>
 export default function AnnotationToolbar({
   mode,
   onModeChange,
-  canDraw,
   excluding,
   onExcludingChange,
 }: AnnotationToolbarProps) {
@@ -84,7 +80,6 @@ export default function AnnotationToolbar({
   let hint = TOOL_HINTS[mode];
   if (selected.length > 0) hint = EDIT_HINT;
   else if (mode !== 'navigate' && excluding) hint = EXCLUDING_HINT;
-  else if (mode !== 'navigate' && !canDraw) hint = NO_CLASS_HINT;
 
   return (
     <>

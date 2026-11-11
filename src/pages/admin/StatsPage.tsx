@@ -11,6 +11,7 @@ import type { TagDimension } from '../../types/tag';
 import { getErrorMessage } from '../../utils/errors';
 import { formatBytes, formatDateTime, formatDecimal } from '../../utils/format';
 import './StatsPage.css';
+import { ROLE_LABELS } from '../../utils/roles';
 
 /** One colour per review stage, the same in every chart on the page. */
 const STATUS_COLORS: Record<HotspotStatus, SeriesColor> = {
@@ -263,7 +264,7 @@ function StatsBody({ stats }: { stats: Stats }) {
                     <span className="stats-table__name">{annotator.full_name ?? annotator.username}</span>
                     {annotator.full_name && <span className="admin-table__faint"> · {annotator.username}</span>}
                   </td>
-                  <td className="admin-table__muted">{annotator.role === 'ADMIN' ? 'Administrator' : 'Anotator'}</td>
+                  <td className="admin-table__muted">{ROLE_LABELS[annotator.role]}</td>
                   <td className="admin-table__num">{formatCount(annotator.in_progress)}</td>
                   <td className="admin-table__num">{formatCount(annotator.finished)}</td>
                   <td className="admin-table__num">{formatCount(annotator.annotations)}</td>

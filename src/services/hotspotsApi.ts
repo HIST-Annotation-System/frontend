@@ -30,8 +30,8 @@ export const hotspotBatchQueryKeys = {
 export const listHotspotFolders = async (signal?: AbortSignal): Promise<HotspotFolder[]> =>
   (await httpClient.get<HotspotFolder[]>('/hotspot-folders', { signal })).data;
 
-export const createHotspotFolder = async (name: string): Promise<HotspotFolder> =>
-  (await httpClient.post<HotspotFolder>('/hotspot-folders', { name })).data;
+export const createHotspotFolder = async (name: string, organizationId?: number): Promise<HotspotFolder> =>
+  (await httpClient.post<HotspotFolder>('/hotspot-folders', { name, organization_id: organizationId })).data;
 
 export const renameHotspotFolder = async (folderId: string, name: string): Promise<HotspotFolder> =>
   (await httpClient.patch<HotspotFolder>(`/hotspot-folders/${folderId}`, { name })).data;

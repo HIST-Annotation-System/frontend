@@ -10,6 +10,7 @@ import { getErrorMessage } from '../../../utils/errors';
 import { formatDateTime, formatDecimal } from '../../../utils/format';
 import { useDismiss } from '../../../hooks/useDismiss';
 import { useHotspotMutations } from '../hooks/useHotspots';
+import ReannotationBadge from '../../reannotation/components/ReannotationBadge';
 import { useTags } from '../hooks/useTags';
 import { HOTSPOT_STATUS_OPTIONS, hotspotStatus } from '../utils/hotspotReview';
 import { isRowControl } from '../utils/rowClick';
@@ -18,6 +19,7 @@ import { TAG_DIMENSIONS } from '../utils/hotspotTags';
 import HotspotDeleteModal from './HotspotDeleteModal';
 import { CustomTagPills, VerdictMark } from './TagMarks';
 import './Hotspots.css';
+import { sameOrganizationFolders } from '../utils/folderOrganization';
 
 interface HotspotTableProps {
   hotspots: Hotspot[];
@@ -295,7 +297,13 @@ function HotspotRow({
           </span>
         )}
       </td>
-      <td className="hotspot-table__status">{status?.label}</td>
+      <td className="hotspot-table__status">
+        {hotspot.reannotation.layered && hotspot.status !== 'untagged' ? (
+          <ReannotationBadge hotspot={hotspot} />
+        ) : (
+          status?.label
+        )}
+      </td>
       <td className="hotspot-table__number mono-data">{hotspot.annotation_count}</td>
       <td className="hotspot-table__number mono-data hotspot-table__strong">{hotspot.score}</td>
       <td className="mono-data hotspot-table__date">{formatDateTime(hotspot.created_at)}</td>
@@ -322,7 +330,7 @@ function HotspotRow({
             {isMoveOpen && (
               <div className="hotspot-table__menu" role="menu" aria-label="Przenieś do folderu">
                 <span className="hotspot-table__menu-label">Przenieś do folderu</span>
-                {folders.map((folder) => (
+                {sameOrganizationFolders(folders, hotspot.folder_id).map((folder) => (
                   <button
                     key={folder.id}
                     type="button"

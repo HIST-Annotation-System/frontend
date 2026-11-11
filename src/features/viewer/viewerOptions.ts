@@ -6,8 +6,10 @@ export const createViewerOptions = (
   overrides: OpenSeadragon.Options = {},
 ): OpenSeadragon.Options => ({
   tileSources,
-  // Tiles come from the API origin; OpenSeadragon 6 picks the WebGL drawer, which needs CORS-enabled images.
-  crossOriginPolicy: 'Anonymous',
+  // Tiles need the session cookie, and OpenSeadragon 6's WebGL drawer needs CORS-enabled images.
+  crossOriginPolicy: 'use-credentials',
+  // The Deep Zoom descriptor (.dzi) is fetched with XHR, which sends the cookie only when asked to.
+  ajaxWithCredentials: true,
   // Navigation buttons are custom React controls, so OpenSeadragon's image buttons (prefixUrl) are not needed.
   showNavigationControl: false,
   showNavigator: true,

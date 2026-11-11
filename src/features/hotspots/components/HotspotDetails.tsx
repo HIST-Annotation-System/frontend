@@ -19,6 +19,7 @@ import HotspotDeleteModal from './HotspotDeleteModal';
 import HotspotSource from './HotspotSource';
 import { TagPill, VerdictMark } from './TagMarks';
 import './Hotspots.css';
+import { sameOrganizationFolders } from '../utils/folderOrganization';
 
 function PaneStrip({ onCollapse }: { onCollapse: () => void }) {
   return (
@@ -233,7 +234,7 @@ export default function HotspotDetails({ hotspot, folders, linkSearch, manage, o
                     disabled={isUpdating}
                     onChange={(event) => setMoveTarget(event.target.value)}
                   >
-                    {folders.map((folder) => (
+                    {sameOrganizationFolders(folders, hotspot.folder_id).map((folder) => (
                       <option key={folder.id} value={folder.id}>
                         {folder.id === hotspot.folder_id ? `${folder.name} (obecny)` : folder.name}
                       </option>

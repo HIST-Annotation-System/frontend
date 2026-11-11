@@ -3,6 +3,7 @@ import { getHotspotThumbnailUrl } from '../../../services/hotspotsApi';
 import type { Hotspot } from '../../../types/hotspot';
 import type { HotspotMode } from '../utils/hotspotReview';
 import { isRowControl } from '../utils/rowClick';
+import ReannotationBadge from '../../reannotation/components/ReannotationBadge';
 import { useTags } from '../hooks/useTags';
 import { TAG_DIMENSIONS } from '../utils/hotspotTags';
 import { CustomTagPills, VerdictMark } from './TagMarks';
@@ -61,7 +62,15 @@ export default function HotspotCard({
       <div className="hotspot-card__thumb">
         <img src={getHotspotThumbnailUrl(hotspot.id)} alt="" loading="lazy" />
         {/* On the thumbnail, so it never competes with the tags for room. */}
-        {hotspot.reannotated_at && <span className="hotspot-card__corrected">Poprawione</span>}
+        {hotspot.reannotation.layered ? (
+          mode !== 'assess' && (
+            <span className="hotspot-card__corrected">
+              <ReannotationBadge hotspot={hotspot} />
+            </span>
+          )
+        ) : (
+          hotspot.reannotated_at && <span className="hotspot-card__corrected">Poprawione</span>
+        )}
       </div>
       <div className="hotspot-card__title">
         <input

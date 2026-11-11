@@ -48,7 +48,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-top: auto;
   padding: var(--space-3);
   border-top: var(--border);
   background: var(--c-pane);
@@ -168,23 +167,22 @@
   color: var(--c-text);
 }
 
-/* Takes all the height the other sections leave, whatever the number of annotations: the list scrolls inside. */
+/* The layers and cell types take the height they need; the dock below stays at the bottom of the pane. */
 .viewer-panel__annotations {
   display: flex;
-  flex: 1 1 0;
+  flex: 0 1 auto;
   flex-direction: column;
-  min-height: 160px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /*
- * The rarely opened sections, at the bottom of the pane: opening one grows it upwards, taking height from the list.
- * Past its maximum it scrolls inside; its minimum keeps both rolled-up headers (26px each) in sight on a short screen.
+ * The rarely opened sections, stacked at the bottom of the pane: opening one grows the dock upwards, taking height
+ * from the list (the list scrolls, the dock never does).
  */
 .viewer-panel__dock {
-  flex: 0 1 auto;
-  min-height: 52px;
-  max-height: 60%;
-  overflow-y: auto;
+  flex: none;
+  margin-top: auto;
   border-top: var(--border);
 }
 
@@ -256,16 +254,4 @@
   height: 26px;
   padding: 0 var(--space-2);
   font-size: 12px;
-}
-
-/* The annotation list rolled up: the panel shrinks to its headers. */
-.viewer-panel__annotations:has(.annotation-panel--collapsed) {
-  flex: none;
-  min-height: 0;
-}
-
-/* A list with a dragged height: the annotations part is only as tall as its content. */
-.viewer-panel__annotations:has(.annotation-panel__body--sized) {
-  flex: none;
-  min-height: 0;
 }

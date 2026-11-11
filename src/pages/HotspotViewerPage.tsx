@@ -1,21 +1,22 @@
 import { Annotorious } from '@annotorious/react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type CSSProperties } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import Button from '../components/ui/Button';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import BottomSections from '../components/ui/BottomSections';
 import SidebarSection from '../components/ui/SidebarSection';
 import Spinner from '../components/ui/Spinner';
 import { useAuth } from '../context/AuthContext';
 import AnnotationLayer from '../features/annotations/components/AnnotationLayer';
 import AnnotationStatus from '../features/annotations/components/AnnotationStatus';
-import AnnotationList from '../features/annotations/components/AnnotationList';
+import AnnotationFilters from '../features/annotations/components/AnnotationFilters';
 import AnnotationProgress from '../features/annotations/components/AnnotationProgress';
 import AnnotationToolbar from '../features/annotations/components/AnnotationToolbar';
 import ExcludedAreaHatching from '../features/annotations/components/ExcludedAreaHatching';
-import CellTypeSelector from '../features/annotations/components/CellTypeSelector';
 import SelectedAnnotationCard from '../features/annotations/components/SelectedAnnotationCard';
 import { useCellTypes, useCellTypeTool } from '../features/annotations/hooks/useCellTypes';
 import { useAnnotations, useModelCellsRefresh } from '../features/annotations/hooks/useAnnotations';
-import { authorLayer, EXCLUDED_LAYER } from '../features/annotations/utils/annotationLayers';
+import { authorLayer, EXCLUDED_LAYER, listLayers, MODEL_LAYER } from '../features/annotations/utils/annotationLayers';
 import { FALLBACK_CELL_TYPE_COLOR } from '../features/annotations/utils/cellTypeColors';
 import HotspotModeSwitch from '../features/hotspots/components/HotspotModeSwitch';
 import HotspotInfoPanel from '../features/hotspots/components/HotspotInfoPanel';
@@ -24,10 +25,15 @@ import HotspotReannotatedButton from '../features/hotspots/components/HotspotRea
 import HotspotTagPanel from '../features/hotspots/components/HotspotTagPanel';
 import HotspotTagMarks from '../features/hotspots/components/TagMarks';
 import HotspotViewer from '../features/hotspots/components/HotspotViewer';
+import AgreementDialog from '../features/reannotation/components/AgreementDialog';
+import AgreementSummary from '../features/reannotation/components/AgreementSummary';
+import ReannotationControls from '../features/reannotation/components/ReannotationControls';
+import { CHANGE_COLORS, CHANGE_LABELS } from '../features/reannotation/utils/reannotation';
 import { useHotspot, useHotspotFolders } from '../features/hotspots/hooks/useHotspots';
 import {
   catalogDefaults,
   readCatalogParams,
+  catalogQuery,
   resolveFolderId,
   writeCatalogParams,
 } from '../features/hotspots/utils/hotspotReview';
@@ -37,6 +43,8 @@ import { StatusSlotContext } from '../features/viewer/statusSlot';
 import type { AnnotationClass, AnnotationKind, AnnotationOwner, ToolMode } from '../types/annotation';
 import type { CellType } from '../types/cellType';
 import type { Hotspot } from '../types/hotspot';
+import type { AnnotatorFigures, ChangeKind } from '../types/reannotation';
+import { isManager } from '../utils/roles';
 import { getErrorMessage } from '../utils/errors';
 import './SlideViewerPage.css';
 
@@ -81,12 +89,16 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   const { search } = useLocation();
   const navigate = useNavigate();
   const catalog = readCatalogParams(searchParams);
-  const assessing = catalog.mode === 'assess';
+  const { user } = useAuth();
+  const username = user?.username;
+  const { layered, my_status: myStatus } = hotspot.reannotation;
+  // Only reannotating changes annotations: in layers, once the user has started and until they confirm.
+  const readOnly = catalog.mode !== 'reannotate' || (layered && myStatus !== 'draft');
   const [error, setError] = useState<string | null>(null);
   // Every mode starts by looking around (pan and zoom); a drawing tool is picked from the tool panel.
   const [toolMode, setToolMode] = useState<ToolMode>('navigate');
   const [excluding, setExcluding] = useState(false);
-  const mode = assessing ? 'navigate' : toolMode;
+  const mode = readOnly ? 'navigate' : toolMode;
   const { data: folders } = useHotspotFolders();
   const owner: AnnotationOwner = { type: 'hotspots', id: hotspot.id };
 
@@ -125,7 +137,16 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   const showAllClasses = useCallback(() => setHiddenClassIds(new Set<string>()), []);
 
   // Layers switched off: the model's cells, one author's cells, the excluded areas.
-  const [hiddenLayers, setHiddenLayers] = useState<ReadonlySet<string>>(new Set<string>());
+  // The model's cells are the reference: once the user has a layer of their own (a copy of them) they are hidden, and
+  // can be switched back on.
+  const hasOwnLayer = layered && myStatus !== null;
+  const defaultHidden = hasOwnLayer ? new Set([MODEL_LAYER]) : new Set<string>();
+  const [hiddenLayers, setHiddenLayers] = useState<ReadonlySet<string>>(defaultHidden);
+  const [hadOwnLayer, setHadOwnLayer] = useState(hasOwnLayer);
+  if (hasOwnLayer !== hadOwnLayer) {
+    setHadOwnLayer(hasOwnLayer);
+    if (hasOwnLayer) setHiddenLayers((current) => new Set(current).add(MODEL_LAYER));
+  }
   const toggleLayer = useCallback((layer: string) => {
     setHiddenLayers((current) => {
       const next = new Set(current);
@@ -134,7 +155,6 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
     });
   }, []);
   // What the user draws lands in their own layer (or the areas'), so that layer is switched on.
-  const username = useAuth().user?.username;
   const showDrawnLayer = useCallback(
     (kind: AnnotationKind) => {
       const layer = kind === 'excluded' ? EXCLUDED_LAYER : authorLayer(username);
@@ -148,19 +168,48 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
     [username],
   );
 
+  // How opaque each layer is drawn; a layer missing here is fully opaque.
+  const [layerOpacity, setLayerOpacity] = useState<ReadonlyMap<string, number>>(new Map<string, number>());
+  const changeLayerOpacity = useCallback((layer: string, opacity: number) => {
+    setLayerOpacity((current) => {
+      const next = new Map(current);
+      if (opacity >= 1) next.delete(layer);
+      else next.set(layer, opacity);
+      return next;
+    });
+  }, []);
+
+  // One annotator's changes singled out on the image (administrators, from the agreement details): their layer and
+  // the model's stay, the other annotators' go, and the cells they changed are outlined by what changed.
+  const [trace, setTrace] = useState<{ username: string; changes: Record<ChangeKind, string[]> } | null>(null);
+  const highlights = useMemo(() => {
+    const colors = new Map<string, string>();
+    if (trace) {
+      (Object.keys(CHANGE_COLORS) as ChangeKind[]).forEach((kind) =>
+        trace.changes[kind].forEach((id) => colors.set(id, CHANGE_COLORS[kind] ?? '')),
+      );
+    }
+    return colors;
+  }, [trace]);
+  const showTrace = (annotator: AnnotatorFigures) => {
+    const others = listLayers(annotations ?? [])
+      .filter((layer) => layer.kind === 'author' && layer.key !== authorLayer(annotator.username))
+      .map((layer) => layer.key);
+    setHiddenLayers(new Set(others));
+    setTrace({ username: annotator.username, changes: annotator.changes });
+  };
+  const endTrace = () => {
+    setHiddenLayers(defaultHidden);
+    setTrace(null);
+  };
+  const [agreementOpen, setAgreementOpen] = useState(false);
+
   const activeClassId = activeCellTypeId !== null ? String(activeCellTypeId) : null;
   const [panelOpen, setPanelOpen] = useState(true);
   const [statusSlot, setStatusSlot] = useState<HTMLDivElement | null>(null);
   const [hintSlot, setHintSlot] = useState<HTMLElement | null>(null);
   const hint = useMemo(() => ({ slot: hintSlot, setSlot: setHintSlot }), [hintSlot]);
   const folderName = folders?.find((folder) => folder.id === hotspot.folder_id)?.name;
-
-  const counts = new Map<number, number>();
-  annotations?.forEach((annotation) => {
-    if (annotation.class_id === null) return;
-    const id = Number(annotation.class_id);
-    counts.set(id, (counts.get(id) ?? 0) + 1);
-  });
 
   const breadcrumbFolder = {
     pathname: '/hotspots',
@@ -185,19 +234,14 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
               </nav>
               <HotspotQueueNav
                 hotspot={hotspot}
-                query={{
-                  folderId: resolveFolderId(catalog, hotspot.folder_id),
-                  sort: catalog.sort,
-                  order: catalog.order,
-                  status: catalog.status,
-                  tagIds: catalog.tagIds,
-                }}
+                query={catalogQuery(catalog, resolveFolderId(catalog, hotspot.folder_id))}
                 search={search}
               />
               {/* Switching the mode keeps this hotspot open; the queue (prev/next) follows the new mode. */}
               <div className="viewer-header__mode">
                 <HotspotModeSwitch
                   mode={catalog.mode}
+                  hidden={['browse']}
                   onChange={(next) =>
                     navigate(
                       {
@@ -227,9 +271,12 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                   mode={mode}
                   activeClassId={activeClassId}
                   activeKind={excluding ? 'excluded' : 'cell'}
-                  readOnly={assessing}
+                  readOnly={readOnly}
                   hiddenClassIds={hiddenClassIds}
                   hiddenLayers={hiddenLayers}
+                  layerOpacity={layerOpacity}
+                  highlights={highlights}
+                  editableBy={layered ? username : undefined}
                   onCellDrawn={showClass}
                   onShapeDrawn={showDrawnLayer}
                   onError={setError}
@@ -241,16 +288,25 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                       segmentationStatus={hotspot.segmentation_status}
                       loadingModelCells={loadingModelCells}
                     />
-                    {!assessing && (
+                    {!readOnly && (
                       <AnnotationToolbar
                         mode={toolMode}
                         onModeChange={setToolMode}
-                        canDraw={activeClassId !== null}
                         excluding={excluding}
                         onExcludingChange={setExcluding}
                       />
                     )}
-                    <SelectedAnnotationCard owner={owner} classes={classes} readOnly={assessing} onError={setError} />
+                    <SelectedAnnotationCard
+                      owner={owner}
+                      classes={classes}
+                      readOnly={readOnly}
+                      editableBy={layered ? username : undefined}
+                      onTypeChosen={(classId) => {
+                        selectCellType(Number(classId));
+                        showClass(classId);
+                      }}
+                      onError={setError}
+                    />
                   </HotspotViewer>
                 </AnnotationLayer>
                 {!panelOpen && errorMessage && <div className="viewer-page__error">{errorMessage}</div>}
@@ -258,65 +314,97 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
               {panelOpen && (
                 <aside className="side-pane" aria-label="Panel hotspotu">
                   {errorMessage && <div className="viewer-panel__error">{errorMessage}</div>}
-                  {!assessing && (
-                    <SidebarSection title="Typ komórki">
-                      <CellTypeSelector
-                        cellTypes={cellTypes}
-                        activeCellTypeId={activeCellTypeId}
-                        colorMap={colorMap}
-                        onSelect={(id) => {
-                          selectCellType(id);
-                          showClass(String(id));
-                        }}
-                        counts={counts}
-                      />
-                    </SidebarSection>
+                  {trace && (
+                    <div className="agreement-trace">
+                      <span>
+                        Zmiany: <strong>{trace.username}</strong>
+                      </span>
+                      <span className="agreement-trace__legend">
+                        {(Object.keys(CHANGE_COLORS) as ChangeKind[]).map((kind) => (
+                          <span
+                            key={kind}
+                            className="agreement-trace__key"
+                            style={{ '--key-color': CHANGE_COLORS[kind] } as CSSProperties}
+                          >
+                            {CHANGE_LABELS[kind]} ({trace.changes[kind].length})
+                          </span>
+                        ))}
+                      </span>
+                      <Button variant="ghost" onClick={endTrace}>
+                        Zakończ podgląd zmian
+                      </Button>
+                    </div>
                   )}
                   <div className="viewer-panel__annotations">
-                    <AnnotationList
+                    <AnnotationFilters
                       owner={owner}
                       classes={classes}
-                      readOnly={assessing}
                       hiddenClassIds={hiddenClassIds}
                       onToggleClass={toggleClass}
                       onShowAllClasses={showAllClasses}
                       hiddenLayers={hiddenLayers}
                       onToggleLayer={toggleLayer}
-                      onError={setError}
+                      layerOpacity={layerOpacity}
+                      onLayerOpacity={changeLayerOpacity}
                     />
                   </div>
                   <div className="viewer-panel__dock">
-                    <SidebarSection title="Ocena eksperta" collapsible defaultOpen={catalog.mode !== 'browse'}>
-                      {hotspot.reannotated_at && catalog.mode !== 'reannotate' && (
-                        <p className="viewer-panel__corrected">Poprawione</p>
-                      )}
-                      <HotspotTagPanel
-                        hotspot={hotspot}
-                        mode={catalog.mode}
-                        onReannotate={() =>
-                          navigate({
-                            pathname: `/hotspots/${hotspot.id}`,
-                            search: new URLSearchParams(
-                              writeCatalogParams({ ...catalogDefaults('reannotate'), folder: catalog.folder }),
-                            ).toString(),
-                          })
-                        }
-                      />
-                    </SidebarSection>
-                    <SidebarSection title="Parametry" collapsible defaultOpen={false}>
-                      <HotspotInfoPanel hotspot={hotspot} folderName={folderName} onError={setError} />
-                    </SidebarSection>
+                    {layered && catalog.mode !== 'assess' && (
+                      <SidebarSection title="Zgodność anotatorów" collapsible>
+                        <AgreementSummary hotspot={hotspot} onOpenDetails={() => setAgreementOpen(true)} />
+                      </SidebarSection>
+                    )}
+                    <BottomSections
+                      sections={[
+                        {
+                          title: 'Ocena eksperta',
+                          defaultOpen: catalog.mode !== 'browse',
+                          content: (
+                            <>
+                              {hotspot.reannotated_at && catalog.mode !== 'reannotate' && (
+                                <p className="viewer-panel__corrected">Poprawione</p>
+                              )}
+                              <HotspotTagPanel
+                                hotspot={hotspot}
+                                mode={catalog.mode}
+                                onReannotate={() =>
+                                  navigate({
+                                    pathname: `/hotspots/${hotspot.id}`,
+                                    search: new URLSearchParams(
+                                      writeCatalogParams({ ...catalogDefaults('reannotate'), folder: catalog.folder }),
+                                    ).toString(),
+                                  })
+                                }
+                              />
+                            </>
+                          ),
+                        },
+                        {
+                          title: 'Parametry',
+                          content: <HotspotInfoPanel hotspot={hotspot} folderName={folderName} onError={setError} />,
+                        },
+                      ]}
+                    />
                   </div>
                   {/* The step that ends a reannotation: pinned to the bottom of the panel, below everything else. */}
                   {catalog.mode === 'reannotate' && (
                     <div className="viewer-panel__footer">
-                      <HotspotReannotatedButton hotspot={hotspot} />
+                      {layered ? <ReannotationControls hotspot={hotspot} /> : <HotspotReannotatedButton hotspot={hotspot} />}
                     </div>
                   )}
                 </aside>
               )}
             </div>
             <div ref={setStatusSlot} className="viewer-screen__status" />
+            {layered && (
+              <AgreementDialog
+                hotspotId={hotspot.id}
+                hotspotName={hotspot.name}
+                open={agreementOpen}
+                onClose={() => setAgreementOpen(false)}
+                onShowTrace={isManager(user) ? showTrace : undefined}
+              />
+            )}
           </div>
         </HintSlotContext.Provider>
       </StatusSlotContext.Provider>

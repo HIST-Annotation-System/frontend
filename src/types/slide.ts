@@ -5,6 +5,7 @@ export type SlideStatus = 'uploading' | 'processing' | 'ready' | 'failed';
 export interface Slide {
   id: string;
   name: string;
+  organization_id: number;
   original_filename: string;
   status: SlideStatus;
   error_message: string | null;

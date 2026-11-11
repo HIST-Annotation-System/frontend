@@ -25,7 +25,9 @@ interface CreateHotspotBatchModalProps {
 
 /** Where the chosen boxes go and how they are named; confirming starts cutting them out in the background. */
 export default function CreateHotspotBatchModal({ slide, boxes, onClose, onCreated }: CreateHotspotBatchModalProps) {
-  const { data: folders = [], isPending: isLoadingFolders } = useHotspotFolders();
+  const { data: allFolders = [], isPending: isLoadingFolders } = useHotspotFolders();
+  // Hotspots stay in the slide's organization (the system admin sees the folders of every organization).
+  const folders = allFolders.filter((folder) => folder.organization_id === slide.organization_id);
   const { createFolder, createBatch, isCreatingFolder, isCreatingBatch } = useHotspotMutations();
   // One id per dialog: a retry after a lost response finds the batch it already started.
   const [batchId] = useState(() => crypto.randomUUID());
@@ -47,7 +49,7 @@ export default function CreateHotspotBatchModal({ slide, boxes, onClose, onCreat
     try {
       let targetFolderId = folderId;
       if (targetFolderId === NEW_FOLDER || targetFolderId === null) {
-        targetFolderId = (await createFolder(newFolderName.trim())).id;
+        targetFolderId = (await createFolder({ name: newFolderName.trim(), organizationId: slide.organization_id })).id;
         // A retry after a failed request must not create the folder a second time.
         setChosenFolderId(targetFolderId);
       }

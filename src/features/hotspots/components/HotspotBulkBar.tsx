@@ -14,10 +14,12 @@ interface HotspotBulkBarProps {
   onClear: () => void;
   /** The review cards' "select all" for the page on screen (the browse table has it in its header). */
   selectAll?: { checked: boolean; indeterminate: boolean; onToggle: () => void };
+  /** Browsing only counts the selection: tags change while assessing and reannotating. */
+  canTag?: boolean;
 }
 
 /** The bar under the list: selecting every hotspot on screen, then tagging every selected one at once. */
-export default function HotspotBulkBar({ hotspotIds, onClear, selectAll }: HotspotBulkBarProps) {
+export default function HotspotBulkBar({ hotspotIds, onClear, selectAll, canTag = true }: HotspotBulkBarProps) {
   const { data: tags = [] } = useTags();
   const { bulkTag, isBulkTagging } = useHotspotTagMutations();
   const [error, setError] = useState<string | null>(null);
@@ -83,13 +85,14 @@ export default function HotspotBulkBar({ hotspotIds, onClear, selectAll }: Hotsp
               onClick={onClear}
             />
           </span>
-          {TAG_DIMENSIONS.map((dimension) =>
+          {canTag &&
+            TAG_DIMENSIONS.map((dimension) =>
             actionSelect(`Ustaw: ${dimension.label.toLowerCase()}`, dimensionTags(tags, dimension.value), (tagId) =>
               void apply({ add: [tagId], remove: [] }),
             ),
           )}
-          {actionSelect('Dodaj tag', customTags(tags), (tagId) => void apply({ add: [tagId], remove: [] }))}
-          {actionSelect('Usuń tag', tags, (tagId) => void apply({ add: [], remove: [tagId] }))}
+          {canTag && actionSelect('Dodaj tag', customTags(tags), (tagId) => void apply({ add: [tagId], remove: [] }))}
+          {canTag && actionSelect('Usuń tag', tags, (tagId) => void apply({ add: [], remove: [tagId] }))}
         </>
       )}
       {error && (

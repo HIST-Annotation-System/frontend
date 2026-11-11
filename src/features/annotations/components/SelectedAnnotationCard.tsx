@@ -1,5 +1,5 @@
 import { useSelection } from '@annotorious/react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, TriangleAlert } from 'lucide-react';
 import OpenSeadragon from 'openseadragon';
 import { useLayoutEffect, useRef, useState } from 'react';
 import Button from '../../../components/ui/Button';
@@ -7,6 +7,7 @@ import type { AnnotationClass, AnnotationOwner } from '../../../types/annotation
 import { useAnnotationActions } from '../hooks/useAnnotationActions';
 import { useAnnotations } from '../hooks/useAnnotations';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
+import { isLocked } from '../utils/annotationLayers';
 import { EXCLUDED_ANNOTATION_COLOR, FALLBACK_ANNOTATION_COLOR } from '../utils/annotationStyle';
 import './AnnotationTools.css';
 
@@ -17,12 +18,18 @@ interface SelectedAnnotationCardProps {
   owner: AnnotationOwner;
   classes: AnnotationClass[];
   readOnly?: boolean;
+  /** In layers: shapes this user may not change (the model's, other people's) show read-only. */
+  editableBy?: string;
+  /** A cell type was chosen for the selected cell: new cells get it from now on. */
+  onTypeChosen?: (classId: string) => void;
   onError: (message: string) => void;
 }
 export default function SelectedAnnotationCard({
   owner,
   classes,
-  readOnly = false,
+  readOnly: allReadOnly = false,
+  editableBy,
+  onTypeChosen,
   onError,
 }: SelectedAnnotationCardProps) {
   const { data: annotations } = useAnnotations(owner);
@@ -78,6 +85,7 @@ export default function SelectedAnnotationCard({
   if (!visible || !annotations) return null;
 
   const annotation = annotations[index];
+  const readOnly = allReadOnly || isLocked(annotation, editableBy);
   const excluded = annotation.kind === 'excluded';
   const choosingType = excluded && choosingTypeFor === annotation.id;
   const color = excluded
@@ -126,6 +134,7 @@ export default function SelectedAnnotationCard({
           disabled={readOnly}
           onChange={(event) => {
             if (!event.target.value) return;
+            onTypeChosen?.(event.target.value);
             if (excluded) {
               setChoosingTypeFor(null);
               void markCell(annotation.id, event.target.value);
@@ -143,6 +152,12 @@ export default function SelectedAnnotationCard({
             </option>
           ))}
         </select>
+      )}
+      {annotation.inside_excluded && (
+        <span className="selected-annotation__warning" title="Komórka leży w obszarze wyłączonym">
+          <TriangleAlert size={14} aria-hidden="true" />
+          <span className="selected-annotation__label">w obszarze wyłączonym</span>
+        </span>
       )}
       {!readOnly && (
         <Button

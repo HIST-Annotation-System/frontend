@@ -1,26 +1,30 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import Button from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
-import { useUpload } from '../../../context/UploadProvider';
 import { ACCEPTED_UPLOAD_EXTENSIONS } from '../slideFileRules';
 import SlideFormatGuide from './SlideFormatGuide';
 import './WsiUploader.css';
 
+interface WsiUploaderProps {
+  onFiles: (files: Iterable<File>) => number;
+  organizationPicker?: ReactNode;
+}
+
 /** Header button for adding slides; the library page shows the queue and accepts dropped files itself. */
-export default function WsiUploader() {
+export default function WsiUploader({ onFiles, organizationPicker }: WsiUploaderProps) {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { enqueue: addToQueue } = useUpload();
   const [queueNotice, setQueueNotice] = useState<string | null>(null);
 
   const enqueue = (files: Iterable<File>) => {
-    const skipped = addToQueue(files);
+    const skipped = onFiles(files);
     setQueueNotice(skipped > 0 ? `Pominięto pliki już dodane do kolejki: ${skipped}.` : null);
   };
 
   return (
     <div className="wsi-uploader">
       <div className="wsi-uploader__buttons">
+        {organizationPicker}
         <Button variant="primary" onClick={() => inputRef.current?.click()}>
           Wgraj
         </Button>

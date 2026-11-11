@@ -1,4 +1,4 @@
-import type { Hotspot, HotspotSort, HotspotStatus, SortOrder } from '../../../types/hotspot';
+import type { Hotspot, HotspotListQuery, HotspotSort, HotspotStatus, SortOrder } from '../../../types/hotspot';
 import { sortOptionsFor } from './hotspotSort';
 
 /** Browse the catalog, assess (tag) untagged hotspots, or reannotate tagged ones. */
@@ -90,6 +90,11 @@ export function readCatalogParams(params: URLSearchParams): CatalogParams {
     status: assessing ? defaults.status : parseStatus(params.get(STATUS_PARAM), defaults.status),
     tagIds: assessing ? [] : parseTagIds(params.get(TAGS_PARAM)),
   };
+}
+
+/** The hotspot list request for the catalog state. */
+export function catalogQuery({ sort, order, status, tagIds }: CatalogParams, folderId: string | null): HotspotListQuery {
+  return { folderId, sort, order, status, tagIds };
 }
 
 /** Where the hotspot is in the review (mirrors the API's status filter). */

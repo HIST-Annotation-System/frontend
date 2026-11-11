@@ -99,6 +99,11 @@ interface RenameFolderVariables {
   name: string;
 }
 
+interface CreateFolderVariables {
+  name: string;
+  organizationId?: number;
+}
+
 interface UpdateHotspotVariables {
   hotspotId: string;
   changes: HotspotUpdate;
@@ -113,7 +118,7 @@ export function useHotspotMutations() {
   const refresh = () => queryClient.invalidateQueries({ queryKey: hotspotQueryKeys.all });
 
   const { mutateAsync: createFolder, isPending: isCreatingFolder } = useMutation({
-    mutationFn: (name: string) => createHotspotFolder(name),
+    mutationFn: ({ name, organizationId }: CreateFolderVariables) => createHotspotFolder(name, organizationId),
     onSuccess: refresh,
   });
   const { mutateAsync: renameFolder, isPending: isRenamingFolder } = useMutation({

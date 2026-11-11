@@ -3,12 +3,12 @@ import { ChevronDown, Moon, Sun } from 'lucide-react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeProvider';
+import { isManager, ROLE_LABELS } from '../../utils/roles';
 import BrandLogo from './BrandLogo';
 import { HeaderSlotContext } from './headerSlot';
 import UploadStatusBar from './UploadStatusBar';
 import './AppLayout.css';
 
-const ROLE_LABELS = { ADMIN: 'Administrator', ANNOTATOR: 'Anotator' } as const;
 
 /** Viewer screens get the compact header so the image keeps as much height as possible. */
 const COMPACT_ROUTE = /^\/(slides|hotspots)\/[^/]+/;
@@ -51,7 +51,7 @@ export default function AppLayout() {
             <NavLink to="/hotspots" className="app-header__tab">
               Hotspoty
             </NavLink>
-            {user?.role === 'ADMIN' && (
+            {isManager(user) && (
               <NavLink to="/admin" className="app-header__tab">
                 Administracja
               </NavLink>
@@ -106,6 +106,7 @@ export default function AppLayout() {
                         <span className="user-menu-header__name">{displayName}</span>
                         <span className="user-menu-header__login">
                           {user.username} · {ROLE_LABELS[user.role] ?? user.role}
+                          {user.organization && ` · ${user.organization.name}`}
                         </span>
                       </div>
                       <Link to="/profile" className="user-menu-item" role="menuitem" onClick={() => setIsUserMenuOpen(false)}>

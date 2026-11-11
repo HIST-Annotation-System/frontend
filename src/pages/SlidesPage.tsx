@@ -4,6 +4,8 @@ import ErrorMessage from '../components/ui/ErrorMessage';
 import Spinner from '../components/ui/Spinner';
 import { useAuth } from '../context/AuthContext';
 import { useUpload } from '../context/UploadProvider';
+import OrganizationSelect from '../features/organizations/components/OrganizationSelect';
+import { useOrganizations } from '../features/organizations/hooks/useOrganizations';
 import SlideGrid from '../features/slides/components/SlideGrid';
 import SlidePreview from '../features/slides/components/SlidePreview';
 import SlideTable from '../features/slides/components/SlideTable';
@@ -13,6 +15,7 @@ import InterruptedUploads from '../features/upload/components/InterruptedUploads
 import UploadQueueList from '../features/upload/components/UploadQueueList';
 import WsiUploader from '../features/upload/components/WsiUploader';
 import { getErrorMessage } from '../utils/errors';
+import { isManager } from '../utils/roles';
 import './SlidesPage.css';
 
 const hasFiles = (event: DragEvent) => event.dataTransfer.types.includes('Files');
@@ -53,8 +56,14 @@ const sortValue = (sort: SlideSort) =>
 export default function SlidesPage() {
   const { user } = useAuth();
   // Adding slides is an administrator task (the upload API enforces it too).
-  const isAdmin = user?.role === 'ADMIN';
-  const { enqueue, items: uploads } = useUpload();
+  const isAdmin = isManager(user);
+  const { enqueue: addToQueue, items: uploads } = useUpload();
+  const { organizations, needsChoice } = useOrganizations();
+  const [chosenOrganizationId, setChosenOrganizationId] = useState<number | null>(null);
+  const uploadOrganizationId = needsChoice
+    ? (organizations.find((organization) => organization.id === chosenOrganizationId) ?? organizations[0]).id
+    : null;
+  const enqueue = (files: Iterable<File>) => addToQueue(files, uploadOrganizationId);
   const { data, isPending, error } = useSlides();
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -116,7 +125,20 @@ export default function SlidesPage() {
             Biblioteka slajdów
             {data && <span className="slides-page__count">{data.length}</span>}
           </h1>
-          {isAdmin && <WsiUploader />}
+          {isAdmin && (
+            <WsiUploader
+              onFiles={enqueue}
+              organizationPicker={
+                needsChoice && (
+                  <OrganizationSelect
+                    organizations={organizations}
+                    value={uploadOrganizationId}
+                    onChange={setChosenOrganizationId}
+                  />
+                )
+              }
+            />
+          )}
           <span className="slides-page__spacer" />
           <div className="segmented" role="group" aria-label="Widok">
             {(

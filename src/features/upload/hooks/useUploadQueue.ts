@@ -133,7 +133,7 @@ export function useUploadQueue() {
         } else {
           let started;
           try {
-            started = await startMultipartUpload(file, item.allowDuplicate);
+            started = await startMultipartUpload(file, item.allowDuplicate, item.organizationId ?? undefined);
           } catch (error) {
             if (!(error instanceof ApiError && error.code === DUPLICATE_SLIDE_CODE)) throw error;
             const existing = queryClient
@@ -257,7 +257,7 @@ export function useUploadQueue() {
 
   /** Adds files to the queue; returns how many were skipped because they are already waiting or being sent. */
   const enqueue = useCallback(
-    (files: Iterable<File>): number => {
+    (files: Iterable<File>, organizationId?: number | null): number => {
       const picked = [...files];
       const fresh = picked.filter(
         (file, index) =>
@@ -266,7 +266,7 @@ export function useUploadQueue() {
             (other) => other.name === file.name && other.size === file.size && other.lastModified === file.lastModified,
           ) === index,
       );
-      if (fresh.length > 0) dispatch({ type: 'add', items: fresh.map((file) => ({ id: newItemId(), file })) });
+      if (fresh.length > 0) dispatch({ type: 'add', items: fresh.map((file) => ({ id: newItemId(), file, organizationId })) });
       return picked.length - fresh.length;
     },
     [items],

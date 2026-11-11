@@ -8,8 +8,17 @@ import type {
 import { UploadCancelledError } from '../utils/errors';
 import { ApiError, httpClient } from './httpClient';
 
-export const startMultipartUpload = async (file: File, allowDuplicate = false): Promise<StartUploadResponse> => {
-  const request: StartUploadRequest = { filename: file.name, file_size: file.size, allow_duplicate: allowDuplicate };
+export const startMultipartUpload = async (
+  file: File,
+  allowDuplicate = false,
+  organizationId?: number,
+): Promise<StartUploadResponse> => {
+  const request: StartUploadRequest = {
+    filename: file.name,
+    file_size: file.size,
+    allow_duplicate: allowDuplicate,
+    organization_id: organizationId,
+  };
   return (await httpClient.post<StartUploadResponse>('/upload/start', request)).data;
 };
 

@@ -4,6 +4,7 @@ export interface StartUploadRequest {
   file_size: number;
   /** Set after the user confirmed they want another copy anyway. */
   allow_duplicate: boolean;
+  organization_id?: number;
 }
 
 export interface StartUploadResponse {

@@ -22,6 +22,7 @@ import {
   catalogDefaults,
   HOTSPOT_STATUS_OPTIONS,
   readCatalogParams,
+  catalogQuery,
   resolveFolderId,
   writeCatalogParams,
   type CatalogParams,
@@ -112,7 +113,7 @@ export default function HotspotsPage() {
             folder={folder}
             folders={folders}
             params={params}
-            query={{ folderId, sort: params.sort, order: params.order, status: params.status, tagIds: params.tagIds }}
+            query={catalogQuery(params, folderId)}
             linkSearch={search}
             modes={
               <HotspotModeSwitch
@@ -351,6 +352,7 @@ function HotspotCatalogList({
             {showBulk ? (
               <HotspotBulkBar
                 hotspotIds={selected}
+                canTag={!browsing}
                 onClear={() => setSelectedIds(new Set())}
                 selectAll={
                   browsing
