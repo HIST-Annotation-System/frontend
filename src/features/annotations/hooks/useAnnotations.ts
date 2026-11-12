@@ -7,6 +7,7 @@ import {
   listAnnotations,
   updateAnnotation,
 } from '../../../services/annotationsApi';
+import { cellTypeQueryKeys } from '../../../services/cellTypesApi';
 import { ApiError } from '../../../services/httpClient';
 import type { Annotation, AnnotationCreate, AnnotationOwner, AnnotationUpdate } from '../../../types/annotation';
 import type { SegmentationStatus } from '../../../types/hotspot';
@@ -20,7 +21,8 @@ export function useAnnotations(owner: AnnotationOwner) {
 
 /**
  * When the model finishes while the hotspot is open, adds its cells to the cache. Only cells not held yet are added,
- * so edits still in progress in the annotator are never overwritten.
+ * so edits still in progress in the annotator are never overwritten. The model may have brought cell types the list
+ * loaded earlier does not have, so that list is refreshed too: a cell of an unknown type would show the wrong name.
  *
  * @returns whether those cells are still on their way.
  */
@@ -40,6 +42,7 @@ export function useModelCellsRefresh(owner: AnnotationOwner, status: Segmentatio
     const current: AnnotationOwner = { type, id };
     void listAnnotations(current)
       .then((fresh) => {
+        void queryClient.invalidateQueries({ queryKey: cellTypeQueryKeys.all });
         queryClient.setQueryData<Annotation[]>(annotationQueryKeys.forOwner(current), (held) => {
           const heldIds = new Set((held ?? []).map((item) => item.id));
           return [...(held ?? []), ...fresh.filter((item) => !heldIds.has(item.id))];
@@ -71,7 +74,9 @@ interface RemoveVariables {
 
 /** An annotation as it will be once `changes` are saved. */
 export function applyAnnotationChanges(annotation: Annotation, changes: AnnotationUpdate): Annotation {
-  const updated = { ...annotation, ...changes };
+  // Any change, or confirming it as it is, makes a copy of a model cell the author's own work.
+  const { confirmed: _confirmed, ...shape } = changes;
+  const updated = { ...annotation, ...shape, untouched: false };
   return changes.kind === 'excluded' ? { ...updated, class_id: null } : updated;
 }
 

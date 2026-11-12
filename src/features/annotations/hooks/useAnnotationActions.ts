@@ -36,6 +36,10 @@ export function useAnnotationActions(owner: AnnotationOwner, onError: (message: 
   const markCell = (annotationId: string, classId: string) =>
     update(annotationId, { kind: 'cell', class_id: classId }, 'Nie udało się zmienić obszaru w komórkę.');
 
+  /** The user keeps their copy of a model cell as it is; it moves to their own layer. */
+  const confirm = (annotationId: string) =>
+    update(annotationId, { confirmed: true }, 'Nie udało się zatwierdzić komórki.');
+
   const removeAnnotation = async (annotationId: string) => {
     const previous = getSavedAnnotation(annotationId);
     if (!previous) return;
@@ -50,5 +54,5 @@ export function useAnnotationActions(owner: AnnotationOwner, onError: (message: 
     }
   };
 
-  return { changeClass, markExcluded, markCell, removeAnnotation };
+  return { changeClass, markExcluded, markCell, confirm, removeAnnotation };
 }

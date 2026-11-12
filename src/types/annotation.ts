@@ -53,6 +53,10 @@ export interface Annotation {
   created_at: string;
   /** A cell lying wholly inside an excluded area of the same hotspot. */
   inside_excluded?: boolean;
+  /** The model cell this one was copied from when its author started reannotating. */
+  origin_id?: string | null;
+  /** The author's copy of a model cell that they have neither changed nor confirmed yet. */
+  untouched?: boolean;
   /**
    * Excluded areas merged into this one on save and deleted (or, when an older area was kept, the id of the area just
    * sent, never stored). Only set on create/update responses.
@@ -74,6 +78,8 @@ export interface AnnotationUpdate {
   class_id?: string;
   geometry?: PolygonGeometry;
   curve?: CurveGeometry | null;
+  /** The author keeps their copy of a model cell as it is. */
+  confirmed?: true;
 }
 
 /** Annotation as exchanged with the annotator; freshly drawn shapes have no class (nor kind) yet. */
