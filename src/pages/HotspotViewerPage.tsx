@@ -16,7 +16,13 @@ import ExcludedAreaHatching from '../features/annotations/components/ExcludedAre
 import SelectedAnnotationCard from '../features/annotations/components/SelectedAnnotationCard';
 import { useCellTypes, useCellTypeTool } from '../features/annotations/hooks/useCellTypes';
 import { useAnnotations, useModelCellsRefresh } from '../features/annotations/hooks/useAnnotations';
-import { authorLayer, EXCLUDED_LAYER, listLayers, MODEL_LAYER } from '../features/annotations/utils/annotationLayers';
+import {
+  authorLayer,
+  EXCLUDED_LAYER,
+  hiddenParts,
+  listLayers,
+  type ModelFilter,
+} from '../features/annotations/utils/annotationLayers';
 import { FALLBACK_CELL_TYPE_COLOR } from '../features/annotations/utils/cellTypeColors';
 import HotspotModeSwitch from '../features/hotspots/components/HotspotModeSwitch';
 import HotspotInfoPanel from '../features/hotspots/components/HotspotInfoPanel';
@@ -137,16 +143,13 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
   const showAllClasses = useCallback(() => setHiddenClassIds(new Set<string>()), []);
 
   // Layers switched off: the model's cells, one author's cells, the excluded areas.
-  // The model's cells are the reference: once the user has a layer of their own (a copy of them) they are hidden, and
-  // can be switched back on.
+  const [hiddenLayers, setHiddenLayers] = useState<ReadonlySet<string>>(new Set<string>());
+  // Once the user has a layer of their own, the model's cells they have changed or confirmed are out of the way:
+  // only those still waiting for them are drawn, unless they ask for all.
   const hasOwnLayer = layered && myStatus !== null;
-  const defaultHidden = hasOwnLayer ? new Set([MODEL_LAYER]) : new Set<string>();
-  const [hiddenLayers, setHiddenLayers] = useState<ReadonlySet<string>>(defaultHidden);
-  const [hadOwnLayer, setHadOwnLayer] = useState(hasOwnLayer);
-  if (hasOwnLayer !== hadOwnLayer) {
-    setHadOwnLayer(hasOwnLayer);
-    if (hasOwnLayer) setHiddenLayers((current) => new Set(current).add(MODEL_LAYER));
-  }
+  const [modelFilter, setModelFilter] = useState<ModelFilter>('remaining');
+  const shownModelFilter = hasOwnLayer ? modelFilter : null;
+  const hiddenLayerParts = useMemo(() => hiddenParts(hiddenLayers, shownModelFilter), [hiddenLayers, shownModelFilter]);
   const toggleLayer = useCallback((layer: string) => {
     setHiddenLayers((current) => {
       const next = new Set(current);
@@ -196,10 +199,13 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
       .filter((layer) => layer.kind === 'author' && layer.key !== authorLayer(annotator.username))
       .map((layer) => layer.key);
     setHiddenLayers(new Set(others));
+    // The changes are read against the model's cells, so all of them are drawn.
+    setModelFilter('all');
     setTrace({ username: annotator.username, changes: annotator.changes });
   };
   const endTrace = () => {
-    setHiddenLayers(defaultHidden);
+    setHiddenLayers(new Set());
+    setModelFilter('remaining');
     setTrace(null);
   };
   const [agreementOpen, setAgreementOpen] = useState(false);
@@ -273,7 +279,7 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                   activeKind={excluding ? 'excluded' : 'cell'}
                   readOnly={readOnly}
                   hiddenClassIds={hiddenClassIds}
-                  hiddenLayers={hiddenLayers}
+                  hiddenLayers={hiddenLayerParts}
                   layerOpacity={layerOpacity}
                   highlights={highlights}
                   editableBy={layered ? username : undefined}
@@ -346,6 +352,8 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                       onToggleLayer={toggleLayer}
                       layerOpacity={layerOpacity}
                       onLayerOpacity={changeLayerOpacity}
+                      modelFilter={shownModelFilter}
+                      onModelFilter={setModelFilter}
                     />
                   </div>
                   <div className="viewer-panel__dock">

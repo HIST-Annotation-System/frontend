@@ -95,6 +95,12 @@ describe('annotation style', () => {
     expect(style(parse(draft), { selected: true })).toMatchObject({ fillOpacity: 0.4, strokeWidth: 3.5 });
   });
 
+  it('lets the tissue show through a hovered shape instead of emphasising it', () => {
+    expect(style(parse(draft), { hovered: true })).toMatchObject({ fillOpacity: 0, strokeWidth: 1.5 });
+    expect(style(parse(draft), { hovered: true }).strokeOpacity).toBeLessThan(1);
+    expect(style(parse(draft), { hovered: true, selected: true })).toMatchObject({ fillOpacity: 0.4 });
+  });
+
   it('uses the pending colour for shapes without a class', () => {
     expect(style(parse({ ...draft, class_id: null }))).toMatchObject({ fill: '#22c55e' });
   });

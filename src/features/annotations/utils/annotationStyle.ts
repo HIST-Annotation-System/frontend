@@ -8,20 +8,21 @@ export const EXCLUDED_ANNOTATION_COLOR: Color = '#6b7280';
 
 const isHexColor = (value: string): value is `#${string}` => /^#[0-9a-fA-F]{6}$/.test(value);
 
-/** Thin outlines keep the cells readable; hover and selection thicken them. */
-const strokeWidthFor = (state?: AnnotationState): number => {
-  if (state?.selected) return 3.5;
-  if (state?.hovered) return 3;
-  return 1.5;
-};
+/** Thin outlines keep the cells readable; selection thickens them. */
+const strokeWidthFor = (state?: AnnotationState): number => (state?.selected ? 3.5 : 1.5);
+
+/** A shape under the pointer lets the tissue show through, so what it covers can be judged without hiding a layer. */
+const HOVERED_FILL_OPACITY = 0;
+const HOVERED_STROKE_OPACITY = 0.6;
+const isSeeThrough = (state?: AnnotationState): boolean => Boolean(state?.hovered) && !state?.selected;
 
 /** Excluded areas: denser grey fill and a heavier outline, so they never pass for a cell. */
 const excludedStyle = (state?: AnnotationState): DrawingStyle => ({
   fill: EXCLUDED_ANNOTATION_COLOR,
-  fillOpacity: 0.35,
+  fillOpacity: isSeeThrough(state) ? HOVERED_FILL_OPACITY : 0.35,
   stroke: EXCLUDED_ANNOTATION_COLOR,
-  strokeOpacity: 1,
-  strokeWidth: state?.selected ? 4 : state?.hovered ? 3.25 : 2.5,
+  strokeOpacity: isSeeThrough(state) ? HOVERED_STROKE_OPACITY : 1,
+  strokeWidth: state?.selected ? 4 : 2.5,
 });
 
 /** How a shape differs from its class's look: how opaque its layer is, and a colour that singles it out. */
@@ -61,9 +62,9 @@ export const createAnnotationStyle =
     const color = own && isHexColor(own) ? own : FALLBACK_ANNOTATION_COLOR;
     return faded({
       fill: color,
-      fillOpacity: state?.selected ? 0.4 : 0.25,
+      fillOpacity: state?.selected ? 0.4 : isSeeThrough(state) ? HOVERED_FILL_OPACITY : 0.25,
       stroke: color,
-      strokeOpacity: 1,
+      strokeOpacity: isSeeThrough(state) ? HOVERED_STROKE_OPACITY : 1,
       strokeWidth: adjustment?.color ? Math.max(strokeWidthFor(state), 3) : strokeWidthFor(state),
     });
   };

@@ -5,7 +5,12 @@ import Spinner from '../../../components/ui/Spinner';
 import type { AnnotationClass, AnnotationOwner } from '../../../types/annotation';
 import { getErrorMessage } from '../../../utils/errors';
 import { useAnnotations } from '../hooks/useAnnotations';
-import { EXCLUDED_LAYER, listLayers, type AnnotationLayerKind } from '../utils/annotationLayers';
+import {
+  EXCLUDED_LAYER,
+  listLayers,
+  type AnnotationLayerKind,
+  type ModelFilter,
+} from '../utils/annotationLayers';
 import '../../../components/ui/SidebarSection.css';
 import './AnnotationTools.css';
 
@@ -80,7 +85,15 @@ interface AnnotationFiltersProps {
   /** How opaque each layer is drawn, 0 to 1 (a layer missing here is fully opaque). */
   layerOpacity: ReadonlyMap<string, number>;
   onLayerOpacity: (layer: string, opacity: number) => void;
+  /** Which of the model's cells are drawn; null when the user has no layer of their own, so nothing waits for them. */
+  modelFilter: ModelFilter | null;
+  onModelFilter: (filter: ModelFilter) => void;
 }
+
+const MODEL_FILTERS: { value: ModelFilter; label: string; title: string }[] = [
+  { value: 'all', label: 'Wszystkie', title: 'Wszystkie komórki modelu' },
+  { value: 'remaining', label: 'Pozostałe', title: 'Komórki modelu, których jeszcze nie zmieniono ani nie zatwierdzono' },
+];
 
 /** What is shown on the image: the layers (model, each author) and the cell types, each switched with an eye. */
 export default function AnnotationFilters({
@@ -93,6 +106,8 @@ export default function AnnotationFilters({
   onToggleLayer,
   layerOpacity,
   onLayerOpacity,
+  modelFilter,
+  onModelFilter,
 }: AnnotationFiltersProps) {
   const { data: annotations, isPending, isError, error } = useAnnotations(owner);
   const { collapsed, toggle } = useCollapsed();
@@ -182,6 +197,22 @@ export default function AnnotationFilters({
                         {LAYER_ICONS[layer.kind]}
                         <span className="annotation-filter__name">{layer.label}</span>
                       </VisibilityRow>
+                      {layer.kind === 'model' && modelFilter !== null && (
+                        <div className="annotation-layers__filter" role="group" aria-label="Komórki modelu">
+                          {MODEL_FILTERS.map(({ value, label, title }) => (
+                            <button
+                              key={value}
+                              type="button"
+                              aria-pressed={modelFilter === value}
+                              title={title}
+                              onClick={() => onModelFilter(value)}
+                            >
+                              {label}
+                              {value === 'remaining' && ` (${layer.remaining ?? 0})`}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       <button
                         type="button"
                         className="annotation-layers__expand"

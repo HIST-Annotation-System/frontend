@@ -15,7 +15,7 @@ import { useAnnotoriousSync } from '../hooks/useAnnotoriousSync';
 import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
 import { DRAWING_TOOLS, registerDrawingTools } from '../tools/drawingTools';
 import { createAnnotationAdapter, getAnnotationClassId, getAnnotationKind } from '../utils/annotationAdapter';
-import { isLocked, layerOf } from '../utils/annotationLayers';
+import { isLocked, layersOf, shownLayer } from '../utils/annotationLayers';
 import { createAnnotationStyle, FALLBACK_ANNOTATION_COLOR, type StyleAdjustment } from '../utils/annotationStyle';
 
 interface AnnotationLayerProps {
@@ -113,9 +113,7 @@ export default function AnnotationLayer({
   // The layer of each saved shape; one just drawn (not saved yet) is in none, so it stays visible.
   const layers = useMemo(
     () =>
-      hiddenLayers?.size || layerOpacity?.size
-        ? new Map((annotations ?? []).map((item) => [item.id, layerOf(item)]))
-        : null,
+      hiddenLayers?.size || layerOpacity?.size ? layersOf(annotations ?? []) : null,
     [annotations, hiddenLayers, layerOpacity],
   );
   // Saved shapes only the author may change (an unsaved one is being drawn by the user).
@@ -168,7 +166,7 @@ export default function AnnotationLayer({
     const colors = new Map(classes.map((item) => [item.id, item.color]));
     const adjust = (id: string): StyleAdjustment | undefined => {
       const layer = layers?.get(id);
-      const opacity = layer === undefined ? undefined : layerOpacity?.get(layer);
+      const opacity = layer === undefined ? undefined : layerOpacity?.get(shownLayer(layer));
       const color = highlights?.get(id);
       return opacity === undefined && color === undefined ? undefined : { opacity, color };
     };

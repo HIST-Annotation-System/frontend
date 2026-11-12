@@ -1,5 +1,5 @@
 import { useSelection } from '@annotorious/react';
-import { Trash2, TriangleAlert } from 'lucide-react';
+import { Check, Trash2, TriangleAlert } from 'lucide-react';
 import OpenSeadragon from 'openseadragon';
 import { useLayoutEffect, useRef, useState } from 'react';
 import Button from '../../../components/ui/Button';
@@ -35,7 +35,7 @@ export default function SelectedAnnotationCard({
   const { data: annotations } = useAnnotations(owner);
   const { selected } = useSelection();
   const anno = useSlideAnnotator();
-  const { changeClass, markExcluded, markCell, removeAnnotation } = useAnnotationActions(owner, onError);
+  const { changeClass, markExcluded, markCell, confirm, removeAnnotation } = useAnnotationActions(owner, onError);
   const cardRef = useRef<HTMLDivElement>(null);
   // An excluded area being turned into a cell: it stays an area until a cell type is picked.
   const [choosingTypeFor, setChoosingTypeFor] = useState<string | null>(null);
@@ -158,6 +158,15 @@ export default function SelectedAnnotationCard({
           <TriangleAlert size={14} aria-hidden="true" />
           <span className="selected-annotation__label">w obszarze wyłączonym</span>
         </span>
+      )}
+      {!readOnly && annotation.untouched && (
+        <Button
+          variant="ghost"
+          icon={<Check size={14} />}
+          title="Zatwierdź: komórka modelu jest poprawna"
+          aria-label="Zatwierdź komórkę"
+          onClick={() => void confirm(annotation.id)}
+        />
       )}
       {!readOnly && (
         <Button

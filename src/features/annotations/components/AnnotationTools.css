@@ -304,3 +304,38 @@
   padding: 4px 10px;
   color: var(--c-text-3);
 }
+
+/* Which of the model's cells are drawn; sits in the model's row, between its name and its opacity caret. */
+.annotation-layers__filter {
+  display: inline-flex;
+  flex: none;
+  overflow: hidden;
+  margin-left: 4px;
+  border: var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.annotation-layers__filter button {
+  height: 19px;
+  padding: 0 5px;
+  border: none;
+  background: transparent;
+  color: var(--c-text-2);
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.annotation-layers__filter button+button {
+  border-left: var(--border);
+}
+
+.annotation-layers__filter button:hover {
+  background: var(--c-hover);
+}
+
+.annotation-layers__filter button[aria-pressed='true'] {
+  background: var(--c-accent-soft);
+  color: var(--c-text);
+  font-weight: 600;
+}
