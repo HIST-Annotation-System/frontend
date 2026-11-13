@@ -1,3 +1,4 @@
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { PanelRightOpen } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
@@ -63,6 +64,7 @@ function writeDetailsOpen(open: boolean) {
  * hotspots, or reannotate tagged ones.
  */
 export default function HotspotsPage() {
+  useDocumentTitle('Hotspoty');
   const [searchParams, setSearchParams] = useSearchParams();
   const { search } = useLocation();
   const foldersQuery = useHotspotFolders();

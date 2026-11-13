@@ -103,6 +103,8 @@
 }
 
 .upload-pill {
+  color: inherit;
+  text-decoration: none;
   position: fixed;
   right: 16px;
   bottom: 16px;
@@ -141,4 +143,17 @@
 
 .upload-pill__queue {
   color: var(--c-text-3);
+}
+
+.upload-status-bar__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.upload-status-bar__link:hover .upload-status-bar__name {
+  text-decoration: underline;
 }

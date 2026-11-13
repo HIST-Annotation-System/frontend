@@ -1,3 +1,4 @@
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -88,6 +89,7 @@ function InlineField({ label, value, displayValue, onSave, type = 'text', disabl
 }
 
 export default function ProfilePage() {
+  useDocumentTitle('Mój profil');
   const { user, refetch } = useAuth();
   const [localError, setLocalError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);

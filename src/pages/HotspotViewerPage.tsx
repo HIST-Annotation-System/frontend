@@ -1,3 +1,4 @@
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { Annotorious } from '@annotorious/react';
 import { useCallback, useMemo, useState, type CSSProperties } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -92,6 +93,7 @@ interface HotspotWorkspaceProps {
 }
 
 function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
+  useDocumentTitle(hotspot.name);
   const [searchParams] = useSearchParams();
   const { search } = useLocation();
   const navigate = useNavigate();

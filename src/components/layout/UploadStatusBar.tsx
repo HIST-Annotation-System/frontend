@@ -1,5 +1,5 @@
 
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useUpload } from '../../context/UploadProvider';
 import { formatRemainingTime, formatTransferRate } from '../../utils/format';
 import { progressPercent } from '../../features/upload/utils/uploadProgress';
@@ -32,22 +32,24 @@ export default function UploadStatusBar() {
 
   if (VIEWER_ROUTE.test(pathname)) {
     return (
-      <div className="upload-pill" role="status" title={`Wgrywanie w tle: ${active.file.name}`}>
+      <Link to="/" className="upload-pill" role="status" title={`Wgrywanie w tle: ${active.file.name} — przejdź do kolejki`}>
         <span className="upload-pill__track">
           <span className="upload-pill__fill" style={{ width: `${percent}%` }} />
         </span>
         <span className="upload-pill__percent">{finalizing ? '…' : `${percent}%`}</span>
         {queuedCount > 0 && <span className="upload-pill__queue">+{queuedCount}</span>}
-      </div>
+      </Link>
     );
   }
 
   return (
     <div className="upload-status-bar" role="status">
-      <span className="upload-status-bar__title">{finalizing ? 'Finalizowanie…' : 'Wgrywanie'}</span>
-      <span className="upload-status-bar__name" title={active.file.name}>
-        {active.file.name}
-      </span>
+      <Link to="/" className="upload-status-bar__link" title="Przejdź do kolejki wgrywania">
+        <span className="upload-status-bar__title">{finalizing ? 'Finalizowanie…' : 'Wgrywanie'}</span>
+        <span className="upload-status-bar__name" title={active.file.name}>
+          {active.file.name}
+        </span>
+      </Link>
       <div
         className={`upload-status-bar__track${finalizing ? ' upload-status-bar__track--indeterminate' : ''}`}
         role="progressbar"

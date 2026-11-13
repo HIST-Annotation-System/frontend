@@ -1,3 +1,4 @@
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { isSystemAdmin } from '../../utils/roles';
@@ -15,6 +16,7 @@ const SECTIONS = [
 ];
 
 export default function AdminLayout() {
+  useDocumentTitle('Administracja');
   const { user } = useAuth();
   const sections = isSystemAdmin(user) ? SECTIONS : SECTIONS.filter((section) => !section.systemOnly);
 

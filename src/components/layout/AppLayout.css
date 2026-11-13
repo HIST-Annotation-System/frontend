@@ -11,6 +11,23 @@
   flex-direction: column;
 }
 
+.skip-link {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 1001;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--c-border);
+  border-radius: var(--radius-md);
+  background: var(--c-surface);
+  color: var(--c-text);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
 .app-header {
   position: relative;
   z-index: 100;
@@ -30,7 +47,6 @@
   margin-right: var(--space-2);
   padding-right: var(--space-5);
   border-right: var(--border-width) solid var(--c-border);
-  text-decoration: none;
 }
 
 .app-header__nav {
@@ -44,6 +60,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  gap: 6px;
   padding: 0 var(--space-3);
   color: var(--c-text-2);
   font-weight: 500;
@@ -83,48 +100,7 @@ a.app-header__tab:hover {
   margin-left: auto;
 }
 
-.app-header__divider {
-  width: 1px;
-  height: 24px;
-  background: var(--c-border);
-}
-
-.theme-switch {
-  display: flex;
-  padding: 2px;
-  border: var(--border-width) solid var(--c-border);
-  border-radius: var(--radius-md);
-  background: var(--c-surface-2);
-}
-
-.theme-switch__option {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 24px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--c-text-3);
-  cursor: pointer;
-}
-
-.theme-switch__option:hover {
-  color: var(--c-text);
-}
-
-.theme-switch__option--active {
-  background: var(--c-surface);
-  color: var(--c-text);
-  box-shadow: var(--shadow-sm);
-}
-
-:root[data-theme='dark'] .theme-switch__option--active {
-  background: var(--c-hover-2);
-}
-
-/* Narrow windows keep every tab: tighter tabs, and the user menu shows only its arrow. */
+/* Narrow windows keep every tab: tighter tabs that scroll sideways if still too wide, and the user menu shows only its arrow. */
 @media (max-width: 900px) {
   .app-header__brand {
     padding-right: var(--space-3);
@@ -132,6 +108,12 @@ a.app-header__tab:hover {
 
   .app-header__nav {
     gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .app-header__nav::-webkit-scrollbar {
+    display: none;
   }
 
   .app-header__tab {
@@ -184,12 +166,6 @@ a.app-header__tab:hover {
 
 .user-menu-chevron {
   color: var(--c-text-3);
-}
-
-.user-menu-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
 }
 
 .user-menu-dropdown {
@@ -247,6 +223,15 @@ a.app-header__tab:hover {
 .user-menu-item:hover {
   background: var(--c-hover);
   color: var(--c-text);
+}
+
+.user-menu-item--danger,
+.user-menu-item--danger:hover {
+  color: var(--c-danger-text);
+}
+
+.user-menu-item--danger:hover {
+  background: var(--c-danger-soft);
 }
 
 .user-menu-separator {

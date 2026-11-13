@@ -1,3 +1,4 @@
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { Annotorious, OpenSeadragonAnnotator } from '@annotorious/react';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -71,6 +72,7 @@ interface SlideWorkspaceProps {
 
 /** The slide viewer is where hotspots are cut out; annotating happens on the hotspots themselves. */
 function SlideWorkspace({ slide, deleted }: SlideWorkspaceProps) {
+  useDocumentTitle(slide.name);
   const [tool, setTool] = useState<HotspotTool | null>(null);
   const [batchId, setBatchId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -88,7 +90,7 @@ function SlideWorkspace({ slide, deleted }: SlideWorkspaceProps) {
               <div className="viewer-page__main">
                 <ViewerHeader>
                   <nav className="crumbs" aria-label="Ścieżka">
-                    <Link to="/">Biblioteka slajdów</Link>
+                    <Link to="/">Slajdy</Link>
                     <span className="crumbs__sep">/</span>
                     <span className="crumbs__here" title={slide.name}>
                       {slide.name}

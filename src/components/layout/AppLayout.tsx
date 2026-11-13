@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
-import { ChevronDown, Moon, Sun } from 'lucide-react';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { useRef, useState, type KeyboardEvent } from 'react';
+import { ChevronDown, LayoutGrid, LogOut, Microscope, Moon, ShieldCheck, Sun, User } from 'lucide-react';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeProvider';
+import { useDismiss } from '../../hooks/useDismiss';
 import { isManager, ROLE_LABELS } from '../../utils/roles';
 import BrandLogo from './BrandLogo';
 import UploadStatusBar from './UploadStatusBar';
@@ -11,16 +12,43 @@ import './AppLayout.css';
 export default function AppLayout() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { pathname } = useLocation();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const menuRoot = useRef<HTMLDivElement>(null);
+  const menuTrigger = useRef<HTMLButtonElement>(null);
+  // The library tab also covers the slide viewer, which belongs to it.
+  const slidesActive = pathname === '/' || pathname.startsWith('/slides/');
 
-  useEffect(() => {
-    if (!isUserMenuOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsUserMenuOpen(false);
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isUserMenuOpen]);
+  const closeMenu = () => {
+    setIsUserMenuOpen(false);
+    menuTrigger.current?.focus();
+  };
+  useDismiss(isUserMenuOpen, menuRoot, () => setIsUserMenuOpen(false));
+
+  const openMenu = () => {
+    setIsUserMenuOpen(true);
+    // The dropdown renders on the next frame: focus its first item then.
+    requestAnimationFrame(() => menuRoot.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus());
+  };
+
+  const onMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      closeMenu();
+      return;
+    }
+    const items = [...event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]')];
+    const current = items.indexOf(document.activeElement as HTMLElement);
+    const target = {
+      ArrowDown: (current + 1) % items.length,
+      ArrowUp: (current - 1 + items.length) % items.length,
+      Home: 0,
+      End: items.length - 1,
+    }[event.key];
+    if (target === undefined) return;
+    event.preventDefault();
+    items[target]?.focus();
+  };
 
   const displayName =
     user && (user.profile?.first_name || user.profile?.last_name)
@@ -29,96 +57,90 @@ export default function AppLayout() {
 
   return (
     <div className="app-layout">
+      <a className="skip-link" href="#main-content">
+        Przejdź do treści
+      </a>
       <header className="app-header">
-        <Link to="/" className="app-header__brand" aria-label="HistAno — Biblioteka slajdów">
+        <div className="app-header__brand">
           <BrandLogo height={24} />
-        </Link>
-        <nav className="app-header__nav">
-          <NavLink to="/" end className="app-header__tab">
-            Biblioteka slajdów
+        </div>
+        <nav className="app-header__nav" aria-label="Główna nawigacja">
+          <NavLink
+            to="/"
+            className={`app-header__tab${slidesActive ? ' active' : ''}`}
+            aria-current={slidesActive ? 'page' : undefined}
+          >
+            <Microscope size={16} aria-hidden="true" />
+            Slajdy
           </NavLink>
           <NavLink to="/hotspots" className="app-header__tab">
+            <LayoutGrid size={16} aria-hidden="true" />
             Hotspoty
           </NavLink>
           {isManager(user) && (
             <NavLink to="/admin" className="app-header__tab">
+              <ShieldCheck size={16} aria-hidden="true" />
               Administracja
             </NavLink>
           )}
         </nav>
 
         <div className="app-header__actions">
-          <div className="theme-switch" role="group" aria-label="Motyw">
-            <button
-              type="button"
-              className={`theme-switch__option${theme === 'light' ? ' theme-switch__option--active' : ''}`}
-              title="Motyw jasny"
-              aria-label="Włącz jasny motyw"
-              aria-pressed={theme === 'light'}
-              onClick={() => theme !== 'light' && toggleTheme()}
-            >
-              <Sun size={14} />
-            </button>
-            <button
-              type="button"
-              className={`theme-switch__option${theme === 'dark' ? ' theme-switch__option--active' : ''}`}
-              title="Motyw ciemny"
-              aria-label="Włącz ciemny motyw"
-              aria-pressed={theme === 'dark'}
-              onClick={() => theme !== 'dark' && toggleTheme()}
-            >
-              <Moon size={14} />
-            </button>
-          </div>
           {user && (
-            <>
-              <span className="app-header__divider" aria-hidden="true" />
-              <div className="user-menu-container">
-                <button
-                  type="button"
-                  className={`user-menu-trigger${isUserMenuOpen ? ' user-menu-trigger--open' : ''}`}
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  title="Rozwiń menu profilu"
-                  aria-label={`Menu profilu: ${displayName}`}
-                  aria-haspopup="menu"
-                  aria-expanded={isUserMenuOpen}
-                >
-                  <span className="user-menu-name">{displayName}</span>
-                  <ChevronDown size={14} className="user-menu-chevron" aria-hidden="true" />
-                </button>
+            <div className="user-menu-container" ref={menuRoot}>
+              <button
+                ref={menuTrigger}
+                type="button"
+                id="user-menu-trigger"
+                className={`user-menu-trigger${isUserMenuOpen ? ' user-menu-trigger--open' : ''}`}
+                onClick={() => (isUserMenuOpen ? closeMenu() : openMenu())}
+                title="Rozwiń menu profilu"
+                aria-label={`Menu profilu: ${displayName}`}
+                aria-haspopup="menu"
+                aria-expanded={isUserMenuOpen}
+              >
+                <span className="user-menu-name">{displayName}</span>
+                <ChevronDown size={14} className="user-menu-chevron" aria-hidden="true" />
+              </button>
 
-                {isUserMenuOpen && (
-                  <>
-                    <div className="user-menu-backdrop" onClick={() => setIsUserMenuOpen(false)} />
-                    <div className="user-menu-dropdown" role="menu">
-                      <div className="user-menu-header">
-                        <span className="user-menu-header__name">{displayName}</span>
-                        <span className="user-menu-header__login">
-                          {user.username} · {ROLE_LABELS[user.role] ?? user.role}
-                          {user.organization && ` · ${user.organization.name}`}
-                        </span>
-                      </div>
-                      <Link to="/profile" className="user-menu-item" role="menuitem" onClick={() => setIsUserMenuOpen(false)}>
-                        Mój profil
-                      </Link>
-                      <span className="user-menu-separator" aria-hidden="true" />
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => { logout(); setIsUserMenuOpen(false); }}
-                        className="user-menu-item"
-                      >
-                        Wyloguj się
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </>
+              {isUserMenuOpen && (
+                <div
+                  className="user-menu-dropdown"
+                  role="menu"
+                  aria-labelledby="user-menu-trigger"
+                  onKeyDown={onMenuKeyDown}
+                >
+                  <div className="user-menu-header">
+                    <span className="user-menu-header__name">{displayName}</span>
+                    <span className="user-menu-header__login">
+                      {ROLE_LABELS[user.role] ?? user.role}
+                    </span>
+                  </div>
+                  <Link to="/profile" className="user-menu-item" role="menuitem" onClick={() => setIsUserMenuOpen(false)}>
+                    <User size={14} aria-hidden="true" />
+                    Mój profil
+                  </Link>
+                  <button type="button" role="menuitem" className="user-menu-item" onClick={toggleTheme}>
+                    {theme === 'dark' ? <Sun size={14} aria-hidden="true" /> : <Moon size={14} aria-hidden="true" />}
+                    {theme === 'dark' ? 'Motyw jasny' : 'Motyw ciemny'}
+                  </button>
+                  <span className="user-menu-separator" aria-hidden="true" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => { logout(); setIsUserMenuOpen(false); }}
+                    className="user-menu-item user-menu-item--danger"
+                  >
+                    <LogOut size={14} aria-hidden="true" />
+                    Wyloguj się
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </header>
-      <main className="app-layout__content">
+      <main id="main-content" className="app-layout__content" tabIndex={-1}>
         <Outlet />
       </main>
       <UploadStatusBar />

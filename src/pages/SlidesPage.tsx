@@ -1,3 +1,4 @@
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { LayoutGrid, List } from 'lucide-react';
 import { useState, type DragEvent } from 'react';
 import ErrorMessage from '../components/ui/ErrorMessage';
@@ -54,6 +55,7 @@ const sortValue = (sort: SlideSort) =>
 
 /** The slide library: tiles (or a table) of slides with the selected one in the preview panel; admins add slides here. */
 export default function SlidesPage() {
+  useDocumentTitle('Slajdy');
   const { user } = useAuth();
   // Adding slides is an administrator task (the upload API enforces it too).
   const isAdmin = isManager(user);
@@ -122,7 +124,7 @@ export default function SlidesPage() {
       <section className="slides-page__main" aria-label="Slajdy">
         <header className="slides-page__header">
           <h1 className="slides-page__title">
-            Biblioteka slajdów
+            Slajdy
             {data && <span className="slides-page__count">{data.length}</span>}
           </h1>
           {isAdmin && (
