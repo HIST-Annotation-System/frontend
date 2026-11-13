@@ -20,6 +20,17 @@ export const formatDimensions = (width: number | null, height: number | null): s
 export const formatDateTime = (isoDate: string): string =>
   new Date(isoDate).toLocaleString('pl-PL', { dateStyle: 'medium', timeStyle: 'short' });
 
+/** "2 dni temu" for the last week, the date after that; callers show the full date as a tooltip. */
+export const formatRelativeDate = (isoDate: string): string => {
+  const seconds = (new Date(isoDate).getTime() - Date.now()) / 1000;
+  const units: [Intl.RelativeTimeFormatUnit, number][] = [['day', 86400], ['hour', 3600], ['minute', 60]];
+  if (Math.abs(seconds) >= 7 * 86400) return new Date(isoDate).toLocaleDateString('pl-PL', { dateStyle: 'medium' });
+  const unit = units.find(([, size]) => Math.abs(seconds) >= size);
+  return unit
+    ? new Intl.RelativeTimeFormat('pl', { numeric: 'auto' }).format(Math.round(seconds / unit[1]), unit[0])
+    : 'przed chwilą';
+};
+
 export const formatTransferRate = (bytesPerSecond: number): string => `${formatBytes(bytesPerSecond)}/s`;
 
 /** Remaining time, rounded the way people read it: "~45 s", "~3 min 20 s", "~1 h 5 min". */

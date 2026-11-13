@@ -1,12 +1,14 @@
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import { LayoutGrid, List } from 'lucide-react';
-import { useState, type DragEvent } from 'react';
+import { LayoutGrid, List, Microscope, SearchX, Upload } from 'lucide-react';
+import { useEffect, useRef, useState, type DragEvent } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import Button from '../components/ui/Button';
 import ErrorMessage from '../components/ui/ErrorMessage';
-import Spinner from '../components/ui/Spinner';
 import { useAuth } from '../context/AuthContext';
 import { useUpload } from '../context/UploadProvider';
 import OrganizationSelect from '../features/organizations/components/OrganizationSelect';
 import { useOrganizations } from '../features/organizations/hooks/useOrganizations';
+import PaneHandle from '../features/viewer/components/PaneHandle';
 import SlideGrid from '../features/slides/components/SlideGrid';
 import SlidePreview from '../features/slides/components/SlidePreview';
 import SlideTable from '../features/slides/components/SlideTable';
@@ -15,6 +17,7 @@ import { sortSlides, type SlideSort } from '../features/slides/utils/slideSort';
 import InterruptedUploads from '../features/upload/components/InterruptedUploads';
 import UploadQueueList from '../features/upload/components/UploadQueueList';
 import WsiUploader from '../features/upload/components/WsiUploader';
+import type { Slide } from '../types/slide';
 import { getErrorMessage } from '../utils/errors';
 import { isManager } from '../utils/roles';
 import './SlidesPage.css';
@@ -30,6 +33,27 @@ function readView(): LibraryView {
   } catch {
     return 'tiles';
   }
+}
+
+type StatusFilter = 'all' | 'ready' | 'pending' | 'failed';
+
+const STATUS_FILTERS: { value: StatusFilter; label: string; matches: (status: Slide['status']) => boolean }[] = [
+  { value: 'all', label: 'Wszystkie', matches: () => true },
+  { value: 'ready', label: 'Gotowe', matches: (status) => status === 'ready' },
+  { value: 'pending', label: 'W toku', matches: (status) => status === 'uploading' || status === 'processing' },
+  { value: 'failed', label: 'Błędy', matches: (status) => status === 'failed' },
+];
+
+const PANEL_KEY = 'hist.slideLibraryPanel';
+
+function readPanelOpen(): boolean {
+  try {
+    const saved = localStorage.getItem(PANEL_KEY);
+    if (saved) return saved === 'open';
+  } catch {
+    // Falls back to the width.
+  }
+  return window.innerWidth >= 1100;
 }
 
 const SORT_OPTIONS: { value: string; label: string; sort: SlideSort }[] = [
@@ -67,19 +91,44 @@ export default function SlidesPage() {
     : null;
   const enqueue = (files: Iterable<File>) => addToQueue(files, uploadOrganizationId);
   const { data, isPending, error } = useSlides();
-  const [query, setQuery] = useState('');
+  const [params, setParams] = useSearchParams();
+  const query = params.get('q') ?? '';
+  const setQuery = (next: string) =>
+    setParams((current) => {
+      const updated = new URLSearchParams(current);
+      if (next) updated.set('q', next);
+      else updated.delete('q');
+      return updated;
+    }, { replace: true });
+  const searchInput = useRef<HTMLInputElement>(null);
+  const pickFiles = useRef<(() => void) | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [panelOpen, setPanelOpen] = useState(readPanelOpen);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [view, setView] = useState<LibraryView>(readView);
   const [sort, setSortState] = useState<SlideSort>(readSort);
 
+  // "/" jumps to the search box, like on most sites with a list.
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (event.key !== '/' || target.closest('input, textarea, select, [contenteditable]')) return;
+      event.preventDefault();
+      searchInput.current?.focus();
+    };
+    document.addEventListener('keydown', focusSearch);
+    return () => document.removeEventListener('keydown', focusSearch);
+  }, []);
+
   const needle = query.trim().toLowerCase();
-  const slides = sortSlides(
-    (data ?? []).filter(
-      (slide) => !needle || slide.name.toLowerCase().includes(needle) || slide.original_filename.toLowerCase().includes(needle),
-    ),
-    sort,
+  const matching = (data ?? []).filter(
+    (slide) => !needle || slide.name.toLowerCase().includes(needle) || slide.original_filename.toLowerCase().includes(needle),
   );
+  const countOf = (filter: (typeof STATUS_FILTERS)[number]) => matching.filter((slide) => filter.matches(slide.status)).length;
+  const activeFilter = STATUS_FILTERS.find((filter) => filter.value === statusFilter) ?? STATUS_FILTERS[0];
+  const slides = sortSlides(matching.filter((slide) => activeFilter.matches(slide.status)), sort);
+  const filtered = needle !== '' || statusFilter !== 'all';
 
   const setSort = (next: SlideSort) => {
     setSortState(next);
@@ -94,6 +143,14 @@ export default function SlidesPage() {
     setView(next);
     try {
       localStorage.setItem(VIEW_KEY, next);
+    } catch {
+      // Not remembered, still works for this visit.
+    }
+  };
+  const togglePanel = () => {
+    setPanelOpen(!panelOpen);
+    try {
+      localStorage.setItem(PANEL_KEY, panelOpen ? 'closed' : 'open');
     } catch {
       // Not remembered, still works for this visit.
     }
@@ -121,26 +178,30 @@ export default function SlidesPage() {
 
   return (
     <div className="slides-page tone-soft" {...dropHandlers}>
-      <section className="slides-page__main" aria-label="Slajdy">
+      <section className="slides-page__main">
         <header className="slides-page__header">
           <h1 className="slides-page__title">
             Slajdy
-            {data && <span className="slides-page__count">{data.length}</span>}
+            {data && (
+              <span className="slides-page__count">{filtered ? `${slides.length} z ${data.length}` : data.length}</span>
+            )}
           </h1>
-          {isAdmin && (
-            <WsiUploader
-              onFiles={enqueue}
-              organizationPicker={
-                needsChoice && (
-                  <OrganizationSelect
-                    organizations={organizations}
-                    value={uploadOrganizationId}
-                    onChange={setChosenOrganizationId}
-                  />
-                )
-              }
+          <label className="slides-page__search">
+            <input
+              ref={searchInput}
+              type="search"
+              placeholder="Szukaj nazwy  ( / )"
+              aria-label="Szukaj slajdu"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  setQuery('');
+                  event.currentTarget.blur();
+                }
+              }}
             />
-          )}
+          </label>
           <span className="slides-page__spacer" />
           <div className="segmented" role="group" aria-label="Widok">
             {(
@@ -162,30 +223,54 @@ export default function SlidesPage() {
               </button>
             ))}
           </div>
-          {/* One order for both views: the table's headers set it too. */}
           <select
-            className="slides-page__sort"
-            aria-label="Kolejność"
-            value={sortValue(sort)}
-            onChange={(event) =>
-              setSort(SORT_OPTIONS.find((option) => option.value === event.target.value)?.sort ?? null)
-            }
+            className={`slides-page__sort${statusFilter !== 'all' ? ' slides-page__sort--active' : ''}`}
+            aria-label="Stan slajdów"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
           >
-            {SORT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            {STATUS_FILTERS.map((filter) => {
+              const count = filter.value === 'all' ? 0 : countOf(filter);
+              return (
+                <option key={filter.value} value={filter.value}>
+                  {filter.value === 'all' ? 'Wszystkie stany' : filter.label}
+                  {filter.value !== 'ready' && count > 0 ? ` (${count})` : ''}
+                </option>
+              );
+            })}
           </select>
-          <label className="slides-page__search">
-            <input
-              type="search"
-              placeholder="Szukaj nazwy"
-              aria-label="Szukaj slajdu"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
+          {/* The table's headers set the order there. */}
+          {view === 'tiles' && (
+            <select
+              className="slides-page__sort"
+              aria-label="Kolejność"
+              value={sortValue(sort)}
+              onChange={(event) =>
+                setSort(SORT_OPTIONS.find((option) => option.value === event.target.value)?.sort ?? null)
+              }
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          )}
+          {isAdmin && (
+            <WsiUploader
+              onFiles={enqueue}
+              pickerRef={pickFiles}
+              organizationPicker={
+                needsChoice && (
+                  <OrganizationSelect
+                    organizations={organizations}
+                    value={uploadOrganizationId}
+                    onChange={setChosenOrganizationId}
+                  />
+                )
+              }
             />
-          </label>
+          )}
         </header>
         {/* A failed background refresh keeps the last list on screen; only a failed first load replaces it. */}
         {error && data && (
@@ -195,31 +280,61 @@ export default function SlidesPage() {
         )}
         <div className="slides-page__scroll">
           {isPending ? (
-            <Spinner label="Wczytywanie slajdów…" />
+            <ul className="slide-grid" aria-busy="true" aria-label="Wczytywanie slajdów…">
+              {Array.from({ length: 8 }, (_, index) => (
+                <li key={index} className="slide-tile slide-tile--skeleton" aria-hidden="true">
+                  <span className="slide-tile__image" />
+                  <span className="slide-tile__line" />
+                  <span className="slide-tile__line slide-tile__line--short" />
+                </li>
+              ))}
+            </ul>
           ) : !data ? (
             <ErrorMessage message={getErrorMessage(error, 'Nie udało się wczytać listy slajdów.')} />
           ) : slides.length === 0 ? (
             <div className="slides-page__empty">
-              <span>
-                {data.length === 0
-                  ? isAdmin
-                    ? 'Brak slajdów. Wgraj pliki przyciskiem powyżej albo upuść je na tę stronę.'
-                    : 'Brak slajdów.'
-                  : 'Żaden slajd nie pasuje do wyszukiwania.'}
-              </span>
+              {filtered ? <SearchX size={32} aria-hidden="true" /> : <Microscope size={32} aria-hidden="true" />}
+              <p className="slides-page__empty-title">
+                {filtered ? 'Żaden slajd nie pasuje do filtrów' : 'Biblioteka jest pusta'}
+              </p>
+              <p>
+                {filtered
+                  ? 'Zmień wyszukiwanie albo stan slajdów.'
+                  : isAdmin
+                    ? 'Wgraj pierwsze pliki albo upuść je na tę stronę.'
+                    : 'Slajdy dodają administratorzy.'}
+              </p>
+              {filtered ? (
+                <Button
+                  onClick={() => {
+                    setQuery('');
+                    setStatusFilter('all');
+                  }}
+                >
+                  Wyczyść filtry
+                </Button>
+              ) : (
+                isAdmin && (
+                  <Button
+                    variant="primary"
+                    icon={<Upload size={16} aria-hidden="true" />}
+                    onClick={() => pickFiles.current?.()}
+                  >
+                    Wgraj slajd
+                  </Button>
+                )
+              )}
             </div>
+          ) : view === 'tiles' ? (
+            <SlideGrid slides={slides} selectedId={selected?.id ?? null} onSelect={setSelectedId} />
           ) : (
-            view === 'tiles' ? (
-              <SlideGrid slides={slides} selectedId={selected?.id ?? null} onSelect={setSelectedId} />
-            ) : (
-              <SlideTable
-                slides={slides}
-                sort={sort}
-                onSortChange={setSort}
-                selectedId={selected?.id ?? null}
-                onSelect={setSelectedId}
-              />
-            )
+            <SlideTable
+              slides={slides}
+              sort={sort}
+              onSortChange={setSort}
+              selectedId={selected?.id ?? null}
+              onSelect={setSelectedId}
+            />
           )}
           {isAdmin && (
             <div className="slides-page__uploads">
@@ -229,13 +344,12 @@ export default function SlidesPage() {
           )}
         </div>
       </section>
-      <aside className="side-pane" aria-label="Podgląd slajdu">
-        {selected ? (
+      {selected && <PaneHandle open={panelOpen} onToggle={togglePanel} label="Podgląd" />}
+      {selected && panelOpen && (
+        <aside className="side-pane" aria-label="Podgląd slajdu">
           <SlidePreview key={selected.id} slide={selected} />
-        ) : (
-          <p className="slides-page__preview-empty">Wybierz slajd z listy.</p>
-        )}
-      </aside>
+        </aside>
+      )}
       {isDragging && (
         <div className="slides-page__drop" aria-hidden="true">
           <p>

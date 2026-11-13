@@ -1,9 +1,11 @@
+import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Modal from '../../../components/ui/Modal';
 import { useAuth } from '../../../context/AuthContext';
+import { useDismiss } from '../../../hooks/useDismiss';
 import { useUpload } from '../../../context/UploadProvider';
 import { getThumbnailUrl } from '../../../services/slidesApi';
 import type { Slide } from '../../../types/slide';
@@ -38,6 +40,9 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
   const [seenVersion, setSeenVersion] = useState(slide.version);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRoot = useRef<HTMLDivElement>(null);
+  useDismiss(isMenuOpen, menuRoot, () => setIsMenuOpen(false));
   // Enter and the blur that follows both save: the second one must not resend with the old version.
   const isSavingName = useRef(false);
   const isUploading = slide.status === 'uploading';
@@ -125,10 +130,7 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
           onBlur={() => void saveName()}
         />
       ) : (
-        <h2 className="preview-pane__title">
-          {/* Opens the slide like its thumbnail does, once it can be viewed. */}
-          {slide.status === 'ready' ? <Link to={`/slides/${slide.id}`}>{slide.name}</Link> : slide.name}
-        </h2>
+        <h2 className="preview-pane__title">{slide.name}</h2>
       )}
 
       <div className="slide-preview__status">
@@ -156,7 +158,7 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
 
       <SlideFacts slide={slide} />
 
-      <div className="preview-pane__actions">
+      <div className="slide-preview__actions">
         {slide.status === 'ready' ? (
           <Link className="btn btn--primary" to={`/slides/${slide.id}`}>
             Otwórz
@@ -167,14 +169,42 @@ export default function SlidePreview({ slide }: SlidePreviewProps) {
           </Button>
         )}
         {canManage && (
-          <>
-            <Button disabled={isUploading || isEditingName} onClick={startEditing}>
-              Zmień nazwę
-            </Button>
-            <Button variant="danger-outline" onClick={startDeleting}>
-              {isUploading ? 'Anuluj wgrywanie' : 'Usuń slajd'}
-            </Button>
-          </>
+          <div className="slide-preview__menu" ref={menuRoot}>
+            <Button
+              icon={<Ellipsis size={16} aria-hidden="true" />}
+              aria-label="Więcej działań"
+              title="Więcej działań"
+              aria-haspopup="true"
+              aria-expanded={isMenuOpen}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            />
+            {isMenuOpen && (
+              <div className="slide-preview__menu-list">
+                <button
+                  type="button"
+                  disabled={isUploading || isEditingName}
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    startEditing();
+                  }}
+                >
+                  <Pencil size={14} aria-hidden="true" />
+                  Zmień nazwę
+                </button>
+                <button
+                  type="button"
+                  className="slide-preview__menu-danger"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    startDeleting();
+                  }}
+                >
+                  <Trash2 size={14} aria-hidden="true" />
+                  {isUploading ? 'Anuluj wgrywanie' : 'Usuń slajd'}
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
       {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}

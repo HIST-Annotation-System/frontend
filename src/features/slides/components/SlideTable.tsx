@@ -2,7 +2,7 @@ import { ArrowDown, ArrowUp } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getThumbnailUrl } from '../../../services/slidesApi';
 import type { Slide } from '../../../types/slide';
-import { formatBytes, formatDateTime, formatDimensions } from '../../../utils/format';
+import { formatBytes, formatDateTime, formatRelativeDate } from '../../../utils/format';
 import { getNativeMagnification } from '../../../utils/magnification';
 import { useSlideProgress } from '../hooks/useSlideProgress';
 import type { SlideSort, SlideSortKey } from '../utils/slideSort';
@@ -26,6 +26,8 @@ export default function SlideTable({ slides, sort: chosenSort, onSortChange, sel
   // The server's order is newest first: shown as "Dodano" descending.
   const sort: NonNullable<SlideSort> = chosenSort ?? { key: 'created_at', descending: true };
   const navigate = useNavigate();
+  // All slides ready: the column would only repeat one word.
+  const showStatus = slides.some((slide) => slide.status !== 'ready');
   const progressOf = useSlideProgress();
 
   const open = (slide: Slide) => {
@@ -54,13 +56,11 @@ export default function SlideTable({ slides, sort: chosenSort, onSortChange, sel
             <span className="visually-hidden">Miniatura</span>
           </th>
           {sortHeader('name', 'Nazwa')}
-          <th className="slide-table__number">Wymiary (px)</th>
           <th className="slide-table__number">Pow.</th>
           <th className="slide-table__number">Rozmiar</th>
-          <th>Producent</th>
           <th>Dodał</th>
           {sortHeader('created_at', 'Dodano')}
-          <th>Stan</th>
+          {showStatus && <th>Stan</th>}
         </tr>
       </thead>
       <tbody>
@@ -74,7 +74,6 @@ export default function SlideTable({ slides, sort: chosenSort, onSortChange, sel
               tabIndex={0}
               aria-selected={selected}
               className={selected ? 'slide-table__row--selected' : undefined}
-              title={slide.status === 'ready' ? 'Dwuklik otwiera slajd' : undefined}
               onClick={() => onSelect(slide.id)}
               onDoubleClick={() => open(slide)}
               onKeyDown={(event) => {
@@ -105,24 +104,22 @@ export default function SlideTable({ slides, sort: chosenSort, onSortChange, sel
                   slide.name
                 )}
               </td>
-              <td className="slide-table__number">
-                {slide.width && slide.height ? formatDimensions(slide.width, slide.height) : '—'}
-              </td>
               <td className="slide-table__number">{magnification ? `${magnification}×` : '—'}</td>
               <td className="slide-table__number">
                 {slide.file_size_bytes !== null ? formatBytes(slide.file_size_bytes) : '—'}
               </td>
-              <td className="slide-table__muted" title={slide.vendor ?? undefined}>
-                {slide.vendor ?? '—'}
-              </td>
               <td className="slide-table__muted" title={slide.uploaded_by ?? undefined}>
                 {slide.uploaded_by ?? '—'}
               </td>
-              <td className="slide-table__date">{formatDateTime(slide.created_at)}</td>
-              <td className="slide-table__status">
-                <SlideStatusBadge status={slide.status} />
-                {progress !== null && <span className="slide-table__progress"> {progress}%</span>}
+              <td className="slide-table__date" title={formatDateTime(slide.created_at)}>
+                {formatRelativeDate(slide.created_at)}
               </td>
+              {showStatus && (
+                <td className="slide-table__status">
+                  {slide.status !== 'ready' && <SlideStatusBadge status={slide.status} />}
+                  {progress !== null && <span className="slide-table__progress"> {progress}%</span>}
+                </td>
+              )}
             </tr>
           );
         })}

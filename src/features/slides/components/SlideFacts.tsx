@@ -28,13 +28,13 @@ export default function SlideFacts({ slide }: { slide: Slide }) {
   const main: Row[] = [
     ['Dodano', formatDateTime(slide.created_at)],
     [slide.status === 'uploading' ? 'Wgrywa' : 'Dodał', slide.uploaded_by ?? '—'],
+    ['Powiększenie', magnification ? `${magnification}×${slide.objective_power ? '' : ' (szacowane)'}` : '—'],
+    ['Rozmiar pliku', slide.file_size_bytes !== null ? formatBytes(slide.file_size_bytes) : '—'],
   ];
   const technical: Row[] = [
-    ['Powiększenie', magnification ? `${magnification}×${slide.objective_power ? '' : ' (szacowane)'}` : '—'],
     ['Wymiary', formatDimensions(slide.width, slide.height)],
     ['Plik', slide.original_filename],
     ['Format', slide.vendor ?? '—'],
-    ['Rozmiar pliku', slide.file_size_bytes !== null ? formatBytes(slide.file_size_bytes) : '—'],
     ['Rozdzielczość', slide.mpp_x ? `${formatDecimal(slide.mpp_x, 4)} µm/px` : '—'],
     ['Poziomy piramidy', slide.level_count?.toString() ?? '—'],
   ];

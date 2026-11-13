@@ -1,8 +1,9 @@
+import { ImageOff, Loader } from 'lucide-react';
 import type { KeyboardEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getThumbnailUrl } from '../../../services/slidesApi';
 import type { Slide } from '../../../types/slide';
-import { formatDimensions } from '../../../utils/format';
+import { formatDateTime, formatDimensions, formatRelativeDate } from '../../../utils/format';
 import { getNativeMagnification } from '../../../utils/magnification';
 import { useSlideProgress } from '../hooks/useSlideProgress';
 import SlideStatusBadge from './SlideStatusBadge';
@@ -63,7 +64,6 @@ export default function SlideGrid({ slides, selectedId, onSelect }: SlideGridPro
               className={`slide-tile${selected ? ' slide-tile--selected' : ''}`}
               tabIndex={0}
               aria-selected={selected}
-              title={ready ? 'Dwuklik otwiera slajd' : undefined}
               onClick={(event) => {
                 if (!(event.target as Element).closest('a')) onSelect(slide.id);
               }}
@@ -71,7 +71,36 @@ export default function SlideGrid({ slides, selectedId, onSelect }: SlideGridPro
               onKeyDown={(event) => onKeyDown(event, index)}
             >
               <span className="slide-tile__image">
-                {ready && <img src={getThumbnailUrl(slide.id)} alt="" loading="lazy" />}
+                {ready ? (
+                  <>
+                    <img src={getThumbnailUrl(slide.id)} alt="" loading="lazy" />
+                    {/* A mouse shortcut; the name below is the link for keyboards and screen readers. */}
+                    <Link
+                      to={`/slides/${slide.id}`}
+                      className="slide-tile__open"
+                      tabIndex={-1}
+                      aria-hidden="true"
+                      onDoubleClick={(event) => event.stopPropagation()}
+                    >
+                      Otwórz
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    {slide.status === 'failed' ? (
+                      <ImageOff size={24} aria-hidden="true" />
+                    ) : (
+                      <Loader size={24} className="slide-tile__spinner" aria-hidden="true" />
+                    )}
+                    <span className="slide-tile__status">
+                      <SlideStatusBadge status={slide.status} />
+                      {progress !== null && ` ${progress}%`}
+                    </span>
+                    {progress !== null && (
+                      <span className="slide-tile__progress" style={{ width: `${progress}%` }} />
+                    )}
+                  </>
+                )}
               </span>
               <span className="slide-tile__name" title={slide.name}>
                 {ready ? (
@@ -83,10 +112,12 @@ export default function SlideGrid({ slides, selectedId, onSelect }: SlideGridPro
                 )}
               </span>
               <span className="slide-tile__meta">
-                {slide.width && slide.height ? `${formatDimensions(slide.width, slide.height)} · ` : ''}
-                {magnification ? `${magnification}× · ` : ''}
-                <SlideStatusBadge status={slide.status} />
-                {progress !== null && ` ${progress}%`}
+                {[slide.width && slide.height && formatDimensions(slide.width, slide.height), magnification && `${magnification}×`]
+                  .filter(Boolean)
+                  .join(' · ') || '—'}
+              </span>
+              <span className="slide-tile__meta" title={formatDateTime(slide.created_at)}>
+                {[formatRelativeDate(slide.created_at), slide.uploaded_by].filter(Boolean).join(' · ')}
               </span>
             </div>
           </li>
