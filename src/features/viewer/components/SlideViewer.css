@@ -157,6 +157,12 @@
   margin: 0 var(--space-3) var(--space-3) 0 !important;
   border-color: var(--c-border) !important;
   background-color: var(--c-viewer) !important;
+  transition: margin-right var(--motion-fast) var(--easing);
+}
+
+/* The side pane floats over the image's right edge: the minimap moves out from under it. */
+.viewer-screen--panel-open .slide-viewer__frame .navigator {
+  margin-right: calc(var(--side-pane-width) + var(--space-3)) !important;
 }
 
 .slide-viewer__frame .navigator .displayregion {

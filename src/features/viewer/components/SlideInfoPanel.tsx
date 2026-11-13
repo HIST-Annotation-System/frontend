@@ -20,10 +20,10 @@ export default function SlideInfoPanel({ slide }: SlideInfoPanelProps) {
 
   return (
     <aside className="side-pane" aria-label="Informacje o slajdzie">
-      <SidebarSection title="Informacje o slajdzie">
+      <SidebarSection title="Informacje o slajdzie" collapsible>
         <SlideFacts slide={slide} />
       </SidebarSection>
-      <SidebarSection title="Hotspoty na slajdzie" meta={hotspots.length}>
+      <SidebarSection title="Hotspoty na slajdzie" meta={hotspots.length} collapsible>
         {perFolder.size === 0 ? (
           <p className="slide-info__empty">Brak hotspotów.</p>
         ) : (

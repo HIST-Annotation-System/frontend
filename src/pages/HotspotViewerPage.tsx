@@ -43,6 +43,7 @@ import {
   resolveFolderId,
   writeCatalogParams,
 } from '../features/hotspots/utils/hotspotReview';
+import PaneHandle from '../features/viewer/components/PaneHandle';
 import ViewerHeader from '../features/viewer/components/ViewerHeader';
 import { HintSlotContext } from '../features/viewer/hintSlot';
 import { StatusSlotContext } from '../features/viewer/statusSlot';
@@ -227,49 +228,49 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
     <Annotorious>
       <StatusSlotContext.Provider value={statusSlot}>
         <HintSlotContext.Provider value={hint}>
-          <div className="viewer-screen">
-            <ViewerHeader panel={{ open: panelOpen, onToggle: () => setPanelOpen(!panelOpen) }}>
-              <nav className="crumbs" aria-label="Ścieżka">
-                <Link to={`/hotspots${search}`}>Hotspoty</Link>
-                <span className="crumbs__sep">/</span>
-                <Link to={breadcrumbFolder}>{folderName ?? 'Folder'}</Link>
-                <span className="crumbs__sep">/</span>
-                <span className="crumbs__here" title={hotspot.name}>
-                  {hotspot.name}
-                </span>
-              </nav>
-              <HotspotQueueNav
-                hotspot={hotspot}
-                query={catalogQuery(catalog, resolveFolderId(catalog, hotspot.folder_id))}
-                search={search}
-              />
-              {/* Switching the mode keeps this hotspot open; the queue (prev/next) follows the new mode. */}
-              <div className="viewer-header__mode">
-                <HotspotModeSwitch
-                  mode={catalog.mode}
-                  hidden={['browse']}
-                  onChange={(next) =>
-                    navigate(
-                      {
-                        pathname: `/hotspots/${hotspot.id}`,
-                        search: new URLSearchParams(
-                          writeCatalogParams({ ...catalogDefaults(next), folder: catalog.folder }),
-                        ).toString(),
-                      },
-                      { replace: true },
-                    )
-                  }
-                />
-              </div>
-              {/* Reannotating fixes what the expert found, so the verdict stays in sight. */}
-              {catalog.mode === 'reannotate' && hotspot.tags.length > 0 && (
-                <span className="viewer-header__verdict">
-                  <HotspotTagMarks tags={hotspot.tags} labelled strong />
-                </span>
-              )}
-            </ViewerHeader>
+          <div className={`viewer-screen${panelOpen ? ' viewer-screen--panel-open' : ''}`}>
             <div className="viewer-page">
               <div className="viewer-page__main">
+                <ViewerHeader>
+                  <nav className="crumbs" aria-label="Ścieżka">
+                    <Link to={`/hotspots${search}`}>Hotspoty</Link>
+                    <span className="crumbs__sep">/</span>
+                    <Link to={breadcrumbFolder}>{folderName ?? 'Folder'}</Link>
+                    <span className="crumbs__sep">/</span>
+                    <span className="crumbs__here" title={hotspot.name}>
+                      {hotspot.name}
+                    </span>
+                  </nav>
+                  <HotspotQueueNav
+                    hotspot={hotspot}
+                    query={catalogQuery(catalog, resolveFolderId(catalog, hotspot.folder_id))}
+                    search={search}
+                  />
+                  {/* Switching the mode keeps this hotspot open; the queue (prev/next) follows the new mode. */}
+                  <div className="viewer-header__mode">
+                    <HotspotModeSwitch
+                      mode={catalog.mode}
+                      hidden={['browse']}
+                      onChange={(next) =>
+                        navigate(
+                          {
+                            pathname: `/hotspots/${hotspot.id}`,
+                            search: new URLSearchParams(
+                              writeCatalogParams({ ...catalogDefaults(next), folder: catalog.folder }),
+                            ).toString(),
+                          },
+                          { replace: true },
+                        )
+                      }
+                    />
+                  </div>
+                  {/* Reannotating fixes what the expert found, so the verdict stays in sight. */}
+                  {catalog.mode === 'reannotate' && hotspot.tags.length > 0 && (
+                    <span className="viewer-header__verdict">
+                      <HotspotTagMarks tags={hotspot.tags} labelled strong />
+                    </span>
+                  )}
+                </ViewerHeader>
                 <AnnotationLayer
                   owner={owner}
                   imageOffset={NO_OFFSET}
@@ -317,6 +318,7 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                 </AnnotationLayer>
                 {!panelOpen && errorMessage && <div className="viewer-page__error">{errorMessage}</div>}
               </div>
+              <PaneHandle open={panelOpen} onToggle={() => setPanelOpen(!panelOpen)} />
               {panelOpen && (
                 <aside className="side-pane" aria-label="Panel hotspotu">
                   {errorMessage && <div className="viewer-panel__error">{errorMessage}</div>}

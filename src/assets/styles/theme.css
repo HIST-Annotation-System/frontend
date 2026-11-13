@@ -72,7 +72,6 @@
   --easing: cubic-bezier(0.2, 0, 0, 1);
 
   --header-height: 48px;
-  --header-compact: 40px;
 }
 
 :root[data-theme='dark'] {

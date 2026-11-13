@@ -9,6 +9,7 @@ import type { HotspotTool } from '../features/hotspots/utils/hotspotBoxes';
 import SlideStatusBadge from '../features/slides/components/SlideStatusBadge';
 import { useSlide } from '../features/slides/hooks/useSlide';
 import { isSlideGone } from '../features/slides/utils/slideConflicts';
+import PaneHandle from '../features/viewer/components/PaneHandle';
 import SlideInfoPanel from '../features/viewer/components/SlideInfoPanel';
 import SlideViewer from '../features/viewer/components/SlideViewer';
 import ViewerHeader from '../features/viewer/components/ViewerHeader';
@@ -72,7 +73,7 @@ interface SlideWorkspaceProps {
 function SlideWorkspace({ slide, deleted }: SlideWorkspaceProps) {
   const [tool, setTool] = useState<HotspotTool | null>(null);
   const [batchId, setBatchId] = useState<string | null>(null);
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [statusSlot, setStatusSlot] = useState<HTMLDivElement | null>(null);
   const [hintSlot, setHintSlot] = useState<HTMLElement | null>(null);
   const hint = useMemo(() => ({ slot: hintSlot, setSlot: setHintSlot }), [hintSlot]);
@@ -82,21 +83,21 @@ function SlideWorkspace({ slide, deleted }: SlideWorkspaceProps) {
     <Annotorious>
       <StatusSlotContext.Provider value={statusSlot}>
         <HintSlotContext.Provider value={hint}>
-          <div className="viewer-screen">
-            <ViewerHeader panel={{ open: panelOpen, onToggle: () => setPanelOpen(!panelOpen) }}>
-              <nav className="crumbs" aria-label="Ścieżka">
-                <Link to="/">Biblioteka slajdów</Link>
-                <span className="crumbs__sep">/</span>
-                <span className="crumbs__here" title={slide.name}>
-                  {slide.name}
-                </span>
-              </nav>
-              <span className="viewer-header__meta">
-                {formatDimensions(slide.width, slide.height)}
-              </span>
-            </ViewerHeader>
+          <div className={`viewer-screen${panelOpen ? ' viewer-screen--panel-open' : ''}`}>
             <div className="viewer-page">
               <div className="viewer-page__main">
+                <ViewerHeader>
+                  <nav className="crumbs" aria-label="Ścieżka">
+                    <Link to="/">Biblioteka slajdów</Link>
+                    <span className="crumbs__sep">/</span>
+                    <span className="crumbs__here" title={slide.name}>
+                      {slide.name}
+                    </span>
+                  </nav>
+                  <span className="viewer-header__meta">
+                    {formatDimensions(slide.width, slide.height)}
+                  </span>
+                </ViewerHeader>
                 <OpenSeadragonAnnotator drawingEnabled={false}>
                   <SlideViewer slide={slide}>
                     {/* Pędzel / Siatka at the left edge, the marking bar at the bottom while choosing. */}
@@ -113,6 +114,7 @@ function SlideWorkspace({ slide, deleted }: SlideWorkspaceProps) {
                   </SlideViewer>
                 </OpenSeadragonAnnotator>
               </div>
+              <PaneHandle open={panelOpen} onToggle={() => setPanelOpen(!panelOpen)} />
               {panelOpen && <SlideInfoPanel slide={slide} />}
             </div>
             <div ref={setStatusSlot} className="viewer-screen__status" />

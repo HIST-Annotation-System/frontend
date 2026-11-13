@@ -1,25 +1,17 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, Moon, Sun } from 'lucide-react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeProvider';
 import { isManager, ROLE_LABELS } from '../../utils/roles';
 import BrandLogo from './BrandLogo';
-import { HeaderSlotContext } from './headerSlot';
 import UploadStatusBar from './UploadStatusBar';
 import './AppLayout.css';
-
-
-/** Viewer screens get the compact header so the image keeps as much height as possible. */
-const COMPACT_ROUTE = /^\/(slides|hotspots)\/[^/]+/;
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { pathname } = useLocation();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | null>(null);
-  const compact = COMPACT_ROUTE.test(pathname);
 
   useEffect(() => {
     if (!isUserMenuOpen) return;
@@ -36,28 +28,25 @@ export default function AppLayout() {
       : user?.username;
 
   return (
-    <div className={`app-layout${compact ? ' app-layout--compact' : ''}`}>
+    <div className="app-layout">
       <header className="app-header">
         <Link to="/" className="app-header__brand" aria-label="HistAno — Biblioteka slajdów">
-          <BrandLogo height={compact ? 18 : 24} />
+          <BrandLogo height={24} />
         </Link>
-        {compact ? (
-          <div ref={setHeaderSlot} className="app-header__slot" />
-        ) : (
-          <nav className="app-header__nav">
-            <NavLink to="/" end className="app-header__tab">
-              Biblioteka slajdów
+        <nav className="app-header__nav">
+          <NavLink to="/" end className="app-header__tab">
+            Biblioteka slajdów
+          </NavLink>
+          <NavLink to="/hotspots" className="app-header__tab">
+            Hotspoty
+          </NavLink>
+          {isManager(user) && (
+            <NavLink to="/admin" className="app-header__tab">
+              Administracja
             </NavLink>
-            <NavLink to="/hotspots" className="app-header__tab">
-              Hotspoty
-            </NavLink>
-            {isManager(user) && (
-              <NavLink to="/admin" className="app-header__tab">
-                Administracja
-              </NavLink>
-            )}
-          </nav>
-        )}
+          )}
+        </nav>
+
         <div className="app-header__actions">
           <div className="theme-switch" role="group" aria-label="Motyw">
             <button
@@ -130,9 +119,7 @@ export default function AppLayout() {
         </div>
       </header>
       <main className="app-layout__content">
-        <HeaderSlotContext.Provider value={compact ? headerSlot : null}>
-          <Outlet />
-        </HeaderSlotContext.Provider>
+        <Outlet />
       </main>
       <UploadStatusBar />
     </div>

@@ -66,21 +66,12 @@
   flex: none;
   align-items: center;
   gap: 10px;
-  height: 40px;
-  padding: 0 var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-3);
   overflow: hidden;
   border-bottom: var(--border);
   background: var(--c-surface);
   white-space: nowrap;
-}
-
-.viewer-header--in-app-header {
-  flex: 1;
-  min-width: 0;
-  height: auto;
-  padding: 0 var(--space-2) 0 0;
-  border-bottom: 0;
-  background: transparent;
 }
 
 .viewer-header__meta {
@@ -146,25 +137,57 @@
   flex-wrap: nowrap;
 }
 
-/* Shows or hides the side pane, at the far end of the bar. */
-.viewer-header__panel-toggle {
-  flex: none;
-  height: var(--control-sm);
-  margin-left: auto;
-  padding: 0 var(--space-2);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--c-text-2);
-  font: inherit;
-  font-size: 13px;
-  white-space: nowrap;
-  cursor: pointer;
+/* The side pane floats over the right edge of the image, so opening it never resizes or shifts the image. */
+.viewer-screen .viewer-page {
+  position: relative;
 }
 
-.viewer-header__panel-toggle:hover {
-  background: var(--c-surface-2);
+.viewer-screen .viewer-page > .side-pane {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 96;
+}
+
+/* Shows or hides the side pane: a tab on the right edge of the image, next to the pane. */
+.pane-handle {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 30px;
+  height: 176px;
+  padding: 0;
+  border: var(--border);
+  border-right: 0;
+  border-radius: 8px 0 0 8px;
+  background: var(--c-pane);
+  box-shadow: var(--shadow-sm);
   color: var(--c-text);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.pane-handle--open {
+  right: var(--side-pane-width);
+  height: 64px;
+}
+
+.pane-handle:hover {
+  background: var(--c-hover);
+}
+
+.pane-handle__label {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  writing-mode: vertical-rl;
 }
 
 /* The layers and cell types take the height they need; the dock below stays at the bottom of the pane. */
