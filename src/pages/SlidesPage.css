@@ -60,40 +60,6 @@
   border-color: var(--c-accent);
 }
 
-.slides-page__search {
-  display: flex;
-  flex: 1 1 140px;
-  min-width: 0;
-  align-items: center;
-  gap: 6px;
-  max-width: 240px;
-  height: var(--control-md);
-  padding: 0 10px;
-  border: var(--border-width) solid var(--c-border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--c-input);
-  color: var(--c-text-3);
-}
-
-.slides-page__search:focus-within {
-  border-color: var(--c-focus-outline);
-  box-shadow: 0 0 0 3px var(--c-focus-ring);
-}
-
-.slides-page__search input[type='search'] {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.slides-page__search input[type='search']:focus {
-  box-shadow: none;
-}
-
 .slides-page__stale {
   margin: 0;
   padding: var(--space-2) var(--space-4);

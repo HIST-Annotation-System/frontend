@@ -234,6 +234,10 @@
   font-weight: 400;
 }
 
+.hotspot-sort__select--active {
+  border-color: var(--c-accent);
+}
+
 .hotspot-form__meta {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -669,13 +673,6 @@
 .hotspot-sort {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-}
-
-.hotspot-sort__label {
-  color: var(--c-text-2);
-  font-size: 13px;
-  white-space: nowrap;
 }
 
 .hotspot-sort .hotspot-sort__select {
@@ -698,6 +695,16 @@
   color: var(--c-text);
   font-size: 13px;
   cursor: pointer;
+}
+
+/* The direction button joins the select into one control: square where they meet. */
+.hotspot-sort > .hotspot-sort__select {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.hotspot-sort > .btn {
+  margin-left: -1px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 /* Review queue cards: the thumbnail, then the tick box beside the name; the numbers are in the details panel. */
@@ -756,9 +763,77 @@
   min-width: 0;
 }
 
-.hotspot-card__title input {
-  flex: none;
+.hotspot-card__meta {
+  overflow: hidden;
+  color: var(--c-text-2);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Checkbox and open shortcut sit on the thumbnail; they show on hover or focus, the checkboxes also while selecting. */
+.hotspot-card__check {
+  position: absolute;
+  top: 6px;
+  left: 6px;
   margin: 0;
+  opacity: 0;
+}
+
+.hotspot-card:hover .hotspot-card__check,
+.hotspot-card__check:focus-visible,
+.hotspot-card__check:checked,
+.hotspots-page__grid--selecting .hotspot-card__check {
+  opacity: 1;
+}
+
+.hotspot-card__open {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--c-primary);
+  color: var(--c-on-primary);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--easing);
+}
+
+.hotspot-card .hotspot-card__open:hover {
+  background: var(--c-primary-hover);
+  color: var(--c-on-primary);
+}
+
+.hotspot-card:hover .hotspot-card__open,
+.hotspot-card--details .hotspot-card__open {
+  opacity: 1;
+}
+
+.hotspot-card--skeleton {
+  pointer-events: none;
+}
+
+.hotspot-card--skeleton .hotspot-card__thumb,
+.hotspot-card__line--skeleton {
+  animation: slide-tile-pulse 1.4s ease-in-out infinite;
+}
+
+.hotspot-card__line--skeleton {
+  display: block;
+  height: 12px;
+  margin-top: 4px;
+  border-radius: 3px;
+  background: var(--c-surface-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hotspot-card--skeleton .hotspot-card__thumb,
+  .hotspot-card__line--skeleton {
+    animation: none;
+  }
 }
 
 .hotspot-card__name {
@@ -911,337 +986,6 @@
   font-weight: 400;
 }
 
-/* The browse table: one dense row per hotspot. */
-/* The list area scrolls (both ways), so the header sticks to it and the move menu is not clipped. */
-.hotspot-table__scroll {
-  background: var(--c-surface);
-}
-
-.hotspot-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 13px;
-  line-height: 18px;
-  white-space: nowrap;
-}
-
-.hotspot-table th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  height: 32px;
-  padding: 0 6px;
-  border-bottom: var(--border-width) solid var(--c-border);
-  background: var(--c-table-head, var(--c-surface-2));
-  color: var(--c-text-2);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 16px;
-  text-align: left;
-}
-
-/* Tight side padding: all columns fit beside the details panel on a 1440 px screen. */
-.hotspot-table td {
-  height: 44px;
-  padding: var(--space-1) 6px;
-  border-bottom: var(--border-width) solid var(--c-border);
-  vertical-align: middle;
-}
-
-.hotspot-table th:first-child,
-.hotspot-table td:first-child {
-  padding-left: var(--space-4);
-}
-
-.hotspot-table th:last-child,
-.hotspot-table td:last-child {
-  padding-right: var(--space-4);
-}
-
-.hotspot-table__check {
-  width: 18px;
-}
-
-.hotspot-table__check input {
-  display: block;
-  width: 16px;
-  height: 16px;
-  margin: 0;
-}
-
-.hotspot-table td.hotspot-table__strong {
-  color: var(--c-text);
-  font-weight: 500;
-}
-
-/* Date over time: keeps the wide table within a laptop screen. */
-.hotspot-table td.hotspot-table__date {
-  min-width: 86px;
-  color: var(--c-text-2);
-  font-size: 12px;
-  line-height: 16px;
-  white-space: normal;
-}
-
-.hotspot-table__none {
-  color: var(--c-text-3);
-  font-size: 12px;
-}
-
-.hotspot-table__tags {
-  display: flex;
-  gap: 4px;
-  max-width: 140px;
-  overflow: hidden;
-}
-
-/* Two long names share the room, each shortened with "…"; "+N" always shows. */
-.hotspot-table__tags .tag-pill:not(.tag-pill--more) {
-  flex: 0 1 auto;
-  min-width: 36px;
-}
-
-/* Priority and accuracy columns: one centred symbol each. */
-.hotspot-table .hotspot-table__verdict {
-  width: 1%;
-  padding-inline: var(--space-1);
-  text-align: center;
-  white-space: nowrap;
-}
-
-.hotspot-table tbody tr {
-  cursor: default;
-  transition: background-color var(--motion-fast) var(--easing);
-}
-
-.hotspot-table tbody tr:focus-visible {
-  outline: 1px solid var(--c-focus-outline);
-  outline-offset: -1px;
-  box-shadow: none;
-}
-
-.hotspot-table tbody tr:hover {
-  background: var(--c-hover);
-}
-
-.hotspot-table tbody .hotspot-table__row--selected {
-  background: var(--c-hover-2);
-}
-
-/* The row shown in the details panel: tinted, with an accent edge on the left (as in the slide library). */
-.hotspot-table tbody .hotspot-table__row--details,
-.hotspot-table tbody .hotspot-table__row--details:hover {
-  background: var(--c-accent-soft);
-}
-
-.hotspot-table tbody .hotspot-table__row--details td:first-child {
-  box-shadow: inset 3px 0 0 var(--c-accent);
-}
-
-.hotspot-table td.mono-data {
-  color: var(--c-text-2);
-  font-size: 12px;
-}
-
-.hotspot-table .hotspot-table__number {
-  width: 1%;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.hotspot-table .hotspot-table__thumb-head {
-  width: 1%;
-}
-
-.hotspot-table th.hotspot-table__active {
-  color: var(--c-accent-text);
-}
-
-.hotspot-table__thumb {
-  display: block;
-  width: 36px;
-  height: 36px;
-  overflow: hidden;
-  border-radius: var(--radius-xs);
-  background: var(--c-viewer);
-}
-
-.hotspot-table__thumb img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* The folder name may wrap so the wide table still fits. */
-/* One line cut with "…" (the full name is in the tooltip), so every row keeps the same height. */
-.hotspot-table__text {
-  max-width: 90px;
-  overflow: hidden;
-  color: var(--c-text-2);
-  font-size: 12px;
-  text-overflow: ellipsis;
-}
-
-/* The name takes the room left by the other columns and is cut with an ellipsis. */
-/* Takes the room left by the other columns, but never so little that the name cannot be read. */
-.hotspot-table__name {
-  width: 100%;
-  min-width: 100px;
-  max-width: 0;
-}
-
-.hotspot-table__rename {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.hotspot-table__status {
-  color: var(--c-text-2);
-}
-
-/* Only the name's text is the link to the annotation screen; the rest of the cell selects the row. */
-.hotspot-table__name-link {
-  display: inline-block;
-  max-width: 100%;
-  overflow: hidden;
-  vertical-align: bottom;
-  color: var(--c-text);
-  font-size: 13px;
-  font-weight: 500;
-  text-decoration: none;
-  text-overflow: ellipsis;
-}
-
-.hotspot-table__name-link:hover {
-  color: var(--c-accent-text);
-  text-decoration: underline;
-}
-
-.hotspot-table__name-input {
-  width: 160px;
-  height: var(--control-sm);
-  padding: 0 6px;
-  border: var(--border-width) solid var(--c-accent);
-  border-radius: 5px;
-  background: var(--c-surface);
-  box-shadow: 0 0 0 3px var(--c-focus-ring);
-  color: var(--c-text);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  outline: none;
-}
-
-.hotspot-table__rename .btn--ghost {
-  width: 24px;
-  height: 24px;
-  min-width: 0;
-  padding: 0;
-  color: var(--c-text-3);
-}
-
-.hotspot-table__actions {
-  width: 1%;
-  text-align: right;
-}
-
-.hotspot-table__action-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0;
-}
-
-.hotspot-table__action-row .btn--ghost {
-  width: 24px;
-  height: 24px;
-  min-width: 0;
-  padding: 0;
-  border-radius: var(--radius-xs);
-  color: var(--c-text-3);
-}
-
-.hotspot-table__action-row .btn--ghost:hover:not(:disabled) {
-  background: var(--c-hover-2);
-  color: var(--c-text);
-}
-
-/* "Move to folder" menu under its row button. */
-.hotspot-table__move {
-  position: relative;
-}
-
-.hotspot-table__menu {
-  position: absolute;
-  top: calc(100% + var(--space-1));
-  right: 0;
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  width: 220px;
-  max-height: 320px;
-  overflow-y: auto;
-  padding: var(--space-1);
-  border: var(--border-width) solid var(--c-border);
-  border-radius: var(--radius-md);
-  background: var(--c-surface);
-  text-align: left;
-}
-
-.hotspot-table__menu-label {
-  padding: var(--space-1) var(--space-2);
-  color: var(--c-text-3);
-  font-size: 11px;
-  line-height: 16px;
-}
-
-.hotspot-table__menu-item {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  height: var(--control-sm);
-  padding: 0 var(--space-2);
-  border: none;
-  border-radius: var(--radius-xs);
-  background: transparent;
-  color: var(--c-text);
-  font: inherit;
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.hotspot-table__menu-item:hover:not(:disabled) {
-  background: var(--c-hover);
-}
-
-.hotspot-table__menu-item:disabled {
-  color: var(--c-text-3);
-  cursor: default;
-}
-
-.hotspot-table__menu-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.hotspot-table__menu-count {
-  color: var(--c-text-3);
-  font-family: var(--font-mono);
-  font-size: 11px;
-}
-
-/* The delete dialog lives inside the row's cell: undo the table's text layout. */
-.hotspot-table .modal {
-  font-size: 14px;
-  line-height: 20px;
-  text-align: left;
-  white-space: normal;
-}
-
 /* Bulk tagging of the selected hotspots, docked under the list; tinted while hotspots are ticked. */
 .hotspot-bulk {
   display: flex;
@@ -1365,6 +1109,20 @@
 
 .hotspot-verdict__option:last-child {
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.hotspot-verdict__option[aria-pressed='false']:hover:not(:disabled) {
+  background: var(--c-hover);
+}
+
+.hotspot-verdict__option:focus-visible {
+  position: relative;
+  outline: 2px solid var(--c-focus-outline);
+  outline-offset: -2px;
+}
+
+.hotspot-verdict__option:disabled {
+  cursor: progress;
 }
 
 .hotspot-verdict__option[aria-pressed='false']:hover:not(:disabled) {

@@ -1,11 +1,9 @@
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { Annotorious } from '@annotorious/react';
-import { useCallback, useMemo, useState, type CSSProperties } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import Button from '../components/ui/Button';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import BottomSections from '../components/ui/BottomSections';
-import SidebarSection from '../components/ui/SidebarSection';
 import Spinner from '../components/ui/Spinner';
 import { useAuth } from '../context/AuthContext';
 import AnnotationLayer from '../features/annotations/components/AnnotationLayer';
@@ -21,21 +19,16 @@ import {
   authorLayer,
   EXCLUDED_LAYER,
   hiddenParts,
-  listLayers,
   type ModelFilter,
 } from '../features/annotations/utils/annotationLayers';
 import { FALLBACK_CELL_TYPE_COLOR } from '../features/annotations/utils/cellTypeColors';
-import HotspotModeSwitch from '../features/hotspots/components/HotspotModeSwitch';
 import HotspotInfoPanel from '../features/hotspots/components/HotspotInfoPanel';
 import HotspotQueueNav from '../features/hotspots/components/HotspotQueueNav';
 import HotspotReannotatedButton from '../features/hotspots/components/HotspotReannotatedButton';
 import HotspotTagPanel from '../features/hotspots/components/HotspotTagPanel';
 import HotspotTagMarks from '../features/hotspots/components/TagMarks';
 import HotspotViewer from '../features/hotspots/components/HotspotViewer';
-import AgreementDialog from '../features/reannotation/components/AgreementDialog';
-import AgreementSummary from '../features/reannotation/components/AgreementSummary';
 import ReannotationControls from '../features/reannotation/components/ReannotationControls';
-import { CHANGE_COLORS, CHANGE_LABELS } from '../features/reannotation/utils/reannotation';
 import { useHotspot, useHotspotFolders } from '../features/hotspots/hooks/useHotspots';
 import {
   catalogDefaults,
@@ -51,8 +44,6 @@ import { StatusSlotContext } from '../features/viewer/statusSlot';
 import type { AnnotationClass, AnnotationKind, AnnotationOwner, ToolMode } from '../types/annotation';
 import type { CellType } from '../types/cellType';
 import type { Hotspot } from '../types/hotspot';
-import type { AnnotatorFigures, ChangeKind } from '../types/reannotation';
-import { isManager } from '../utils/roles';
 import { getErrorMessage } from '../utils/errors';
 import './SlideViewerPage.css';
 
@@ -185,34 +176,6 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
     });
   }, []);
 
-  // One annotator's changes singled out on the image (administrators, from the agreement details): their layer and
-  // the model's stay, the other annotators' go, and the cells they changed are outlined by what changed.
-  const [trace, setTrace] = useState<{ username: string; changes: Record<ChangeKind, string[]> } | null>(null);
-  const highlights = useMemo(() => {
-    const colors = new Map<string, string>();
-    if (trace) {
-      (Object.keys(CHANGE_COLORS) as ChangeKind[]).forEach((kind) =>
-        trace.changes[kind].forEach((id) => colors.set(id, CHANGE_COLORS[kind] ?? '')),
-      );
-    }
-    return colors;
-  }, [trace]);
-  const showTrace = (annotator: AnnotatorFigures) => {
-    const others = listLayers(annotations ?? [])
-      .filter((layer) => layer.kind === 'author' && layer.key !== authorLayer(annotator.username))
-      .map((layer) => layer.key);
-    setHiddenLayers(new Set(others));
-    // The changes are read against the model's cells, so all of them are drawn.
-    setModelFilter('all');
-    setTrace({ username: annotator.username, changes: annotator.changes });
-  };
-  const endTrace = () => {
-    setHiddenLayers(new Set());
-    setModelFilter('remaining');
-    setTrace(null);
-  };
-  const [agreementOpen, setAgreementOpen] = useState(false);
-
   const activeClassId = activeCellTypeId !== null ? String(activeCellTypeId) : null;
   const [panelOpen, setPanelOpen] = useState(true);
   const [statusSlot, setStatusSlot] = useState<HTMLDivElement | null>(null);
@@ -248,24 +211,6 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                     query={catalogQuery(catalog, resolveFolderId(catalog, hotspot.folder_id))}
                     search={search}
                   />
-                  {/* Switching the mode keeps this hotspot open; the queue (prev/next) follows the new mode. */}
-                  <div className="viewer-header__mode">
-                    <HotspotModeSwitch
-                      mode={catalog.mode}
-                      hidden={['browse']}
-                      onChange={(next) =>
-                        navigate(
-                          {
-                            pathname: `/hotspots/${hotspot.id}`,
-                            search: new URLSearchParams(
-                              writeCatalogParams({ ...catalogDefaults(next), folder: catalog.folder }),
-                            ).toString(),
-                          },
-                          { replace: true },
-                        )
-                      }
-                    />
-                  </div>
                   {/* Reannotating fixes what the expert found, so the verdict stays in sight. */}
                   {catalog.mode === 'reannotate' && hotspot.tags.length > 0 && (
                     <span className="viewer-header__verdict">
@@ -284,7 +229,6 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                   hiddenClassIds={hiddenClassIds}
                   hiddenLayers={hiddenLayerParts}
                   layerOpacity={layerOpacity}
-                  highlights={highlights}
                   editableBy={layered ? username : undefined}
                   onCellDrawn={showClass}
                   onShapeDrawn={showDrawnLayer}
@@ -324,27 +268,6 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
               {panelOpen && (
                 <aside className="side-pane" aria-label="Panel hotspotu">
                   {errorMessage && <div className="viewer-panel__error">{errorMessage}</div>}
-                  {trace && (
-                    <div className="agreement-trace">
-                      <span>
-                        Zmiany: <strong>{trace.username}</strong>
-                      </span>
-                      <span className="agreement-trace__legend">
-                        {(Object.keys(CHANGE_COLORS) as ChangeKind[]).map((kind) => (
-                          <span
-                            key={kind}
-                            className="agreement-trace__key"
-                            style={{ '--key-color': CHANGE_COLORS[kind] } as CSSProperties}
-                          >
-                            {CHANGE_LABELS[kind]} ({trace.changes[kind].length})
-                          </span>
-                        ))}
-                      </span>
-                      <Button variant="ghost" onClick={endTrace}>
-                        Zakończ podgląd zmian
-                      </Button>
-                    </div>
-                  )}
                   <div className="viewer-panel__annotations">
                     <AnnotationFilters
                       owner={owner}
@@ -361,16 +284,11 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
                     />
                   </div>
                   <div className="viewer-panel__dock">
-                    {layered && catalog.mode !== 'assess' && (
-                      <SidebarSection title="Zgodność anotatorów" collapsible>
-                        <AgreementSummary hotspot={hotspot} onOpenDetails={() => setAgreementOpen(true)} />
-                      </SidebarSection>
-                    )}
                     <BottomSections
                       sections={[
                         {
                           title: 'Ocena eksperta',
-                          defaultOpen: catalog.mode !== 'browse',
+                          defaultOpen: true,
                           content: (
                             <>
                               {hotspot.reannotated_at && catalog.mode !== 'reannotate' && (
@@ -408,15 +326,6 @@ function HotspotWorkspace({ hotspot, cellTypes }: HotspotWorkspaceProps) {
               )}
             </div>
             <div ref={setStatusSlot} className="viewer-screen__status" />
-            {layered && (
-              <AgreementDialog
-                hotspotId={hotspot.id}
-                hotspotName={hotspot.name}
-                open={agreementOpen}
-                onClose={() => setAgreementOpen(false)}
-                onShowTrace={isManager(user) ? showTrace : undefined}
-              />
-            )}
           </div>
         </HintSlotContext.Provider>
       </StatusSlotContext.Provider>

@@ -1,5 +1,5 @@
 import { CircleHelp } from 'lucide-react';
-import { useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import Button from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
 import { ACCEPTED_UPLOAD_EXTENSIONS } from '../slideFileRules';
@@ -18,7 +18,9 @@ export default function WsiUploader({ onFiles, organizationPicker, pickerRef }: 
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [queueNotice, setQueueNotice] = useState<string | null>(null);
-  if (pickerRef) pickerRef.current = () => inputRef.current?.click();
+  useEffect(() => {
+    if (pickerRef) pickerRef.current = () => inputRef.current?.click();
+  }, [pickerRef]);
 
   const enqueue = (files: Iterable<File>) => {
     const skipped = onFiles(files);

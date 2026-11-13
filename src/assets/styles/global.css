@@ -294,6 +294,16 @@ progress::-moz-progress-bar {
   overflow-wrap: anywhere;
 }
 
+/* The main button of a preview pane with a "⋯" menu beside it. */
+.preview-pane__bar {
+  display: flex;
+  gap: 6px;
+}
+
+.preview-pane__bar > .btn {
+  flex: 1;
+}
+
 .preview-pane__actions {
   display: flex;
   flex-direction: column;
@@ -468,4 +478,39 @@ progress::-moz-progress-bar {
   font-weight: 500;
   letter-spacing: 0.02em;
   writing-mode: vertical-rl;
+}
+
+/* Search box of a list page toolbar. */
+.search-field {
+  display: flex;
+  flex: 1 1 140px;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  max-width: 240px;
+  height: var(--control-md);
+  padding: 0 10px;
+  border: var(--border-width) solid var(--c-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--c-input);
+  color: var(--c-text-3);
+}
+
+.search-field:focus-within {
+  border-color: var(--c-focus-outline);
+  box-shadow: 0 0 0 3px var(--c-focus-ring);
+}
+
+.search-field input[type='search'] {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.search-field input[type='search']:focus {
+  box-shadow: none;
 }

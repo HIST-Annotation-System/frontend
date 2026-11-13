@@ -38,8 +38,6 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
   const otherCustom = customTags(tags).filter((tag) => !ownIds.has(tag.id));
   const weightMax = maxCustomWeight(tags);
   const isTagged = TAG_DIMENSIONS.every(({ value }) => hotspot.tags.some((tag) => tag.dimension === value));
-  // Browsing only looks: the verdict and tags change while assessing and reannotating.
-  const locked = mode === 'browse';
 
   useEffect(() => {
     if (!isMenuOpen) return undefined;
@@ -77,7 +75,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
   };
 
   return (
-    <div className="hotspot-tag-panel" data-locked={locked || undefined}>
+    <div className="hotspot-tag-panel">
       <div className="hotspot-verdict">
         {TAG_DIMENSIONS.map((dimension) => {
           const options = dimensionTags(tags, dimension.value);
@@ -96,7 +94,6 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
                     type="button"
                     className="hotspot-verdict__option"
                     aria-pressed={ownIds.has(tag.id)}
-                    disabled={locked}
                     title={ownIds.has(tag.id) ? 'Kliknij ponownie, aby usunąć ocenę' : `Waga: ${tag.weight}`}
                     onClick={() => void (ownIds.has(tag.id) ? remove(tag.id) : add(tag.id))}
                   >
@@ -123,7 +120,7 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
                 className="hotspot-tag-panel__chip-remove"
                 title="Usuń tag"
                 aria-label={`Usuń tag ${tag.name}`}
-                disabled={isTagging || locked}
+                disabled={isTagging}
                 onClick={() => void remove(tag.id)}
               >
                 <X size={12} />
@@ -136,8 +133,6 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
               className="hotspot-tag-panel__add"
               aria-expanded={isMenuOpen}
               aria-haspopup="dialog"
-              disabled={locked}
-              title={locked ? 'Tagi zmienia się w trybach Oceniaj i Reannotuj' : undefined}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               Dodaj tag

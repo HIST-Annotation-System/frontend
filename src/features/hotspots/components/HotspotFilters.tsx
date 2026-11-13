@@ -18,7 +18,7 @@ export default function HotspotFilters({ mode, status, tagIds, onChange }: Hotsp
   return (
     <div className="hotspot-filters">
       <select
-        className="hotspot-sort__select"
+        className={`hotspot-sort__select${status ? ' hotspot-sort__select--active' : ''}`}
         aria-label="Status oceny"
         value={status ?? ''}
         onChange={(event) => onChange({ status: (event.target.value || null) as HotspotStatus | null })}

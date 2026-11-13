@@ -4,15 +4,17 @@ import { ALL_FOLDERS, hotspotStatus, readCatalogParams, resolveFolderId, writeCa
 const read = (search: string) => readCatalogParams(new URLSearchParams(search));
 
 describe('hotspot catalog params', () => {
-  it('falls back to the browse defaults', () => {
-    expect(read('')).toEqual({
-      mode: 'browse',
+  it('falls back to assessing, also for the removed browse mode', () => {
+    const assessing = {
+      mode: 'assess',
       folder: null,
       sort: 'created_at',
       order: 'desc',
-      status: null,
+      status: 'untagged',
       tagIds: [],
-    });
+    };
+    expect(read('')).toEqual(assessing);
+    expect(read('mode=browse')).toEqual(assessing);
   });
 
   it('presets status and sort per mode', () => {

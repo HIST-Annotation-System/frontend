@@ -321,16 +321,21 @@
 /* Mouse shortcut over the thumbnail of the hovered or selected tile. */
 .slide-tile__open {
   position: absolute;
-  inset: auto var(--space-2) var(--space-2) auto;
+  inset: var(--space-2) var(--space-2) auto auto;
   padding: 3px 10px;
   border-radius: var(--radius-sm);
-  background: var(--c-text);
-  color: var(--c-surface);
+  background: var(--c-primary);
+  color: var(--c-on-primary);
   font-size: 12px;
   font-weight: 500;
   text-decoration: none;
   opacity: 0;
   transition: opacity var(--motion-fast) var(--easing);
+}
+
+.slide-tile .slide-tile__open:hover {
+  background: var(--c-primary-hover);
+  color: var(--c-on-primary);
 }
 
 .slide-tile:hover .slide-tile__open,
@@ -371,60 +376,4 @@
   .slide-tile__line {
     animation: none;
   }
-}
-
-/* Preview panel actions: the main one, and a menu for rename and delete. */
-.slide-preview__actions {
-  display: flex;
-  gap: 6px;
-}
-
-.slide-preview__actions > .btn {
-  flex: 1;
-}
-
-.slide-preview__menu {
-  position: relative;
-}
-
-.slide-preview__menu-list {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  min-width: 170px;
-  padding: var(--space-1);
-  border: var(--border);
-  border-radius: var(--radius-md);
-  background: var(--c-surface);
-  box-shadow: var(--shadow-sm);
-}
-
-.slide-preview__menu-list button {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 32px;
-  padding: 0 10px;
-  border: 0;
-  border-radius: var(--radius-xs);
-  background: transparent;
-  color: var(--c-text);
-  text-align: left;
-  cursor: pointer;
-}
-
-.slide-preview__menu-list button:hover:not(:disabled) {
-  background: var(--c-hover);
-}
-
-.slide-preview__menu-list button:disabled {
-  color: var(--c-text-3);
-  cursor: default;
-}
-
-.slide-preview__menu-list .slide-preview__menu-danger {
-  color: var(--c-danger-text);
 }

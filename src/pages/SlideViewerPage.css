@@ -112,12 +112,6 @@
   text-overflow: ellipsis;
 }
 
-.viewer-header__mode {
-  flex: none;
-  color: var(--c-text-2);
-  font-size: 12px;
-}
-
 /* Reannotation: the expert's verdict beside the mode, on a tinted strip; with many tags the last ones are cut off,
    so the panel toggle stays on screen. */
 .viewer-header__verdict {
@@ -231,13 +225,6 @@
   background: var(--c-scrim);
 }
 
-
-/* The mode switch in the hotspot header: the catalog's switch, compact. */
-.viewer-header__mode .segmented__option {
-  height: 20px;
-  padding: 0 var(--space-2);
-  font-size: 11px;
-}
 
 /* The queue arrows and position, compact to fit the slim viewer header. */
 .viewer-header .hotspot-queue__step {

@@ -1,6 +1,7 @@
-import { Check, FolderInput, PanelRightClose, Trash2, X } from 'lucide-react';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Check, FolderInput, Pencil, Trash2, X } from 'lucide-react';
+import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
+import ActionMenu from '../../../components/ui/ActionMenu';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import MoreDetails from '../../../components/ui/MoreDetails';
@@ -21,26 +22,10 @@ import { TagPill, VerdictMark } from './TagMarks';
 import './Hotspots.css';
 import { sameOrganizationFolders } from '../utils/folderOrganization';
 
-function PaneStrip({ onCollapse }: { onCollapse: () => void }) {
-  return (
-    <header className="pane-strip">
-      <span>Szczegóły</span>
-      <Button
-        variant="ghost"
-        icon={<PanelRightClose size={16} />}
-        title="Zwiń panel"
-        aria-label="Zwiń panel szczegółów"
-        onClick={onCollapse}
-      />
-    </header>
-  );
-}
-
 /** The details panel with no hotspot to show (the list is loading or empty). */
-export function HotspotDetailsPlaceholder({ text, onCollapse }: { text: string; onCollapse: () => void }) {
+export function HotspotDetailsPlaceholder({ text }: { text: string }) {
   return (
     <aside className="side-pane hotspot-details" aria-label="Szczegóły hotspotu">
-      <PaneStrip onCollapse={onCollapse} />
       <p className="hotspot-details__empty">{text}</p>
     </aside>
   );
@@ -51,30 +36,15 @@ interface HotspotDetailsProps {
   folders: HotspotFolder[];
   /** The catalog's URL search, handed to the viewer so it can walk the same list. */
   linkSearch: string;
-  /** Rename, move and delete belong to browsing, as in the table. */
-  manage: boolean;
-  /** Folds the panel away (it stays docked beside the catalog otherwise). */
-  onCollapse: () => void;
 }
 
 /** Everything known about one hotspot, beside the catalog list. */
-export default function HotspotDetails({ hotspot, folders, linkSearch, manage, onCollapse }: HotspotDetailsProps) {
+export default function HotspotDetails({ hotspot, folders, linkSearch }: HotspotDetailsProps) {
   const { updateHotspot, isUpdating, deleteHotspot, isDeleting } = useHotspotMutations();
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   /** The folder picked in the move form; null while the form is closed. */
   const [moveTarget, setMoveTarget] = useState<string | null>(null);
-  // Closing the move form puts focus back on the button that opened it (it would fall to the page otherwise).
-  const moveButton = useRef<HTMLButtonElement>(null);
-  const refocusMove = useRef(false);
-  const closeMove = () => {
-    refocusMove.current = true;
-    setMoveTarget(null);
-  };
-  useEffect(() => {
-    if (moveTarget !== null || !refocusMove.current) return;
-    refocusMove.current = false;
-    moveButton.current?.focus();
-  }, [moveTarget]);
+  const closeMove = () => setMoveTarget(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const link = `/hotspots/${hotspot.id}${linkSearch}`;
@@ -118,8 +88,6 @@ export default function HotspotDetails({ hotspot, folders, linkSearch, manage, o
 
   return (
     <aside className="side-pane hotspot-details" aria-label={`Szczegóły hotspotu ${hotspot.name}`}>
-      <PaneStrip onCollapse={onCollapse} />
-
       <div className="preview-pane">
         <Link to={link} className="preview-pane__image preview-pane__image--square" title="Otwórz do anotacji">
           <img src={getHotspotThumbnailUrl(hotspot.id)} alt="" />
@@ -143,11 +111,7 @@ export default function HotspotDetails({ hotspot, folders, linkSearch, manage, o
             <Button variant="ghost" icon={<X size={14} />} aria-label="Anuluj zmianę nazwy" onClick={() => setNameDraft(null)} />
           </span>
         ) : (
-          <h2 className="preview-pane__title">
-            <Link to={link} title="Otwórz do anotacji">
-              {hotspot.name}
-            </Link>
-          </h2>
+          <h2 className="preview-pane__title">{hotspot.name}</h2>
         )}
         {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
 
@@ -171,25 +135,25 @@ export default function HotspotDetails({ hotspot, folders, linkSearch, manage, o
           <dd className="hotspot-details__pills">
             {customTags.length === 0 ? '—' : customTags.map((tag) => <TagPill key={tag.id} tag={tag} />)}
           </dd>
-          <dt>Wynik</dt>
-          <dd>{hotspot.score}</dd>
           <dt>Stan</dt>
           <dd>{status?.label ?? '—'}</dd>
-          {hotspot.assessed_by && (
-            <>
-              <dt>Ocenił</dt>
-              <dd>{hotspot.assessed_by}</dd>
-            </>
-          )}
-          <dt>Anotacje</dt>
-          <dd>{hotspot.annotation_count}</dd>
-          <dt>Model</dt>
-          <dd title={segmentationLabel(hotspot)}>{segmentationLabel(hotspot)}</dd>
-          <dt>Dodano</dt>
-          <dd>{formatDateTime(hotspot.created_at)}</dd>
         </dl>
         <MoreDetails>
           <dl className="kv">
+            <dt>Wynik</dt>
+            <dd>{hotspot.score}</dd>
+            {hotspot.assessed_by && (
+              <>
+                <dt>Ocenił</dt>
+                <dd>{hotspot.assessed_by}</dd>
+              </>
+            )}
+            <dt>Anotacje</dt>
+            <dd>{hotspot.annotation_count}</dd>
+            <dt>Model</dt>
+            <dd title={segmentationLabel(hotspot)}>{segmentationLabel(hotspot)}</dd>
+            <dt>Dodano</dt>
+            <dd>{formatDateTime(hotspot.created_at)}</dd>
             <dt>Rozmiar</dt>
             <dd>
               {formatDimensions(hotspot.image_width, hotspot.image_height)}
@@ -207,64 +171,66 @@ export default function HotspotDetails({ hotspot, folders, linkSearch, manage, o
           </dl>
         </MoreDetails>
 
-        <div className="preview-pane__actions">
+        <div className="preview-pane__bar">
           <Link to={link} className="btn btn--primary">
             Otwórz
           </Link>
-          {manage && (
-            <>
-              <Button onClick={() => setNameDraft(hotspot.name)} disabled={nameDraft !== null}>
-                Zmień nazwę
-              </Button>
-              {/* Moving is an explicit step: pick the folder, then confirm, so a stray select change moves nothing. */}
-              {moveTarget === null ? (
-                <Button ref={moveButton} icon={<FolderInput size={16} />} onClick={() => setMoveTarget(hotspot.folder_id)}>
-                  Przenieś do folderu…
-                </Button>
-              ) : (
-                <div className="hotspot-details__move">
-                  <label className="hotspot-details__move-label" htmlFor="hotspot-move-target">
-                    Przenieś do folderu
-                  </label>
-                  <select
-                    id="hotspot-move-target"
-                    autoFocus
-                    className="hotspot-sort__select"
-                    value={moveTarget}
-                    disabled={isUpdating}
-                    onChange={(event) => setMoveTarget(event.target.value)}
-                  >
-                    {sameOrganizationFolders(folders, hotspot.folder_id).map((folder) => (
-                      <option key={folder.id} value={folder.id}>
-                        {folder.id === hotspot.folder_id ? `${folder.name} (obecny)` : folder.name}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="hotspot-details__move-buttons">
-                    <Button onClick={closeMove} disabled={isUpdating}>
-                      Anuluj
-                    </Button>
-                    <Button
-                      variant="primary"
-                      disabled={isUpdating || moveTarget === hotspot.folder_id}
-                      onClick={() => void move(moveTarget)}
-                    >
-                      Przenieś
-                    </Button>
-                  </span>
-                </div>
-              )}
-              <Button
-                variant="danger-outline"
-                icon={<Trash2 size={16} />}
-                aria-label={`Usuń hotspot ${hotspot.name}`}
-                onClick={() => setIsConfirmingDelete(true)}
-              >
-                Usuń hotspot
-              </Button>
-            </>
-          )}
+          <ActionMenu
+            items={[
+              {
+                label: 'Zmień nazwę',
+                icon: <Pencil size={14} aria-hidden="true" />,
+                disabled: nameDraft !== null,
+                onSelect: () => setNameDraft(hotspot.name),
+              },
+              {
+                label: 'Przenieś do folderu…',
+                icon: <FolderInput size={14} aria-hidden="true" />,
+                onSelect: () => setMoveTarget(hotspot.folder_id),
+              },
+              {
+                label: 'Usuń hotspot',
+                icon: <Trash2 size={14} aria-hidden="true" />,
+                danger: true,
+                onSelect: () => setIsConfirmingDelete(true),
+              },
+            ]}
+          />
         </div>
+        {/* Moving is an explicit step: pick the folder, then confirm, so a stray select change moves nothing. */}
+        {moveTarget !== null && (
+          <div className="hotspot-details__move">
+            <label className="hotspot-details__move-label" htmlFor="hotspot-move-target">
+              Przenieś do folderu
+            </label>
+            <select
+              id="hotspot-move-target"
+              autoFocus
+              className="hotspot-sort__select"
+              value={moveTarget}
+              disabled={isUpdating}
+              onChange={(event) => setMoveTarget(event.target.value)}
+            >
+              {sameOrganizationFolders(folders, hotspot.folder_id).map((folder) => (
+                <option key={folder.id} value={folder.id}>
+                  {folder.id === hotspot.folder_id ? `${folder.name} (obecny)` : folder.name}
+                </option>
+              ))}
+            </select>
+            <span className="hotspot-details__move-buttons">
+              <Button onClick={closeMove} disabled={isUpdating}>
+                Anuluj
+              </Button>
+              <Button
+                variant="primary"
+                disabled={isUpdating || moveTarget === hotspot.folder_id}
+                onClick={() => void move(moveTarget)}
+              >
+                Przenieś
+              </Button>
+            </span>
+          </div>
+        )}
       </div>
 
       <HotspotDeleteModal

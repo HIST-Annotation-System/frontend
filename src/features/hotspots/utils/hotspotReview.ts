@@ -1,8 +1,8 @@
 import type { Hotspot, HotspotListQuery, HotspotSort, HotspotStatus, SortOrder } from '../../../types/hotspot';
 import { sortOptionsFor } from './hotspotSort';
 
-/** Browse the catalog, assess (tag) untagged hotspots, or reannotate tagged ones. */
-export type HotspotMode = 'browse' | 'assess' | 'reannotate';
+/** Assess (tag) untagged hotspots, or reannotate tagged ones. */
+export type HotspotMode = 'assess' | 'reannotate';
 
 /** The `folder` URL value that lists every folder. */
 export const ALL_FOLDERS = 'all';
@@ -26,13 +26,11 @@ interface ModeDefaults {
 
 /** A mode only presets the catalog: every sort and filter stays available. */
 const MODE_DEFAULTS: Record<HotspotMode, ModeDefaults> = {
-  browse: { sort: 'created_at', order: 'desc', status: null, allFolders: true },
   assess: { sort: 'created_at', order: 'desc', status: 'untagged', allFolders: true },
   reannotate: { sort: 'score', order: 'desc', status: 'to_reannotate', allFolders: true },
 };
 
 export const HOTSPOT_MODES: { value: HotspotMode; label: string; description: string }[] = [
-  { value: 'browse', label: 'Przeglądaj', description: 'Cały katalog: wgrywanie, zmiana nazw, przenoszenie.' },
   { value: 'assess', label: 'Oceniaj', description: 'Nieocenione hotspoty: ustaw priorytet, poprawność i tagi.' },
   {
     value: 'reannotate',
@@ -60,7 +58,7 @@ export interface CatalogParams {
 }
 
 const parseMode = (value: string | null): HotspotMode =>
-  HOTSPOT_MODES.find((option) => option.value === value)?.value ?? 'browse';
+  HOTSPOT_MODES.find((option) => option.value === value)?.value ?? 'assess';
 
 const parseStatus = (value: string | null, fallback: HotspotStatus | null): HotspotStatus | null => {
   if (value === ANY_STATUS) return null;
@@ -114,7 +112,7 @@ export function catalogDefaults(mode: HotspotMode): CatalogParams {
 export function writeCatalogParams({ mode, folder, sort, order, status, tagIds }: CatalogParams): Record<string, string> {
   const defaults = MODE_DEFAULTS[mode];
   const params: Record<string, string> = {};
-  if (mode !== 'browse') params[MODE_PARAM] = mode;
+  if (mode !== 'assess') params[MODE_PARAM] = mode;
   if (folder !== null) params[FOLDER_PARAM] = folder;
   if (sort !== defaults.sort) params[SORT_PARAM] = sort;
   if (order !== defaults.order) params[ORDER_PARAM] = order;

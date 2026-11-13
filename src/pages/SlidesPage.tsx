@@ -1,6 +1,7 @@
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useSearchShortcut } from '../hooks/useSearchShortcut';
 import { LayoutGrid, List, Microscope, SearchX, Upload } from 'lucide-react';
-import { useEffect, useRef, useState, type DragEvent } from 'react';
+import { useRef, useState, type DragEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import ErrorMessage from '../components/ui/ErrorMessage';
@@ -109,17 +110,7 @@ export default function SlidesPage() {
   const [view, setView] = useState<LibraryView>(readView);
   const [sort, setSortState] = useState<SlideSort>(readSort);
 
-  // "/" jumps to the search box, like on most sites with a list.
-  useEffect(() => {
-    const focusSearch = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement;
-      if (event.key !== '/' || target.closest('input, textarea, select, [contenteditable]')) return;
-      event.preventDefault();
-      searchInput.current?.focus();
-    };
-    document.addEventListener('keydown', focusSearch);
-    return () => document.removeEventListener('keydown', focusSearch);
-  }, []);
+  useSearchShortcut(searchInput);
 
   const needle = query.trim().toLowerCase();
   const matching = (data ?? []).filter(
@@ -186,7 +177,7 @@ export default function SlidesPage() {
               <span className="slides-page__count">{filtered ? `${slides.length} z ${data.length}` : data.length}</span>
             )}
           </h1>
-          <label className="slides-page__search">
+          <label className="search-field">
             <input
               ref={searchInput}
               type="search"

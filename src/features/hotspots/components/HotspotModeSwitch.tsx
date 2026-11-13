@@ -1,21 +1,19 @@
-import { ClipboardCheck, Eye, PenLine } from 'lucide-react';
+import { ClipboardCheck, PenLine } from 'lucide-react';
 import { HOTSPOT_MODES, type HotspotMode } from '../utils/hotspotReview';
 import './Hotspots.css';
 
-const MODE_ICONS: Record<HotspotMode, typeof Eye> = { browse: Eye, assess: ClipboardCheck, reannotate: PenLine };
+const MODE_ICONS: Record<HotspotMode, typeof PenLine> = { assess: ClipboardCheck, reannotate: PenLine };
 
 interface HotspotModeSwitchProps {
   mode: HotspotMode;
   onChange: (mode: HotspotMode) => void;
-  /** Modes left out of the switch (the detail view has no use for browsing). */
-  hidden?: HotspotMode[];
 }
 
-/** Browse the catalog, assess untagged hotspots, or reannotate tagged ones. */
-export default function HotspotModeSwitch({ mode, onChange, hidden = [] }: HotspotModeSwitchProps) {
+/** Assess untagged hotspots, or reannotate tagged ones. */
+export default function HotspotModeSwitch({ mode, onChange }: HotspotModeSwitchProps) {
   return (
     <div className="segmented" role="group" aria-label="Tryb pracy">
-      {HOTSPOT_MODES.filter((option) => !hidden.includes(option.value)).map((option) => {
+      {HOTSPOT_MODES.map((option) => {
         const active = option.value === mode;
         const Icon = MODE_ICONS[option.value];
         return (

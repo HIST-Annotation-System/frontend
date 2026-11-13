@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDownWideNarrow, ArrowUpNarrowWide } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import type { HotspotSort, SortOrder } from '../../../types/hotspot';
 import type { HotspotSortOption } from '../utils/hotspotSort';
@@ -15,10 +15,11 @@ interface HotspotSortControlProps {
 /** Orders the catalog by date, an image feature or the tags; the arrow flips descending (down) and ascending (up). */
 export default function HotspotSortControl({ options, sort, order, onChange }: HotspotSortControlProps) {
   const selected = options.find((option) => option.value === sort);
+  const dates = sort === 'created_at';
+  const orderLabel = (order === 'desc' ? (dates ? 'Najnowsze' : 'Największe') : dates ? 'Najstarsze' : 'Najmniejsze') + ' najpierw';
 
   return (
     <div className="hotspot-sort">
-      <span className="hotspot-sort__label">Sortuj według</span>
       <select
         className="hotspot-sort__select"
         aria-label="Sortuj według"
@@ -33,9 +34,9 @@ export default function HotspotSortControl({ options, sort, order, onChange }: H
         ))}
       </select>
       <Button
-        icon={order === 'desc' ? <ArrowDown size={16} /> : <ArrowUp size={16} />}
-        title={order === 'desc' ? 'Malejąco' : 'Rosnąco'}
-        aria-label={`Kierunek sortowania: ${order === 'desc' ? 'malejąco' : 'rosnąco'}`}
+        icon={order === 'desc' ? <ArrowDownWideNarrow size={16} /> : <ArrowUpNarrowWide size={16} />}
+        title={`${orderLabel} (kliknij, aby odwrócić)`}
+        aria-label={`Kierunek sortowania: ${orderLabel}`}
         onClick={() => onChange(sort, order === 'desc' ? 'asc' : 'desc')}
       />
     </div>

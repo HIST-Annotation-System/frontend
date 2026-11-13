@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getHotspotThumbnailUrl } from '../../../services/hotspotsApi';
 import type { Hotspot } from '../../../types/hotspot';
 import type { HotspotMode } from '../utils/hotspotReview';
+import { formatDateTime, formatRelativeDate } from '../../../utils/format';
 import { isRowControl } from '../utils/rowClick';
 import ReannotationBadge from '../../reannotation/components/ReannotationBadge';
 import { useTags } from '../hooks/useTags';
@@ -61,6 +62,17 @@ export default function HotspotCard({
     >
       <div className="hotspot-card__thumb">
         <img src={getHotspotThumbnailUrl(hotspot.id)} alt="" loading="lazy" />
+        <input
+          type="checkbox"
+          className="hotspot-card__check"
+          checked={selected}
+          aria-label={`Zaznacz hotspot ${hotspot.name}`}
+          onChange={onToggleSelect}
+        />
+        {/* A mouse shortcut; the name below is the link for keyboards and screen readers. */}
+        <Link to={link} className="hotspot-card__open" tabIndex={-1} aria-hidden="true">
+          {reannotating ? 'Reannotuj' : 'Oceń'}
+        </Link>
         {/* On the thumbnail, so it never competes with the tags for room. */}
         {hotspot.reannotation.layered ? (
           mode !== 'assess' && (
@@ -73,15 +85,12 @@ export default function HotspotCard({
         )}
       </div>
       <div className="hotspot-card__title">
-        <input
-          type="checkbox"
-          checked={selected}
-          aria-label={`Zaznacz hotspot ${hotspot.name}`}
-          onChange={onToggleSelect}
-        />
         <Link to={link} className="hotspot-card__name" title={`${reannotating ? 'Reannotuj' : 'Oceń'}: ${hotspot.name}`}>
           {hotspot.name}
         </Link>
+      </div>
+      <div className="hotspot-card__meta" title={formatDateTime(hotspot.created_at)}>
+        {formatRelativeDate(hotspot.created_at)}
       </div>
       {/* Two lines of fixed height, filled or not, so every card in the grid is as tall as the others. */}
       {tagLines && (

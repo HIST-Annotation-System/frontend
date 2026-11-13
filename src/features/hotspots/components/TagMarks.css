@@ -1,4 +1,4 @@
-/* Tag marks: priority as signal bars, accuracy as a tick or cross, custom tags as outlined pills. */
+/* Tag marks: priority as three pips, accuracy as a circled tick or cross, custom tags as outlined pills. */
 .tag-marks {
   display: inline-flex;
   flex-wrap: wrap;
@@ -16,35 +16,20 @@
   line-height: 18px;
 }
 
-/* Priority as signal bars: 3 lit for high, 2 for medium, 1 for low; the unlit ones stay faint. */
-.priority-bars {
+.priority-pips {
   display: inline-flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 2px;
 }
 
-.priority-bars__bar {
-  width: 3px;
-  border-radius: 1px;
+.priority-pips__pip {
+  box-sizing: border-box;
+  border: 1.25px solid currentColor;
+  border-radius: 50%;
+}
+
+.priority-pips__pip--on {
   background: currentColor;
-  opacity: 0.22;
-}
-
-.priority-bars__bar--on {
-  opacity: 1;
-}
-
-/* High contrast mode drops backgrounds: keep the lit bars in the text colour and the unlit ones grey. */
-@media (forced-colors: active) {
-  .priority-bars__bar {
-    background: GrayText;
-    opacity: 1;
-    forced-color-adjust: none;
-  }
-
-  .priority-bars__bar--on {
-    background: CanvasText;
-  }
 }
 
 .tag-mark__label {
@@ -52,43 +37,20 @@
 }
 
 .tag-mark--correct {
-  --tag-mark: #23845f;
+  --tag-mark: var(--c-success-text);
 }
 
-.tag-mark--wrong {
-  --tag-mark: #d0660a;
-}
-
+.tag-mark--wrong,
 .tag-mark--priority-high {
-  --tag-mark: #cf3a24;
+  --tag-mark: var(--c-danger-text);
 }
 
 .tag-mark--priority-medium {
-  --tag-mark: #d0880a;
+  --tag-mark: var(--c-text-2);
 }
 
 .tag-mark--priority-low {
-  --tag-mark: #2a6fdb;
-}
-
-:root[data-theme='dark'] .tag-mark--correct {
-  --tag-mark: #6fd3a8;
-}
-
-:root[data-theme='dark'] .tag-mark--wrong {
-  --tag-mark: #f09a4f;
-}
-
-:root[data-theme='dark'] .tag-mark--priority-high {
-  --tag-mark: #f07a66;
-}
-
-:root[data-theme='dark'] .tag-mark--priority-medium {
-  --tag-mark: #f0bf5a;
-}
-
-:root[data-theme='dark'] .tag-mark--priority-low {
-  --tag-mark: #7aa7f2;
+  --tag-mark: var(--c-text-3);
 }
 
 /* Custom tags: outlined in the text colour (white on the dark theme), no fill. */

@@ -60,11 +60,9 @@ const TAG_SORT_OPTIONS: HotspotSortOption[] = [
   },
 ];
 
-const HOTSPOT_SORT_OPTIONS: HotspotSortOption[] = [CREATED_AT_OPTION, ...HOTSPOT_FEATURES, ...TAG_SORT_OPTIONS];
 
 /** Assessing picks among untagged hotspots, so the tag-based orders make no sense there. */
 export const sortOptionsFor = (mode: HotspotMode): HotspotSortOption[] => {
   if (mode === 'assess') return [CREATED_AT_OPTION, ...HOTSPOT_FEATURES];
-  if (mode === 'reannotate') return [...TAG_SORT_OPTIONS, CREATED_AT_OPTION, ...HOTSPOT_FEATURES];
-  return HOTSPOT_SORT_OPTIONS;
+  return [...TAG_SORT_OPTIONS, CREATED_AT_OPTION, ...HOTSPOT_FEATURES];
 };

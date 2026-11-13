@@ -35,6 +35,8 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
     ? (organizations.find((organization) => organization.id === chosenOrganizationId) ?? organizations[0]).id
     : undefined;
   const organizationName = (id: number) => organizations.find((organization) => organization.id === id)?.name ?? '';
+  // The organization headings only help when folders of several organizations are listed.
+  const grouped = needsChoice && new Set(folders.map((folder) => folder.organization_id)).size > 1;
   const listed = needsChoice
     ? [...folders].sort((a, b) => organizationName(a.organization_id).localeCompare(organizationName(b.organization_id)))
     : folders;
@@ -107,7 +109,7 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
             </li>
             {listed.map((folder, index) => {
               const selected = folder.id === selectedId;
-              const startsGroup = needsChoice && listed[index - 1]?.organization_id !== folder.organization_id;
+              const startsGroup = grouped && listed[index - 1]?.organization_id !== folder.organization_id;
               return (
                 <Fragment key={folder.id}>
                   {startsGroup && (

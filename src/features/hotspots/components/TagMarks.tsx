@@ -1,4 +1,4 @@
-import { Check, X } from 'lucide-react';
+import { CircleCheck, CircleX } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Tag } from '../../../types/tag';
 import { useTags } from '../hooks/useTags';
@@ -11,17 +11,18 @@ import {
 } from '../utils/hotspotTags';
 import './TagMarks.css';
 
-const PRIORITY_BARS: Record<PriorityLevel, number> = { high: 3, medium: 2, low: 1 };
+const PRIORITY_PIPS: Record<PriorityLevel, number> = { high: 3, medium: 2, low: 1 };
 
-/** A priority as signal bars (like a phone's signal strength): three for high, two for medium, one for low. */
-function PriorityBars({ level, size }: { level: PriorityLevel; size: number }) {
+/** A priority as three pips, like a rating: all filled for high, two for medium, one for low. */
+function PriorityPips({ level, size }: { level: PriorityLevel; size: number }) {
+  const pip = Math.round(size / 3);
   return (
-    <span className="priority-bars" style={{ height: size }} aria-hidden="true">
-      {[1, 2, 3].map((bar) => (
+    <span className="priority-pips" aria-hidden="true">
+      {[1, 2, 3].map((index) => (
         <span
-          key={bar}
-          className={`priority-bars__bar${bar <= PRIORITY_BARS[level] ? ' priority-bars__bar--on' : ''}`}
-          style={{ height: `${(bar / 3) * 100}%` }}
+          key={index}
+          className={`priority-pips__pip${index <= PRIORITY_PIPS[level] ? ' priority-pips__pip--on' : ''}`}
+          style={{ width: pip, height: pip }}
         />
       ))}
     </span>
@@ -38,17 +39,17 @@ interface VerdictMarkProps {
   size?: number;
 }
 
-/** A priority as signal bars (high, medium, low) or an accuracy as a tick (correct) or a cross (wrong). */
+/** A priority as three pips (high, medium, low) or an accuracy as a circled tick (correct) or cross (wrong). */
 export function VerdictMark({ tag, allTags, labelled = false, size = 16 }: VerdictMarkProps) {
   const wrong = isWrongAccuracy(tag);
   const level = priorityLevel(tag, allTags);
   const accuracy = tag.dimension === 'accuracy';
   const variant = accuracy ? (wrong ? 'wrong' : 'correct') : `priority-${level}`;
-  const Icon = wrong ? X : Check;
+  const Icon = wrong ? CircleX : CircleCheck;
 
   return (
     <span className={`tag-mark tag-mark--${variant}`} title={labelled ? undefined : tagLabel(tag)}>
-      {accuracy ? <Icon size={size} strokeWidth={2.75} aria-hidden="true" /> : <PriorityBars level={level} size={size - 2} />}
+      {accuracy ? <Icon size={size} strokeWidth={1.75} aria-hidden="true" /> : <PriorityPips level={level} size={size} />}
       {labelled ? <span className="tag-mark__label">{tag.name}</span> : <span className="visually-hidden">{tagLabel(tag)}</span>}
     </span>
   );
