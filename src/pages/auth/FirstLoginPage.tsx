@@ -1,7 +1,5 @@
 import { useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { dictionariesApi } from '../../services/dictionariesApi';
 import BrandLogo from '../../components/layout/BrandLogo';
 import AuthAppearance from './AuthAppearance';
 import LoginBackground from './LoginBackground';
@@ -29,23 +27,11 @@ export default function FirstLoginPage() {
   const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const { user, setupProfile, error } = useAuth();
-
-  const { data: categories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => dictionariesApi.getCategories(),
-  });
-
-  const toggleCategory = (id: number) => {
-    setSelectedCategories(prev =>
-      prev.includes(id) ? prev.filter(cId => cId !== id) : [...prev, id]
-    );
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +53,6 @@ export default function FirstLoginPage() {
         new_password: password,
         first_name: firstName,
         last_name: lastName,
-        category_ids: selectedCategories
       });
       // React state update in AuthContext will automatically trigger RequireFirstLogin to redirect
     } catch {
@@ -196,34 +181,6 @@ export default function FirstLoginPage() {
               )}
             </div>
           </div>
-
-          {categories && categories.length > 0 && (
-            <div className="form-group">
-              <div className="auth-categories__header">
-                <span className="auth-label" id="categories-label">Kategorie, którymi się zajmujesz</span>
-                <span className="auth-categories__count">
-                  {selectedCategories.length} z {categories.length}
-                </span>
-              </div>
-              <div className="auth-categories" role="group" aria-labelledby="categories-label">
-                {categories.map(cat => {
-                  const selected = selectedCategories.includes(cat.id);
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      className={`auth-chip${selected ? ' auth-chip--selected' : ''}`}
-                      aria-pressed={selected}
-                      onClick={() => toggleCategory(cat.id)}
-                      disabled={loading}
-                    >
-                      {cat.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {(error || localError) && (
             <div className="auth-error" role="alert">

@@ -255,59 +255,6 @@
   color: var(--c-danger-text);
 }
 
-.auth-categories__header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.auth-categories__count {
-  color: var(--c-text-3);
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
-
-.auth-categories {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: var(--space-1);
-}
-
-.auth-chip {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  height: 28px;
-  padding: 0 10px;
-  border: var(--border-width) solid var(--c-border-strong);
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--c-text-2);
-  font-size: 13px;
-  cursor: pointer;
-  transition:
-    border-color var(--motion-fast) var(--easing),
-    background-color var(--motion-fast) var(--easing);
-}
-
-.auth-chip:hover:not(:disabled) {
-  border-color: var(--c-accent);
-}
-
-.auth-chip--selected {
-  padding-left: var(--space-2);
-  border-color: var(--c-accent);
-  background: var(--c-accent-soft);
-  color: var(--c-accent-text);
-  font-weight: 500;
-}
-
-.auth-chip:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
 .auth-button {
   display: flex;
   align-items: center;

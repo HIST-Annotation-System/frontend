@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Trash2, UserPlus } from 'lucide-react';
+import { Building2, Trash2, UserPlus } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useOrganizations } from '../../features/organizations/hooks/useOrganizations';
@@ -9,9 +9,10 @@ import { organizationQueryKeys, organizationsApi } from '../../services/organiza
 import { usersApi } from '../../services/usersApi';
 import type { Organization } from '../../types/organization';
 import { getErrorMessage } from '../../utils/errors';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, formatRelativeDate } from '../../utils/format';
 import CreateUserModal from '../../features/users/components/CreateUserModal';
 import AdminAlert from './AdminAlert';
+import { AdminEmpty, AdminSkeleton } from './AdminParts';
 import './UsersPage.css';
 
 const NAME_MAX_LENGTH = 255;
@@ -68,20 +69,19 @@ export default function OrganizationsPage() {
           Organizacje
           <span className="admin-page-count">{organizations.length}</span>
         </h1>
-      </div>
-
-      <form
-        className="admin-add"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (trimmedName && !nameTaken) createMutation.mutate(trimmedName);
-        }}
-      >
-        <label className="admin-field">
-          <span className="admin-field__label">Nowa organizacja</span>
+        <span className="admin-page-spacer" />
+        <form
+          className="admin-header-add"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (trimmedName && !nameTaken) createMutation.mutate(trimmedName);
+          }}
+        >
           <input
             type="text"
             className={`admin-input${nameTaken ? ' admin-input--invalid' : ''}`}
+            placeholder="Nazwa nowej organizacji"
+            aria-label="Nazwa nowej organizacji"
             value={newName}
             maxLength={NAME_MAX_LENGTH}
             aria-invalid={nameTaken ? true : undefined}
@@ -91,72 +91,91 @@ export default function OrganizationsPage() {
             }}
             autoComplete="off"
           />
-        </label>
-        <Button type="submit" variant="primary" disabled={createMutation.isPending || !trimmedName || nameTaken}>
-          Dodaj
-        </Button>
-      </form>
+          <Button type="submit" variant="primary" disabled={createMutation.isPending || !trimmedName || nameTaken}>
+            Dodaj
+          </Button>
+        </form>
+      </div>
 
-      {nameTaken ? (
-        <div className="admin-alert" role="alert">
-          <span>Organizacja „{trimmedName}” już istnieje.</span>
+      <div className="admin-list">
+        <div className="admin-list__col">
+          <p className="admin-page-desc">
+            Organizacja zamyka w sobie konta, slajdy i foldery hotspotów. Po założeniu dodaj jej administratora.
+          </p>
+
+          {nameTaken ? (
+            <div className="admin-alert" role="alert">
+              <span>Organizacja „{trimmedName}” już istnieje.</span>
+            </div>
+          ) : (
+            apiError && <AdminAlert message={apiError} onDismiss={() => setApiError(null)} />
+          )}
+
+          {isLoading ? (
+            <AdminSkeleton />
+          ) : organizations.length === 0 ? (
+            <AdminEmpty
+              icon={<Building2 size={32} aria-hidden="true" />}
+              title="Brak organizacji"
+              text="Wpisz nazwę powyżej, aby założyć pierwszą."
+            />
+          ) : (
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Nazwa</th>
+                  <th className="admin-table__num">Członkowie</th>
+                  <th>Administrator</th>
+                  <th>Utworzono</th>
+                  <th className="admin-table__actions" aria-label="Akcje" />
+                </tr>
+              </thead>
+              <tbody>
+                {organizations.map((organization) => (
+                  <tr key={organization.id}>
+                    <td className="admin-table__truncate" title={organization.name}>
+                      {organization.name}
+                    </td>
+                    <td className="admin-table__num admin-table__muted">{organization.member_count}</td>
+                    <td>
+                      {users === undefined ? null : hasAdmin(organization) ? (
+                        <span className="admin-dot">istnieje</span>
+                      ) : (
+                        <span className="admin-chip admin-chip--warn">brak</span>
+                      )}
+                    </td>
+                    <td className="admin-table__muted" title={formatDateTime(organization.created_at)}>
+                      {formatRelativeDate(organization.created_at)}
+                    </td>
+                    <td className="admin-table__actions">
+                      <span className="admin-row-actions">
+                        <button
+                          type="button"
+                          onClick={() => openAdminDialog(organization)}
+                          className="admin-icon-btn"
+                          title="Dodaj użytkownika"
+                          aria-label={`Dodaj użytkownika do organizacji ${organization.name}`}
+                        >
+                          <UserPlus size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openDeleteDialog(organization)}
+                          className="admin-icon-btn admin-icon-btn--danger"
+                          title="Usuń organizację"
+                          aria-label={`Usuń organizację ${organization.name}`}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
-      ) : (
-        apiError && <AdminAlert message={apiError} onDismiss={() => setApiError(null)} />
-      )}
-
-      {isLoading ? (
-        <div className="admin-loading">Ładowanie…</div>
-      ) : (
-        <table className="admin-table admin-table--720">
-          <thead>
-            <tr>
-              <th>Nazwa</th>
-              <th>Członkowie</th>
-              <th>Utworzono</th>
-              <th className="admin-table__actions" aria-label="Akcje" />
-            </tr>
-          </thead>
-          <tbody>
-            {organizations.length === 0 && (
-              <tr className="admin-table__empty">
-                <td colSpan={4}>Brak organizacji.</td>
-              </tr>
-            )}
-            {organizations.map((organization) => (
-              <tr key={organization.id}>
-                <td className="admin-table__truncate" title={organization.name}>
-                  {organization.name}
-                </td>
-                <td className="admin-table__muted">{organization.member_count}</td>
-                <td className="admin-table__muted">{formatDateTime(organization.created_at)}</td>
-                <td className="admin-table__actions">
-                  <span className="admin-row-actions">
-                    <button
-                      type="button"
-                      onClick={() => openAdminDialog(organization)}
-                      className="admin-icon-btn"
-                      title="Dodaj użytkownika"
-                      aria-label={`Dodaj użytkownika do organizacji ${organization.name}`}
-                    >
-                      <UserPlus size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openDeleteDialog(organization)}
-                      className="admin-icon-btn admin-icon-btn--danger"
-                      title="Usuń organizację"
-                      aria-label={`Usuń organizację ${organization.name}`}
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      </div>
 
       {adminFor && (
         <CreateUserModal

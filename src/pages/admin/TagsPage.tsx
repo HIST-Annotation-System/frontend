@@ -15,6 +15,7 @@ import {
 import type { Tag } from '../../types/tag';
 import { getErrorMessage } from '../../utils/errors';
 import AdminAlert from './AdminAlert';
+import { AdminSkeleton } from './AdminParts';
 import './TagsPage.css';
 
 /** The shared hotspot tags: names, weights (a hotspot's score is the sum), and removal of custom tags. */
@@ -55,76 +56,82 @@ export default function TagsPage() {
           Tagi hotspotów
           <span className="admin-page-count">{tags.length}</span>
         </h1>
-      </div>
-
-      <form onSubmit={(event) => void create(event)} className="admin-add">
-        <label className="admin-field">
-          <span className="admin-field__label">Nowy tag</span>
+        <span className="admin-page-spacer" />
+        <form onSubmit={(event) => void create(event)} className="admin-header-add">
           <input
             type="text"
             className="admin-input"
+            placeholder="Nazwa nowego tagu"
+            aria-label="Nazwa nowego tagu"
             maxLength={64}
             value={newName}
             onChange={(event) => setNewName(event.target.value)}
             autoComplete="off"
           />
-        </label>
-        <label className="admin-field">
-          <span className="admin-field__label">Waga</span>
           <input
             type="number"
             className="admin-input admin-input--weight"
+            aria-label="Waga nowego tagu"
             title={`Wynik hotspotu to suma wag jego tagów. Tag własny musi ważyć mniej niż najlżejsza niezerowa ocena${cap === null ? '' : ` (obecnie < ${cap})`}.`}
             min={0}
             max={maxCustomWeight(tags)}
             value={newWeight}
             onChange={(event) => setNewWeight(Number(event.target.value))}
           />
-        </label>
-        <Button type="submit" variant="primary" disabled={isCreating || !newName.trim()}>
-          Dodaj
-        </Button>
-      </form>
+          <Button type="submit" variant="primary" disabled={isCreating || !newName.trim()}>
+            Dodaj
+          </Button>
+        </form>
+      </div>
 
-      {apiError && <AdminAlert message={apiError} onDismiss={() => setApiError(null)} />}
+      <div className="admin-list">
+        <div className="admin-list__col">
+          <p className="admin-page-desc">
+            Wynik hotspotu to suma wag jego tagów. Oceny (priorytet, poprawność) mają stałe nazwy; własne tagi tworzą
+            eksperci i można je tu usunąć.
+          </p>
 
-      {isLoading ? (
-        <div className="admin-loading">Ładowanie…</div>
-      ) : (
-        <table className="admin-table admin-table--760 admin-table--editable tags-table">
-          <thead>
-            <tr>
-              <th>Rodzaj</th>
-              <th>Nazwa</th>
-              <th className="admin-table__num">Waga</th>
-              <th className="admin-table__actions" aria-label="Akcje" />
-            </tr>
-          </thead>
-          <tbody>
-            {groups.flatMap((group) =>
-              group.tags.map((tag, index) => (
-                <TagRow
-                  key={tag.id}
-                  tag={tag}
-                  kind={index === 0 ? group.label : ''}
-                  isEditing={editingId === tag.id}
-                  onStartEdit={() => {
-                    setApiError(null);
-                    setEditingId(tag.id);
-                  }}
-                  onEndEdit={() => setEditingId(null)}
-                  onError={setApiError}
-                />
-              )),
-            )}
-            {tags.length === 0 && (
-              <tr className="admin-table__empty">
-                <td colSpan={4}>Brak tagów.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      )}
+          {apiError && <AdminAlert message={apiError} onDismiss={() => setApiError(null)} />}
+
+          {isLoading ? (
+            <AdminSkeleton />
+          ) : (
+            <table className="admin-table admin-table--editable tags-table">
+              <thead>
+                <tr>
+                  <th>Rodzaj</th>
+                  <th>Nazwa</th>
+                  <th className="admin-table__num">Waga</th>
+                  <th className="admin-table__actions" aria-label="Akcje" />
+                </tr>
+              </thead>
+              <tbody>
+                {groups.flatMap((group) =>
+                  group.tags.map((tag, index) => (
+                    <TagRow
+                      key={tag.id}
+                      tag={tag}
+                      kind={index === 0 ? group.label : ''}
+                      isEditing={editingId === tag.id}
+                      onStartEdit={() => {
+                        setApiError(null);
+                        setEditingId(tag.id);
+                      }}
+                      onEndEdit={() => setEditingId(null)}
+                      onError={setApiError}
+                    />
+                  )),
+                )}
+                {tags.length === 0 && (
+                  <tr className="admin-table__empty">
+                    <td colSpan={4}>Brak tagów.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -252,7 +259,7 @@ function TagRow({ tag, kind, isEditing, onStartEdit, onEndEdit, onError }: TagRo
             type="button"
             className="admin-icon-btn"
             title={dimension ? 'Zmień wagę' : 'Zmień nazwę'}
-            aria-label={dimension ? 'Zmień wagę' : 'Zmień nazwę'}
+            aria-label={`${dimension ? 'Zmień wagę' : 'Zmień nazwę'}: ${tag.name}`}
             onClick={startEdit}
           >
             <Pencil size={13} />
@@ -264,7 +271,7 @@ function TagRow({ tag, kind, isEditing, onStartEdit, onEndEdit, onError }: TagRo
               type="button"
               className="admin-icon-btn admin-icon-btn--danger"
               title="Usuń tag"
-              aria-label="Usuń tag"
+              aria-label={`Usuń tag ${tag.name}`}
               disabled={isDeleting}
               onClick={() => setIsConfirmingDelete(true)}
             >

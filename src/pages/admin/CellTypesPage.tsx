@@ -3,10 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cellTypesApi, cellTypeQueryKeys } from '../../services/cellTypesApi';
 import { ApiError } from '../../services/httpClient';
 import type { CellType } from '../../types/cellType';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Microscope, Pencil, Trash2 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import AdminAlert from './AdminAlert';
+import { AdminEmpty, AdminSkeleton } from './AdminParts';
 import { getErrorMessage } from '../../utils/errors';
 import {
   CELL_TYPE_NAME_MAX_LENGTH,
@@ -106,15 +107,14 @@ export default function CellTypesPage() {
           Typy komórek
           {cellTypes && <span className="admin-page-count">{cellTypes.length}</span>}
         </h1>
-      </div>
-
-      <form onSubmit={handleCreate} className="admin-add">
-        <label className="admin-field">
-          <span className="admin-field__label">Nowy typ komórki</span>
+        <span className="admin-page-spacer" />
+        <form onSubmit={handleCreate} className="admin-header-add">
           <input
             id="new-cell-type-input"
             type="text"
             className={`admin-input${newDuplicate ? ' admin-input--invalid' : ''}`}
+            placeholder="Nazwa nowego typu"
+            aria-label="Nazwa nowego typu komórki"
             value={newName}
             maxLength={CELL_TYPE_NAME_MAX_LENGTH}
             aria-invalid={newDuplicate ? true : undefined}
@@ -125,74 +125,83 @@ export default function CellTypesPage() {
             }}
             autoComplete="off"
           />
-        </label>
-        <Button
-          id="add-cell-type-btn"
-          type="submit"
-          variant="primary"
-          disabled={createMutation.isPending || !normalizedNew || newDuplicate !== undefined}
-        >
-          Dodaj
-        </Button>
-      </form>
+          <Button
+            id="add-cell-type-btn"
+            type="submit"
+            variant="primary"
+            disabled={createMutation.isPending || !normalizedNew || newDuplicate !== undefined}
+          >
+            Dodaj
+          </Button>
+        </form>
+      </div>
 
-      {newDuplicate ? (
-        <div id="new-cell-type-duplicate" className="admin-alert" role="alert">
-          <span>{duplicateMessage(newDuplicate)}</span>
-        </div>
-      ) : (
-        apiError && <AdminAlert message={apiError} onDismiss={() => setApiError(null)} />
-      )}
+      <div className="admin-list">
+        <div className="admin-list__col">
+          <p className="admin-page-desc">
+            Typy komórek, które anotator przypisuje do zaznaczeń na slajdzie. Typu użytego w anotacjach nie można usunąć.
+          </p>
 
-      {isLoading ? (
-        <div className="admin-loading">Ładowanie…</div>
-      ) : (
-        <table className="admin-table admin-table--720 admin-table--editable">
-          <thead>
-            <tr>
-              <th>Nazwa</th>
-              <th className="admin-table__actions" aria-label="Akcje" />
-            </tr>
-          </thead>
-          <tbody>
-            {cellTypes?.length === 0 && (
-              <tr className="admin-table__empty">
-                <td colSpan={2}>Brak typów komórek.</td>
-              </tr>
-            )}
-            {cellTypes?.map((ct) => {
-              // A failed delete is explained under its own row.
-              const deleteBlocked = deleteError !== null && deleteMutation.variables === ct.id;
-              return (
-                <Fragment key={ct.id}>
-                  <CellTypeRow
-                    cellType={ct}
-                    cellTypes={cellTypes}
-                    isDuplicateTarget={newDuplicate?.id === ct.id}
-                    isEditing={editingId === ct.id}
-                    isSaving={updateMutation.isPending && updateMutation.variables?.id === ct.id}
-                    isDeleting={deleteMutation.isPending}
-                    onStartEdit={() => {
-                      setApiError(null);
-                      setEditingId(ct.id);
-                    }}
-                    onCancelEdit={() => setEditingId(null)}
-                    onRename={(name) => rename(ct.id, name)}
-                    onDelete={() => handleDelete(ct)}
-                  />
-                  {deleteBlocked && (
-                    <tr className="admin-table__error">
+          {newDuplicate ? (
+            <div id="new-cell-type-duplicate" className="admin-alert" role="alert">
+              <span>{duplicateMessage(newDuplicate)}</span>
+            </div>
+          ) : (
+            apiError && <AdminAlert message={apiError} onDismiss={() => setApiError(null)} />
+          )}
+
+          {isLoading ? (
+            <AdminSkeleton />
+          ) : cellTypes?.length === 0 ? (
+            <AdminEmpty
+              icon={<Microscope size={32} aria-hidden="true" />}
+              title="Brak typów komórek"
+              text="Wpisz nazwę powyżej, aby dodać pierwszy."
+            />
+          ) : (
+            <table className="admin-table admin-table--editable">
+              <thead>
+                <tr>
+                  <th>Nazwa</th>
+                  <th className="admin-table__actions" aria-label="Akcje" />
+                </tr>
+              </thead>
+              <tbody>
+                {cellTypes?.map((ct) => {
+                  // A failed delete is explained under its own row.
+                  const deleteBlocked = deleteError !== null && deleteMutation.variables === ct.id;
+                  return (
+                    <Fragment key={ct.id}>
+                      <CellTypeRow
+                        cellType={ct}
+                        cellTypes={cellTypes}
+                        isDuplicateTarget={newDuplicate?.id === ct.id}
+                        isEditing={editingId === ct.id}
+                        isSaving={updateMutation.isPending && updateMutation.variables?.id === ct.id}
+                        isDeleting={deleteMutation.isPending}
+                        onStartEdit={() => {
+                          setApiError(null);
+                          setEditingId(ct.id);
+                        }}
+                        onCancelEdit={() => setEditingId(null)}
+                        onRename={(name) => rename(ct.id, name)}
+                        onDelete={() => handleDelete(ct)}
+                      />
+                      {deleteBlocked && (
+                        <tr className="admin-table__error">
                       <td colSpan={2}>
                         <span role="alert">{deleteError}</span>
                       </td>
                     </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-      )}
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
 
       <ConfirmDialog
         title="Usuń typ komórki"
@@ -305,7 +314,7 @@ function CellTypeRow({
             type="button"
             className="admin-icon-btn"
             title="Zmień nazwę"
-            aria-label="Zmień nazwę"
+            aria-label={`Zmień nazwę typu ${cellType.name}`}
             onClick={startEdit}
           >
             <Pencil size={13} />
@@ -314,7 +323,7 @@ function CellTypeRow({
             type="button"
             className="admin-icon-btn admin-icon-btn--danger"
             title="Usuń typ komórki"
-            aria-label="Usuń typ komórki"
+            aria-label={`Usuń typ komórki ${cellType.name}`}
             onClick={onDelete}
             disabled={isDeleting}
           >

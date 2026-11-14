@@ -1,274 +1,300 @@
-import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import { useState, useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { Check, Eye, EyeOff } from 'lucide-react';
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import Button from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { usersApi } from '../../services/usersApi';
-import { dictionariesApi } from '../../services/dictionariesApi';
 import type { ProfileUpdate } from '../../types/user';
 import { ROLE_LABELS } from '../../utils/roles';
-import Button from '../../components/ui/Button';
-import { Pencil, Lock, X } from 'lucide-react';
 import './ProfilePage.css';
 
+const PASSWORD_MIN_LENGTH = 8;
 
-interface InlineFieldProps {
-  label: string;
-  value: string;
-  displayValue?: string;
-  onSave: (val: string) => void;
-  type?: string;
-  disabled?: boolean;
-  mono?: boolean;
+type SectionName = 'personal' | 'password';
+
+interface SectionProps {
+  title: string;
+  /** The button that starts editing; left out for a read-only section. */
+  action?: ReactNode;
+  /** Shows "Zapisano" in the header for a moment after a save. */
+  saved?: boolean;
+  children: ReactNode;
 }
 
-function InlineField({ label, value, displayValue, onSave, type = 'text', disabled = false, mono = false }: InlineFieldProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(value);
-
-  useEffect(() => {
-    setEditValue(value);
-  }, [value]);
-
-  const handleSave = () => {
-    onSave(editValue);
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    setEditValue(value);
-    setIsEditing(false);
-  };
-
+function Section({ title, action, saved = false, children }: SectionProps) {
   return (
-    <div className="profile-row">
-      <div className="profile-row__label">{label}</div>
-      {!isEditing ? (
-        <div className={`profile-row__value${mono ? ' profile-row__value--mono' : ''}`}>
-          {type === 'password' ? '••••••••' : (displayValue || value || <span className="profile-muted">Brak</span>)}
-        </div>
-      ) : (
-        <div className="profile-row__edit">
-          <input
-            type={type}
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            className={`profile-input${mono ? ' profile-input--mono' : ''}`}
-            placeholder={type === 'password' ? 'Nowe hasło' : undefined}
-            autoComplete={type === 'password' ? 'new-password' : undefined}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSave();
-              if (e.key === 'Escape') handleCancel();
-            }}
-          />
-          <div className="profile-row__edit-actions">
-            <Button variant="primary" className="btn-sm" onClick={handleSave} title="Zapisz">
-              Zapisz
-            </Button>
-            <Button className="btn-sm" onClick={handleCancel} title="Anuluj">
-              Anuluj
-            </Button>
-          </div>
-        </div>
+    <section className="profile-section">
+      <header className="profile-section__header">
+        <h2>{title}</h2>
+        <span className="profile-section__saved" role="status">
+          {saved && (
+            <>
+              <Check size={14} aria-hidden="true" />
+              Zapisano
+            </>
+          )}
+        </span>
+        {action}
+      </header>
+      <div className="profile-section__body">{children}</div>
+    </section>
+  );
+}
+
+interface SectionFormProps {
+  onSubmit: () => void;
+  onCancel: () => void;
+  pending: boolean;
+  error: string | null;
+  children: ReactNode;
+}
+
+/** The editing state of a section: Enter saves, Esc cancels, the error sits under the fields it belongs to. */
+function SectionForm({ onSubmit, onCancel, pending, error, children }: SectionFormProps) {
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    onSubmit();
+  };
+  return (
+    <form
+      className="profile-form"
+      onSubmit={submit}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') onCancel();
+      }}
+    >
+      {children}
+      {error && (
+        <p className="profile-form__error" role="alert">
+          {error}
+        </p>
       )}
-      <div className="profile-row__trailing">
-        {disabled ? (
-          <span className="profile-lock" title="Tego pola nie można zmienić">
-            <Lock size={14} aria-hidden="true" />
-          </span>
-        ) : (
-          !isEditing && (
-            <button onClick={() => setIsEditing(true)} className="profile-icon-btn" title="Edytuj">
-              <Pencil size={15} />
-            </button>
-          )
-        )}
+      <div className="profile-form__actions">
+        <Button type="submit" variant="primary" disabled={pending}>
+          {pending ? 'Zapisywanie…' : 'Zapisz'}
+        </Button>
+        <Button onClick={onCancel} disabled={pending}>
+          Anuluj
+        </Button>
       </div>
-    </div>
+    </form>
+  );
+}
+
+interface FormProps {
+  pending: boolean;
+  error: string | null;
+  onCancel: () => void;
+  onSave: (data: ProfileUpdate) => void;
+}
+
+function NameForm({ first, last, ...form }: FormProps & { first: string; last: string }) {
+  const [firstName, setFirstName] = useState(first);
+  const [lastName, setLastName] = useState(last);
+  const id = useId();
+  return (
+    <SectionForm
+      {...form}
+      onSubmit={() => form.onSave({ first_name: firstName.trim(), last_name: lastName.trim() })}
+    >
+      <div className="profile-form__field">
+        <label htmlFor={`${id}-first`}>Imię</label>
+        <input
+          id={`${id}-first`}
+          value={firstName}
+          autoComplete="given-name"
+          autoFocus
+          onChange={(event) => setFirstName(event.target.value)}
+        />
+      </div>
+      <div className="profile-form__field">
+        <label htmlFor={`${id}-last`}>Nazwisko</label>
+        <input
+          id={`${id}-last`}
+          value={lastName}
+          autoComplete="family-name"
+          onChange={(event) => setLastName(event.target.value)}
+        />
+      </div>
+    </SectionForm>
+  );
+}
+
+function PasswordForm(form: FormProps) {
+  const [password, setPassword] = useState('');
+  const [repeat, setRepeat] = useState('');
+  const [visible, setVisible] = useState(false);
+  const [invalid, setInvalid] = useState<string | null>(null);
+  const id = useId();
+  const submit = () => {
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      setInvalid(`Hasło musi mieć co najmniej ${PASSWORD_MIN_LENGTH} znaków.`);
+    } else if (password !== repeat) {
+      setInvalid('Hasła nie są takie same.');
+    } else {
+      setInvalid(null);
+      form.onSave({ password });
+    }
+  };
+  return (
+    <SectionForm {...form} error={invalid ?? form.error} onSubmit={submit}>
+      <div className="profile-form__field">
+        <label htmlFor={`${id}-new`}>Nowe hasło</label>
+        <div className="profile-form__password">
+          <input
+            id={`${id}-new`}
+            type={visible ? 'text' : 'password'}
+            value={password}
+            autoComplete="new-password"
+            autoFocus
+            aria-describedby={`${id}-hint`}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+          <button
+            type="button"
+            className="profile-form__eye"
+            aria-label={visible ? 'Ukryj hasło' : 'Pokaż hasło'}
+            aria-pressed={visible}
+            onClick={() => setVisible(!visible)}
+          >
+            {visible ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+          </button>
+        </div>
+        <span className="profile-form__hint" id={`${id}-hint`}>
+          Co najmniej {PASSWORD_MIN_LENGTH} znaków.
+        </span>
+      </div>
+      <div className="profile-form__field">
+        <label htmlFor={`${id}-repeat`}>Powtórz hasło</label>
+        <input
+          id={`${id}-repeat`}
+          type={visible ? 'text' : 'password'}
+          value={repeat}
+          autoComplete="new-password"
+          onChange={(event) => setRepeat(event.target.value)}
+        />
+      </div>
+    </SectionForm>
   );
 }
 
 export default function ProfilePage() {
   useDocumentTitle('Mój profil');
   const { user, refetch } = useAuth();
-  const [localError, setLocalError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isEditingCategories, setIsEditingCategories] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [editing, setEditing] = useState<SectionName | null>(null);
+  const [saved, setSaved] = useState<SectionName | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const savedTimer = useRef<number>(undefined);
+  useEffect(() => () => window.clearTimeout(savedTimer.current), []);
 
-  const { data: categories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => dictionariesApi.getCategories(),
-  });
-
-  useEffect(() => {
-    if (user?.profile) {
-      setSelectedCategories(user.profile.categories.map(c => c.id));
-    }
-  }, [user]);
-
-  const updateMutation = useMutation({
+  const { mutateAsync, isPending } = useMutation({
     mutationFn: (data: ProfileUpdate) => usersApi.updateAccount(user!.id, data),
-    onSuccess: async () => {
-      setSuccessMessage('Profil został zaktualizowany.');
-      await refetch();
-      setTimeout(() => setSuccessMessage(null), 3000);
-      setIsEditingCategories(false);
-    },
-    onError: (err: Error) => {
-      setLocalError(err.message || 'Wystąpił błąd podczas aktualizacji.');
-    }
   });
 
-  const handleUpdate = (field: keyof ProfileUpdate, value: any) => {
-    setLocalError(null);
-    setSuccessMessage(null);
-
-    if (field === 'password' && value.length < 8) {
-      setLocalError("Hasło musi mieć co najmniej 8 znaków.");
-      return;
+  const start = (section: SectionName) => {
+    setError(null);
+    setSaved(null);
+    setEditing(section);
+  };
+  const stop = () => {
+    setError(null);
+    setEditing(null);
+  };
+  const save = async (section: SectionName, data: ProfileUpdate) => {
+    setError(null);
+    try {
+      await mutateAsync(data);
+      await refetch();
+      setEditing(null);
+      setSaved(section);
+      window.clearTimeout(savedTimer.current);
+      savedTimer.current = window.setTimeout(() => setSaved(null), 3000);
+    } catch (requestError) {
+      setError(requestError instanceof Error && requestError.message ? requestError.message : 'Wystąpił błąd podczas aktualizacji.');
     }
-
-    updateMutation.mutate({ [field]: value });
-  };
-
-  const toggleCategory = (id: number) => {
-    setSelectedCategories(prev =>
-      prev.includes(id) ? prev.filter(cId => cId !== id) : [...prev, id]
-    );
-  };
-
-  const saveCategories = () => {
-    handleUpdate('category_ids', selectedCategories);
-  };
-
-  const cancelCategories = () => {
-    if (user?.profile) {
-      setSelectedCategories(user.profile.categories.map(c => c.id));
-    }
-    setIsEditingCategories(false);
   };
 
   if (!user) return null;
 
+  const firstName = user.profile?.first_name ?? '';
+  const lastName = user.profile?.last_name ?? '';
+  const fullName = `${firstName} ${lastName}`.trim();
   const initials = (
-    `${user.profile?.first_name?.trim().charAt(0) ?? ''}${user.profile?.last_name?.trim().charAt(0) ?? ''}` ||
-    user.username.slice(0, 2)
+    `${firstName.trim().charAt(0)}${lastName.trim().charAt(0)}` || user.username.slice(0, 2)
   ).toUpperCase();
+  const form = (section: SectionName): FormProps => ({
+    pending: isPending,
+    error: editing === section ? error : null,
+    onCancel: stop,
+    onSave: (data) => void save(section, data),
+  });
+  const editButton = (section: SectionName, label = 'Edytuj') =>
+    editing === section ? null : (
+      <Button className="btn-sm" onClick={() => start(section)}>
+        {label}
+      </Button>
+    );
 
   return (
     <div className="profile-page">
-      <div className="profile-content">
-        <div className="profile-header">
-          <span className="profile-avatar" aria-hidden="true">{initials}</span>
-          <div className="profile-header__text">
-            <h1 className="page-title">Mój profil</h1>
-          </div>
-        </div>
-
-        {localError && (
-          <div className="profile-alert profile-alert--error" role="alert">
-            <span>{localError}</span>
-            <button type="button" className="profile-alert__close" title="Zamknij" onClick={() => setLocalError(null)}>
-              <X size={14} />
-            </button>
-          </div>
-        )}
-        {successMessage && (
-          <div className="profile-alert profile-alert--success" role="status">
-            <span>{successMessage}</span>
-            <button type="button" className="profile-alert__close" title="Zamknij" onClick={() => setSuccessMessage(null)}>
-              <X size={14} />
-            </button>
-          </div>
-        )}
-
-        <div className="profile-card">
-          <InlineField
-            label="Imię"
-            value={user.profile?.first_name || ''}
-            onSave={(val) => handleUpdate('first_name', val)}
-          />
-          <InlineField
-            label="Nazwisko"
-            value={user.profile?.last_name || ''}
-            onSave={(val) => handleUpdate('last_name', val)}
-          />
-          <InlineField
-            label="Nazwa użytkownika"
-            value={user.username}
-            onSave={() => {}}
-            disabled
-            mono
-          />
-          <InlineField
-            label="Rola"
-            value={user.role}
-            displayValue={ROLE_LABELS[user.role]}
-            onSave={() => {}}
-            disabled
-          />
-          {user.organization && (
-            <InlineField label="Organizacja" value={user.organization.name} onSave={() => {}} disabled />
-          )}
-          <InlineField
-            label="Hasło"
-            value=""
-            type="password"
-            onSave={(val) => handleUpdate('password', val)}
-          />
-
-          {categories && categories.length > 0 && (
-            <div className="profile-row">
-              <div className="profile-row__label">Kategorie</div>
-              {!isEditingCategories ? (
-                <div className="profile-row__value profile-chips">
-                  {user.profile?.categories && user.profile.categories.length > 0 ? (
-                    user.profile.categories.map(c => (
-                      <span key={c.id} className="profile-chip">
-                        {c.name}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="profile-muted">Brak powiązanych kategorii</span>
-                  )}
-                </div>
-              ) : (
-                <div className="profile-row__edit">
-                  <div className="profile-chips">
-                    {categories.map(cat => (
-                      <label
-                        key={cat.id}
-                        className={`profile-chip-toggle${selectedCategories.includes(cat.id) ? ' is-on' : ''}`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedCategories.includes(cat.id)}
-                          onChange={() => toggleCategory(cat.id)}
-                        />
-                        {cat.name}
-                      </label>
-                    ))}
-                  </div>
-                  <div className="profile-row__edit-actions">
-                    <Button variant="primary" className="btn-sm" onClick={saveCategories} title="Zapisz">
-                      Zapisz
-                    </Button>
-                    <Button className="btn-sm" onClick={cancelCategories} title="Anuluj">
-                      Anuluj
-                    </Button>
-                  </div>
-                </div>
-              )}
-              <div className="profile-row__trailing">
-                {!isEditingCategories && (
-                  <button onClick={() => setIsEditingCategories(true)} className="profile-icon-btn" title="Edytuj">
-                    <Pencil size={15} />
-                  </button>
-                )}
-              </div>
+      <header className="profile-page__bar">
+        <h1 className="page-title">Mój profil</h1>
+      </header>
+      <div className="profile-page__scroll">
+        <div className="profile-content">
+          <section className="profile-identity" aria-label="Twoje konto">
+            <span className="profile-avatar" aria-hidden="true">
+              {initials}
+            </span>
+            <div className="profile-identity__text">
+              <p className="profile-identity__name">{fullName || user.username}</p>
+              <p className="profile-identity__meta">
+                <span className="profile-role">{ROLE_LABELS[user.role]}</span>
+                {user.organization && <span>{user.organization.name}</span>}
+              </p>
             </div>
-          )}
+          </section>
+
+          <Section title="Dane osobowe" saved={saved === 'personal'} action={editButton('personal')}>
+            {editing === 'personal' ? (
+              <NameForm {...form('personal')} first={firstName} last={lastName} />
+            ) : (
+              <dl className="kv profile-kv">
+                <dt>Imię</dt>
+                <dd>{firstName || <span className="profile-muted">Brak</span>}</dd>
+                <dt>Nazwisko</dt>
+                <dd>{lastName || <span className="profile-muted">Brak</span>}</dd>
+              </dl>
+            )}
+          </Section>
+
+          <Section title="Konto">
+            <dl className="kv profile-kv">
+              <dt>Nazwa użytkownika</dt>
+              <dd className="profile-kv__mono">{user.username}</dd>
+              <dt>Rola</dt>
+              <dd>{ROLE_LABELS[user.role]}</dd>
+              {user.organization && (
+                <>
+                  <dt>Organizacja</dt>
+                  <dd>{user.organization.name}</dd>
+                </>
+              )}
+            </dl>
+            <p className="profile-hint">Te dane zmienia administrator.</p>
+          </Section>
+
+          <Section title="Bezpieczeństwo" saved={saved === 'password'} action={editButton('password', 'Zmień hasło')}>
+            {editing === 'password' ? (
+              <PasswordForm {...form('password')} />
+            ) : (
+              <dl className="kv profile-kv">
+                <dt>Hasło</dt>
+                <dd>••••••••</dd>
+              </dl>
+            )}
+          </Section>
         </div>
       </div>
     </div>

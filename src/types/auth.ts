@@ -19,5 +19,4 @@ export interface ProfileSetup {
   new_password: string;
   first_name: string;
   last_name: string;
-  category_ids?: number[];
 }

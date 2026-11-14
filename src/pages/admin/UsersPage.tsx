@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '../../services/usersApi';
-import { Trash2, Pencil } from 'lucide-react';
+import { Trash2, Pencil, SearchX, Users } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Modal from '../../components/ui/Modal';
+import { useSearchShortcut } from '../../hooks/useSearchShortcut';
 import { getErrorMessage } from '../../utils/errors';
+import { AdminEmpty, AdminSkeleton } from './AdminParts';
 import { useAuth } from '../../context/AuthContext';
 import { useOrganizations } from '../../features/organizations/hooks/useOrganizations';
 import { ALL_ROLES, isSystemAdmin, ORGANIZATION_ROLES, ROLE_LABELS } from '../../utils/roles';
@@ -64,6 +66,8 @@ export default function UsersPage() {
   const [deletingUser, setDeletingUser] = useState<AccountResponse | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const searchInput = useRef<HTMLInputElement>(null);
+  useSearchShortcut(searchInput);
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
 
   const { data: users, isLoading } = useQuery({
@@ -148,7 +152,6 @@ export default function UsersPage() {
       ? (filteredByOrganization?.length ?? 0)
       : (filteredByOrganization?.filter((user) => user.role === role).length ?? 0);
   const roleFilters = systemAdmin ? ROLE_FILTERS : ROLE_FILTERS.filter((filter) => filter.id !== 'ADMIN');
-  const columnCount = systemAdmin ? 7 : 6;
 
   return (
     <div className="admin-page users-page">
@@ -160,11 +163,18 @@ export default function UsersPage() {
         <span className="admin-page-spacer" />
         <label className="admin-search">
           <input
+            ref={searchInput}
             type="search"
-            placeholder="Szukaj po imieniu lub loginie"
+            placeholder="Szukaj użytkownika  ( / )"
             aria-label="Szukaj użytkowników"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setSearchQuery('');
+                e.currentTarget.blur();
+              }
+            }}
           />
         </label>
         {systemAdmin && organizations.length > 0 && (
@@ -204,7 +214,33 @@ export default function UsersPage() {
       </div>
 
       {isLoading ? (
-        <div className="admin-loading">Ładowanie użytkowników…</div>
+        <AdminSkeleton />
+      ) : users?.length === 0 ? (
+        <AdminEmpty
+          icon={<Users size={32} aria-hidden="true" />}
+          title="Brak użytkowników"
+          text="Dodaj pierwsze konto. Osoba ustawi własne hasło przy pierwszym logowaniu."
+        >
+          <Button variant="primary" onClick={openCreateModal}>
+            Dodaj użytkownika
+          </Button>
+        </AdminEmpty>
+      ) : visibleUsers?.length === 0 ? (
+        <AdminEmpty
+          icon={<SearchX size={32} aria-hidden="true" />}
+          title="Brak wyników"
+          text="Żaden użytkownik nie pasuje do wyszukiwania ani filtrów."
+        >
+          <Button
+            onClick={() => {
+              setSearchQuery('');
+              setRoleFilter('all');
+              setOrganizationFilter(ALL_ORGANIZATIONS);
+            }}
+          >
+            Wyczyść filtry
+          </Button>
+        </AdminEmpty>
       ) : (
         <table className="admin-table users-table">
           <thead>
@@ -227,17 +263,23 @@ export default function UsersPage() {
                   ) : <span className="admin-table__faint">brak profilu</span>}
                 </td>
                 <td className="admin-table__truncate users-login" title={user.username}>{user.username}</td>
-                <td>{(ROLE_LABELS[user.role] ?? user.role).toLowerCase()}</td>
+                <td>
+                  <span className={`admin-chip${user.role === 'ANNOTATOR' ? ' admin-chip--quiet' : ''}`}>
+                    {ROLE_LABELS[user.role] ?? user.role}
+                  </span>
+                </td>
                 {systemAdmin && (
                   <td className="admin-table__muted admin-table__truncate users-org" title={user.organization?.name}>
                     {user.organization?.name ?? <span className="admin-table__faint">—</span>}
                   </td>
                 )}
-                <td className={user.profile?.can_upload ? undefined : 'admin-table__muted'}>
-                  {user.profile?.can_upload ? 'tak' : 'nie'}
+                <td className={user.profile?.can_upload ? undefined : 'admin-table__faint'}>
+                  {user.profile?.can_upload ? 'tak' : '—'}
                 </td>
-                <td className="admin-table__muted">
-                  {user.is_first_login ? 'oczekuje na pierwsze logowanie' : 'aktywny'}
+                <td>
+                  <span className={`admin-dot${user.is_first_login ? ' admin-dot--pending' : ''}`}>
+                    {user.is_first_login ? 'Czeka na pierwsze logowanie' : 'Aktywny'}
+                  </span>
                 </td>
                 <td className="admin-table__actions">
                   <span className="admin-row-actions">
@@ -246,7 +288,7 @@ export default function UsersPage() {
                       onClick={() => openEditModal(user)}
                       className="admin-icon-btn"
                       title="Edytuj użytkownika"
-                      aria-label="Edytuj użytkownika"
+                      aria-label={`Edytuj użytkownika ${user.username}`}
                     >
                       <Pencil size={13} />
                     </button>
@@ -255,7 +297,7 @@ export default function UsersPage() {
                       onClick={() => openDeleteDialog(user)}
                       className="admin-icon-btn admin-icon-btn--danger"
                       title="Usuń użytkownika"
-                      aria-label="Usuń użytkownika"
+                      aria-label={`Usuń użytkownika ${user.username}`}
                     >
                       <Trash2 size={13} />
                     </button>
@@ -263,16 +305,6 @@ export default function UsersPage() {
                 </td>
               </tr>
             ))}
-            {users?.length === 0 && (
-              <tr className="admin-table__empty">
-                <td colSpan={columnCount}>Brak użytkowników.</td>
-              </tr>
-            )}
-            {users && users.length > 0 && visibleUsers?.length === 0 && (
-              <tr className="admin-table__empty">
-                <td colSpan={columnCount}>Brak użytkowników pasujących do wyszukiwania.</td>
-              </tr>
-            )}
           </tbody>
         </table>
       )}
@@ -301,7 +333,13 @@ export default function UsersPage() {
           </label>
           <label className="admin-field">
             <span className="admin-field__label">Nowe hasło</span>
-            <input type="password" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} />
+            <input
+              type="password"
+              value={editPassword}
+              autoComplete="new-password"
+              onChange={(e) => setEditPassword(e.target.value)}
+            />
+            <span className="admin-hint">Zostaw puste, aby nie zmieniać hasła.</span>
           </label>
           <label className="admin-field">
             <span className="admin-field__label">Rola</span>

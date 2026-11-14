@@ -14,7 +14,6 @@ import LoginPage from './pages/auth/LoginPage';
 import FirstLoginPage from './pages/auth/FirstLoginPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import UsersPage from './pages/admin/UsersPage';
-import SettingsPage from './pages/admin/SettingsPage';
 import CellTypesPage from './pages/admin/CellTypesPage';
 import TagsPage from './pages/admin/TagsPage';
 import ProfilePage from './pages/auth/ProfilePage';
@@ -113,7 +112,6 @@ function App() {
                         path="organizations"
                         element={<RequireAuth roles={SYSTEM_ADMIN}><OrganizationsPage /></RequireAuth>}
                       />
-                      <Route path="settings" element={<RequireAuth roles={SYSTEM_ADMIN}><SettingsPage /></RequireAuth>} />
                       <Route path="cell-types" element={<RequireAuth roles={SYSTEM_ADMIN}><CellTypesPage /></RequireAuth>} />
                       <Route path="tags" element={<RequireAuth roles={SYSTEM_ADMIN}><TagsPage /></RequireAuth>} />
                     </Route>
