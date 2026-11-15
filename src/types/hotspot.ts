@@ -13,10 +13,20 @@ export interface HotspotFolder {
 export type HotspotImageType = 'png' | 'jpeg';
 
 /** Image descriptors computed on a hotspot's thumbnail; the catalog can be sorted by any of them. */
-export type HotspotFeature = 'entropy' | 'glcm_contrast' | 'edge_density' | 'colorfulness';
+export type HotspotFeature = 'entropy' | 'glcm_contrast' | 'edge_density' | 'hematoxylin';
 
-/** Creation time, an image feature, the summed tag weights, or the weight of the importance/accuracy tag. */
-export type HotspotSort = 'created_at' | HotspotFeature | 'score' | 'importance' | 'accuracy';
+/**
+ * What the catalog is ordered by. Unrated hotspots: creation time, an image feature, the model's cell count or
+ * density, the estimated priority. Rated ones: the summed tag weights, the annotators' disagreement.
+ */
+export type HotspotSort =
+  | 'created_at'
+  | HotspotFeature
+  | 'cell_count'
+  | 'cell_density'
+  | 'estimated_priority'
+  | 'score'
+  | 'disagreement';
 
 /** Where a hotspot is in the review; tagged means both importance and accuracy are set. */
 export type HotspotStatus = 'untagged' | 'to_reannotate' | 'reannotated';

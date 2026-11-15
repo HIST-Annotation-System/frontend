@@ -24,9 +24,9 @@ interface ModeDefaults {
   allFolders: boolean;
 }
 
-/** A mode only presets the catalog: every sort and filter stays available. */
+/** A mode presets the catalog and offers its own sort orders (see `sortOptionsFor`). */
 const MODE_DEFAULTS: Record<HotspotMode, ModeDefaults> = {
-  assess: { sort: 'created_at', order: 'desc', status: 'untagged', allFolders: true },
+  assess: { sort: 'estimated_priority', order: 'desc', status: 'untagged', allFolders: true },
   reannotate: { sort: 'score', order: 'desc', status: 'to_reannotate', allFolders: true },
 };
 

@@ -11,6 +11,7 @@ const GROUPS = [
     sections: [
       { to: '/admin/stats', label: 'Statystyki', systemOnly: true },
       { to: '/admin/agreement', label: 'Zgodność reannotacji', systemOnly: false },
+      { to: '/admin/priority-weights', label: 'Wagi priorytetu', systemOnly: true },
     ],
   },
   {

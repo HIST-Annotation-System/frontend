@@ -8,7 +8,7 @@ describe('hotspot catalog params', () => {
     const assessing = {
       mode: 'assess',
       folder: null,
-      sort: 'created_at',
+      sort: 'estimated_priority',
       order: 'desc',
       status: 'untagged',
       tagIds: [],
@@ -18,14 +18,14 @@ describe('hotspot catalog params', () => {
   });
 
   it('presets status and sort per mode', () => {
-    expect(read('mode=assess')).toMatchObject({ status: 'untagged', sort: 'created_at' });
+    expect(read('mode=assess')).toMatchObject({ status: 'untagged', sort: 'estimated_priority' });
     expect(read('mode=reannotate')).toMatchObject({ status: 'to_reannotate', sort: 'score', order: 'desc' });
   });
 
   it('lets the URL override the mode defaults, including any status', () => {
-    expect(read('mode=reannotate&status=all&sort=entropy&order=asc&tags=3,x,7')).toMatchObject({
+    expect(read('mode=reannotate&status=all&sort=disagreement&order=asc&tags=3,x,7')).toMatchObject({
       status: null,
-      sort: 'entropy',
+      sort: 'disagreement',
       order: 'asc',
       tagIds: [3, 7],
     });
@@ -33,7 +33,7 @@ describe('hotspot catalog params', () => {
 
   it('round-trips, leaving the defaults out', () => {
     expect(writeCatalogParams(read('mode=reannotate'))).toEqual({ mode: 'reannotate' });
-    const search = 'mode=reannotate&folder=f1&sort=entropy&status=all&tags=2,5';
+    const search = 'mode=reannotate&folder=f1&sort=disagreement&status=all&tags=2,5';
     expect(writeCatalogParams(read(search))).toEqual(Object.fromEntries(new URLSearchParams(search)));
   });
 
@@ -47,11 +47,18 @@ describe('hotspot catalog params', () => {
 
   it('keeps assessing on untagged hotspots, without tag sorts or filters', () => {
     expect(read('mode=assess&sort=score&status=all&tags=3')).toMatchObject({
-      sort: 'created_at',
+      sort: 'estimated_priority',
       status: 'untagged',
       tagIds: [],
     });
     expect(read('mode=assess&sort=entropy').sort).toBe('entropy');
+    expect(read('mode=assess&sort=cell_density').sort).toBe('cell_density');
+  });
+
+  it('offers each mode only its own sorts', () => {
+    expect(read('mode=reannotate&sort=entropy').sort).toBe('score');
+    expect(read('mode=reannotate&sort=estimated_priority').sort).toBe('score');
+    expect(read('mode=assess&sort=disagreement').sort).toBe('estimated_priority');
   });
 
   it('derives the review status from the verdict tags', () => {

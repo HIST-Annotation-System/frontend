@@ -20,6 +20,7 @@ import ProfilePage from './pages/auth/ProfilePage';
 import StatsPage from './pages/admin/StatsPage';
 import OrganizationsPage from './pages/admin/OrganizationsPage';
 import AgreementPage from './pages/admin/AgreementPage';
+import PriorityWeightsPage from './pages/admin/PriorityWeightsPage';
 import type { Role } from './types/user';
 
 const SlideViewerPage = lazy(() => import('./pages/SlideViewerPage'));
@@ -114,6 +115,10 @@ function App() {
                       />
                       <Route path="cell-types" element={<RequireAuth roles={SYSTEM_ADMIN}><CellTypesPage /></RequireAuth>} />
                       <Route path="tags" element={<RequireAuth roles={SYSTEM_ADMIN}><TagsPage /></RequireAuth>} />
+                      <Route
+                        path="priority-weights"
+                        element={<RequireAuth roles={SYSTEM_ADMIN}><PriorityWeightsPage /></RequireAuth>}
+                      />
                     </Route>
                     <Route path="*" element={<NotFound />} />
                   </Route>

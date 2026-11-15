@@ -29,10 +29,10 @@ export const HOTSPOT_FEATURES: (HotspotSortOption & { value: HotspotFeature; sho
     description: 'Średnia siła gradientu (filtr Sobela): wysoka dla drobnych, ostrych struktur.',
   },
   {
-    value: 'colorfulness',
-    label: 'Kolorowość',
-    shortLabel: 'Kolorowość',
-    description: 'Miara Haslera i Süsstrunka: rozpiętość i nasycenie barw.',
+    value: 'hematoxylin',
+    label: 'Hematoksylina',
+    shortLabel: 'Hematoksylina',
+    description: 'Średnie stężenie hematoksyliny (barwnik jąder) z dekonwolucji barw: im wyższe, tym więcej jąder.',
   },
 ];
 
@@ -42,27 +42,58 @@ const CREATED_AT_OPTION: HotspotSortOption = {
   description: 'Kolejność zapisania hotspotów.',
 };
 
-const TAG_SORT_OPTIONS: HotspotSortOption[] = [
+const ESTIMATED_PRIORITY_OPTION: HotspotSortOption = {
+  value: 'estimated_priority',
+  label: 'Szacowany priorytet',
+  description:
+    'Ocena z obrazu i komórek modelu, z wagami ustawionymi przez administratora: im wyższa, tym wcześniej warto ocenić hotspot. Puste szkło jest na końcu.',
+};
+
+const CELL_COUNT_OPTION: HotspotSortOption = {
+  value: 'cell_count',
+  label: 'Liczba komórek',
+  description: 'Liczba komórek znalezionych przez model; hotspoty, których model jeszcze nie przetworzył, są na końcu.',
+};
+
+const CELL_DENSITY_OPTION: HotspotSortOption = {
+  value: 'cell_density',
+  label: 'Gęstość komórek',
+  description:
+    'Komórki modelu na mm²; potrzebuje rozdzielczości obrazu i przetworzonego hotspotu, pozostałe są na końcu.',
+};
+
+const SCORE_OPTION: HotspotSortOption = {
+  value: 'score',
+  label: 'Wynik tagów',
+  description: 'Suma wag tagów hotspotu: im wyższa, tym pilniej trzeba go poprawić.',
+};
+
+const DISAGREEMENT_OPTION: HotspotSortOption = {
+  value: 'disagreement',
+  label: 'Niezgodność anotatorów',
+  description: 'Jak daleko anotatorzy są od pełnej zgody (wg miary organizacji); hotspoty bez porównania są na końcu.',
+};
+
+/** Unrated hotspots have no tags, so they are ordered by what the image and the model say about them. */
+const ASSESS_SORT_OPTIONS: HotspotSortOption[] = [
+  ESTIMATED_PRIORITY_OPTION,
+  CREATED_AT_OPTION,
+  CELL_DENSITY_OPTION,
+  CELL_COUNT_OPTION,
+  ...HOTSPOT_FEATURES,
+];
+
+/** Rated hotspots are ordered by the experts' verdict and by how their reannotation went. */
+const REANNOTATE_SORT_OPTIONS: HotspotSortOption[] = [
+  SCORE_OPTION,
+  CREATED_AT_OPTION,
+  DISAGREEMENT_OPTION,
   {
-    value: 'score',
-    label: 'Wynik tagów',
-    description: 'Suma wag tagów hotspotu: im wyższa, tym pilniej trzeba go poprawić.',
-  },
-  {
-    value: 'importance',
-    label: 'Priorytet',
-    description: 'Waga tagu priorytetu; hotspoty bez priorytetu są na końcu.',
-  },
-  {
-    value: 'accuracy',
-    label: 'Poprawność',
-    description: 'Waga tagu poprawności (błędna waży więcej); hotspoty bez oceny poprawności są na końcu.',
+    value: 'cell_count',
+    label: 'Liczba masek do poprawy',
+    description: 'Liczba komórek narysowanych przez model: im więcej, tym więcej pracy przy poprawianiu.',
   },
 ];
 
-
-/** Assessing picks among untagged hotspots, so the tag-based orders make no sense there. */
-export const sortOptionsFor = (mode: HotspotMode): HotspotSortOption[] => {
-  if (mode === 'assess') return [CREATED_AT_OPTION, ...HOTSPOT_FEATURES];
-  return [...TAG_SORT_OPTIONS, CREATED_AT_OPTION, ...HOTSPOT_FEATURES];
-};
+export const sortOptionsFor = (mode: HotspotMode): HotspotSortOption[] =>
+  mode === 'assess' ? ASSESS_SORT_OPTIONS : REANNOTATE_SORT_OPTIONS;
