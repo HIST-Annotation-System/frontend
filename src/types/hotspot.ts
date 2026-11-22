@@ -17,7 +17,8 @@ export type HotspotFeature = 'entropy' | 'glcm_contrast' | 'edge_density' | 'hem
 
 /**
  * What the catalog is ordered by. Unrated hotspots: creation time, an image feature, the model's cell count or
- * density, the estimated priority. Rated ones: the summed tag weights, the annotators' disagreement.
+ * density, the estimated priority. Rated ones: the summed tag weights, the annotators' disagreement. Both: how
+ * unsure the model is of its outlines, its cell types, or both together.
  */
 export type HotspotSort =
   | 'created_at'
@@ -26,7 +27,10 @@ export type HotspotSort =
   | 'cell_density'
   | 'estimated_priority'
   | 'score'
-  | 'disagreement';
+  | 'disagreement'
+  | 'outline_uncertainty'
+  | 'class_uncertainty'
+  | 'model_uncertainty';
 
 /** Where a hotspot is in the review; tagged means both importance and accuracy are set. */
 export type HotspotStatus = 'untagged' | 'to_reannotate' | 'reannotated';
@@ -75,7 +79,17 @@ export interface Hotspot {
   annotation_count: number;
   segmentation_status: SegmentationStatus;
   segmentation_error: string | null;
+  /** The model's confidence averaged over its cells, 0..1: in the outlines, and in the cell types; null until known. */
+  model_outline_confidence?: number | null;
+  model_class_confidence?: number | null;
+  /** Its folder was sent to the model again for that confidence, and the answer has not come yet. */
+  confidence_pending?: boolean;
   created_at: string;
+}
+
+/** How many of a folder's hotspots went back to the model for its confidence. */
+export interface ConfidenceRescore {
+  queued: number;
 }
 
 /** Which hotspots the catalog lists, and in what order. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { segmentationLabel } from './hotspotSegmentation';
+import { segmentationLabel, uncertaintyLabel } from './hotspotSegmentation';
 
 describe('segmentationLabel', () => {
   it('names each status', () => {
@@ -13,5 +13,18 @@ describe('segmentationLabel', () => {
       'Błąd: Brak pamięci',
     );
     expect(segmentationLabel({ segmentation_status: 'failed', segmentation_error: null })).toBe('Błąd');
+  });
+});
+
+describe('uncertaintyLabel', () => {
+  it('shows how unsure the model is, as a percentage', () => {
+    expect(uncertaintyLabel(0.83, false)).toBe('17%');
+    expect(uncertaintyLabel(1, false)).toBe('0%');
+  });
+
+  it('shows a dash before the model has reported it, and a note while it is being rescored', () => {
+    expect(uncertaintyLabel(null, false)).toBe('—');
+    expect(uncertaintyLabel(undefined, undefined)).toBe('—');
+    expect(uncertaintyLabel(0.5, true)).toBe('Przeliczanie…');
   });
 });

@@ -44,3 +44,12 @@ export const markLegacyHotspot = (hotspotId: string): Promise<void> =>
   withDb(async (db) => {
     await db.query("UPDATE hotspots SET layered = false, segmentation_status = 'done' WHERE id = $1", [hotspotId]);
   });
+
+// The model's mean confidence in a hotspot's cells comes from the ML worker, which is not part of the E2E stack.
+export const setModelConfidence = (hotspotId: string, outline: number, cellTypes: number): Promise<void> =>
+  withDb(async (db) => {
+    await db.query(
+      "UPDATE hotspots SET segmentation_status = 'done', model_outline_confidence = $2, model_class_confidence = $3 WHERE id = $1",
+      [hotspotId, outline, cellTypes],
+    );
+  });

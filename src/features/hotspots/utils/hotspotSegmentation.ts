@@ -15,3 +15,13 @@ export function segmentationLabel({
   const label = SEGMENTATION_LABELS[status];
   return status === 'failed' && error ? `${label}: ${error}` : label;
 }
+
+/**
+ * How unsure the model is of a hotspot's cells (1 - its mean confidence), as a percentage; a dash before it is known,
+ * and a note while its folder is being rescored.
+ */
+export function uncertaintyLabel(confidence: number | null | undefined, pending: boolean | undefined): string {
+  if (pending) return 'Przeliczanie…';
+  if (confidence === null || confidence === undefined) return '—';
+  return `${Math.round((1 - confidence) * 100)}%`;
+}

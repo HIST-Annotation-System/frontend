@@ -103,9 +103,11 @@ describe('folders and sorting', () => {
   it('offers each mode its own sorts', () => {
     const assess = sortOptionsFor('assess').map((option) => option.value);
     const reannotate = sortOptionsFor('reannotate').map((option) => option.value);
-    expect(reannotate).toEqual(['score', 'created_at', 'disagreement', 'cell_count']);
+    const uncertainty = ['model_uncertainty', 'outline_uncertainty', 'class_uncertainty'];
+    expect(reannotate).toEqual(['score', 'created_at', 'disagreement', ...uncertainty, 'cell_count']);
     expect(assess).not.toContain('score');
     expect(assess).toContain('created_at');
+    expect(assess).toEqual(expect.arrayContaining(uncertainty));
   });
 });
 

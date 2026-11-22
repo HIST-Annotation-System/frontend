@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { env } from './env';
 import { Api, unique } from './helpers/api';
-import { markSegmentationDone } from './helpers/db';
+import { markSegmentationDone, setModelConfidence } from './helpers/db';
 import { removeFolder, seedFolder, type SeededFolder } from './helpers/hotspots';
 import { HotspotViewerPage } from './pages/HotspotViewerPage';
 
@@ -42,6 +42,9 @@ const METRICS = [
   'Data dodania',
   'Gęstość komórek',
   'Liczba komórek',
+  'Niepewność modelu',
+  'Niepewność segmentacji',
+  'Niepewność klasyfikacji',
   'Entropia',
   'Kontrast tekstury (GLCM)',
   'Gęstość krawędzi',
@@ -77,6 +80,45 @@ test.describe('sorting the catalogue', () => {
     await expect.poll(() => new URL(page.url()).searchParams.get('sort')).toBe('hematoxylin');
     await page.reload();
     await expect(page.getByRole('combobox', { name: 'Sortuj według' })).toHaveValue('hematoxylin');
+  });
+});
+
+test.describe("the model's uncertainty", () => {
+  test('SCRUM-79: the hotspots the model is least sure of come first, those without a value last', async ({ page }) => {
+    folder = await seedFolder(
+      admin,
+      [unique('unsure'), unique('sure'), unique('unknown')],
+      await admin.e2eOrganizationId(),
+    );
+    const [unsure, sure, unknown] = folder.hotspots;
+    await setModelConfidence(unsure.id, 0.6, 0.5);
+    await setModelConfidence(sure.id, 0.95, 0.9);
+    await page.goto(`/hotspots?folder=${folder.id}&sort=model_uncertainty&order=desc`);
+    await expect(page.getByRole('list').getByRole('link')).toHaveText([unsure.name, sure.name, unknown.name]);
+  });
+
+  test('SCRUM-79: an annotator cannot send a folder back to the model', async ({ page }) => {
+    folder = await seedFolder(admin, [unique('rescore')], await admin.e2eOrganizationId());
+    await page.goto(`/hotspots?folder=${folder.id}`);
+    await expect(page.getByRole('button', { name: `Zmień nazwę folderu ${folder.name}` })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Przelicz niepewność modelu/ })).toHaveCount(0);
+    expect((await annotator.ctx.post(`hotspot-folders/${folder.id}/confidence-rescore`)).status()).toBe(403);
+  });
+
+  test.describe('as an admin', () => {
+    test.use({ storageState: 'e2e/auth/admin.json' });
+
+    test('SCRUM-79: a folder is sent back to the model for its uncertainty after confirmation', async ({ page }) => {
+      folder = await seedFolder(admin, [unique('rescore')], await admin.e2eOrganizationId());
+      // Segmented, but without the model's cells (the worker is not in the E2E stack), so nothing is sent.
+      await markSegmentationDone(folder.hotspots[0].id);
+      await page.goto(`/hotspots?folder=${folder.id}`);
+      await page.getByRole('button', { name: `Przelicz niepewność modelu w folderze ${folder.name}` }).click();
+      const dialog = page.getByRole('dialog').filter({ hasText: 'Przelicz niepewność modelu' });
+      await dialog.getByRole('button', { name: 'Przelicz' }).click();
+      await expect(dialog).toBeHidden();
+      await expect(page.getByText(/nie ma hotspotów przetworzonych przez model/)).toBeVisible();
+    });
   });
 });
 

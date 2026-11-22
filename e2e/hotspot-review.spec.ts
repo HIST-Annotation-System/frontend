@@ -85,6 +85,9 @@ test.describe('working modes', () => {
       'Wynik tagów',
       'Data dodania',
       'Niezgodność anotatorów',
+      'Niepewność modelu',
+      'Niepewność segmentacji',
+      'Niepewność klasyfikacji',
       'Liczba masek do poprawy',
     ]);
   });

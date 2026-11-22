@@ -1,6 +1,7 @@
 import type {
   BoxFeatures,
   BoxFeaturesRequest,
+  ConfidenceRescore,
   Hotspot,
   HotspotBatch,
   HotspotBatchCreate,
@@ -39,6 +40,10 @@ export const renameHotspotFolder = async (folderId: string, name: string): Promi
 export const deleteHotspotFolder = async (folderId: string): Promise<void> => {
   await httpClient.delete(`/hotspot-folders/${folderId}`);
 };
+
+/** Sends the folder's segmented hotspots to the model again, only for its confidence in their cells. */
+export const rescoreFolderConfidence = async (folderId: string): Promise<ConfidenceRescore> =>
+  (await httpClient.post<ConfidenceRescore>(`/hotspot-folders/${folderId}/confidence-rescore`)).data;
 
 export const listHotspots = async (
   { folderId, sort, order, status, tagIds }: HotspotListQuery,

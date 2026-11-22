@@ -74,12 +74,35 @@ const DISAGREEMENT_OPTION: HotspotSortOption = {
   description: 'Jak daleko anotatorzy są od pełnej zgody (wg miary organizacji); hotspoty bez porównania są na końcu.',
 };
 
+const MISSING_UNCERTAINTY =
+  'Hotspoty, dla których model jeszcze jej nie podał (przetworzone wcześniej), są na końcu: przelicz ich folder.';
+
+/** How unsure the model is of its cells (1 - its mean confidence); descending puts the least sure first. */
+export const UNCERTAINTY_OPTIONS: HotspotSortOption[] = [
+  {
+    value: 'model_uncertainty',
+    label: 'Niepewność modelu',
+    description: `Średnia niepewności segmentacji i klasyfikacji: im wyższa, tym bardziej warto sprawdzić komórki modelu. ${MISSING_UNCERTAINTY}`,
+  },
+  {
+    value: 'outline_uncertainty',
+    label: 'Niepewność segmentacji',
+    description: `Jak bardzo model nie jest pewien, że jego obrysy to komórki (średnio po komórkach). ${MISSING_UNCERTAINTY}`,
+  },
+  {
+    value: 'class_uncertainty',
+    label: 'Niepewność klasyfikacji',
+    description: `Jak bardzo model nie jest pewien typów komórek (średnio po komórkach z typem). ${MISSING_UNCERTAINTY}`,
+  },
+];
+
 /** Unrated hotspots have no tags, so they are ordered by what the image and the model say about them. */
 const ASSESS_SORT_OPTIONS: HotspotSortOption[] = [
   ESTIMATED_PRIORITY_OPTION,
   CREATED_AT_OPTION,
   CELL_DENSITY_OPTION,
   CELL_COUNT_OPTION,
+  ...UNCERTAINTY_OPTIONS,
   ...HOTSPOT_FEATURES,
 ];
 
@@ -88,6 +111,7 @@ const REANNOTATE_SORT_OPTIONS: HotspotSortOption[] = [
   SCORE_OPTION,
   CREATED_AT_OPTION,
   DISAGREEMENT_OPTION,
+  ...UNCERTAINTY_OPTIONS,
   {
     value: 'cell_count',
     label: 'Liczba masek do poprawy',

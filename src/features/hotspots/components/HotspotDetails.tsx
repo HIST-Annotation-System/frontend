@@ -12,7 +12,7 @@ import { formatDateTime, formatDecimal, formatDimensions } from '../../../utils/
 import { useHotspotMutations } from '../hooks/useHotspots';
 import { useTags } from '../hooks/useTags';
 import { formatLength } from '../utils/hotspotFormat';
-import { segmentationLabel } from '../utils/hotspotSegmentation';
+import { segmentationLabel, uncertaintyLabel } from '../utils/hotspotSegmentation';
 import { HOTSPOT_STATUS_OPTIONS, hotspotStatus } from '../utils/hotspotReview';
 import { HOTSPOT_FEATURES } from '../utils/hotspotSort';
 import { TAG_DIMENSIONS } from '../utils/hotspotTags';
@@ -152,6 +152,12 @@ export default function HotspotDetails({ hotspot, folders, linkSearch }: Hotspot
             <dd>{hotspot.annotation_count}</dd>
             <dt>Model</dt>
             <dd title={segmentationLabel(hotspot)}>{segmentationLabel(hotspot)}</dd>
+            <dt title="Jak bardzo model nie jest pewien, że jego obrysy to komórki (średnio po komórkach)">
+              Niepewność segm.
+            </dt>
+            <dd>{uncertaintyLabel(hotspot.model_outline_confidence, hotspot.confidence_pending)}</dd>
+            <dt title="Jak bardzo model nie jest pewien typów komórek (średnio po komórkach z typem)">Niepewność klas.</dt>
+            <dd>{uncertaintyLabel(hotspot.model_class_confidence, hotspot.confidence_pending)}</dd>
             <dt>Dodano</dt>
             <dd>{formatDateTime(hotspot.created_at)}</dd>
             <dt>Rozmiar</dt>

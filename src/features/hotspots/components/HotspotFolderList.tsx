@@ -1,8 +1,10 @@
-import { Check, Folder, FolderPlus, Folders, Pencil, Trash2, X } from 'lucide-react';
+import { Check, Folder, FolderPlus, Folders, Gauge, Pencil, Trash2, X } from 'lucide-react';
 import { Fragment, useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import Modal from '../../../components/ui/Modal';
+import { useAuth } from '../../../context/AuthContext';
+import { isManager } from '../../../utils/roles';
 import OrganizationSelect from '../../organizations/components/OrganizationSelect';
 import { useOrganizations } from '../../organizations/hooks/useOrganizations';
 import type { HotspotFolder } from '../../../types/hotspot';
@@ -19,10 +21,25 @@ interface HotspotFolderListProps {
   onSelect: (folderId: string) => void;
 }
 
-/** The catalog's folders: pick one (or all of them) to browse, add, rename or delete (with its hotspots). */
+/**
+ * The catalog's folders: pick one (or all of them) to browse, add, rename or delete (with its hotspots). Managers can
+ * also send a folder back to the model for its uncertainty about the cells.
+ */
 export default function HotspotFolderList({ folders, selectedId, onSelect }: HotspotFolderListProps) {
-  const { createFolder, isCreatingFolder, renameFolder, isRenamingFolder, deleteFolder, isDeletingFolder } =
-    useHotspotMutations();
+  const {
+    createFolder,
+    isCreatingFolder,
+    renameFolder,
+    isRenamingFolder,
+    deleteFolder,
+    isDeletingFolder,
+    rescoreFolder,
+    isRescoringFolder,
+  } = useHotspotMutations();
+  const { user } = useAuth();
+  const canRescore = isManager(user);
+  const [rescoring, setRescoring] = useState<HotspotFolder | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   // null: the "Nowy folder" button; a string: its name being typed.
   const [newName, setNewName] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
@@ -69,6 +86,23 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
       setEditing(null);
     } catch (requestError) {
       setError(getErrorMessage(requestError, 'Nie udało się zmienić nazwy folderu.'));
+    }
+  };
+
+  const confirmRescore = async () => {
+    if (!rescoring) return;
+    setError(null);
+    try {
+      const { queued } = await rescoreFolder(rescoring.id);
+      setNotice(
+        queued === 0
+          ? `W folderze „${rescoring.name}” nie ma hotspotów przetworzonych przez model.`
+          : `Wysłano do modelu hotspoty z folderu „${rescoring.name}” (${queued}). Niepewność pojawi się w ciągu kilku minut.`,
+      );
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, 'Nie udało się zlecić przeliczenia niepewności.'));
+    } finally {
+      setRescoring(null);
     }
   };
 
@@ -158,6 +192,18 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
                           </span>
                           <span className="hotspot-folders__count">{folder.hotspot_count}</span>
                         </button>
+                        {canRescore && (
+                          <Button
+                            variant="ghost"
+                            icon={<Gauge size={13} />}
+                            title="Przelicz niepewność modelu"
+                            aria-label={`Przelicz niepewność modelu w folderze ${folder.name}`}
+                            onClick={() => {
+                              setNotice(null);
+                              setRescoring(folder);
+                            }}
+                          />
+                        )}
                         <Button
                           variant="ghost"
                           icon={<Pencil size={13} />}
@@ -185,6 +231,11 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
 
       <form className="hotspot-folders__new" onSubmit={(event) => void add(event)}>
         {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
+        {notice && (
+          <p className="hotspot-folders__notice" role="status">
+            {notice}
+          </p>
+        )}
         {newName === null ? (
           <Button className="hotspot-folders__add" icon={<FolderPlus size={15} />} onClick={() => setNewName('')}>
             Nowy folder
@@ -229,6 +280,22 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
           </div>
         )}
       </form>
+
+      <Modal title="Przelicz niepewność modelu" open={rescoring !== null} onClose={() => setRescoring(null)}>
+        <p>
+          Hotspoty z folderu „{rescoring?.name}”, które model już przetworzył, trafią do niego ponownie, tylko po to, żeby
+          podał, jak bardzo jest niepewny swoich obrysów i typów komórek. Komórki i praca anotatorów się nie zmienią.
+          Model liczy około 15 s na obraz, a nowe hotspoty mają pierwszeństwo.
+        </p>
+        <div className="hotspot-form__actions">
+          <Button onClick={() => setRescoring(null)} disabled={isRescoringFolder}>
+            Wróć
+          </Button>
+          <Button variant="primary" onClick={() => void confirmRescore()} disabled={isRescoringFolder}>
+            {isRescoringFolder ? 'Wysyłanie…' : 'Przelicz'}
+          </Button>
+        </div>
+      </Modal>
 
       <Modal title="Usuń folder" open={deleting !== null} onClose={() => setDeleting(null)}>
         <p>

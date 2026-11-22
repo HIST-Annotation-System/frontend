@@ -14,6 +14,7 @@ import {
   listHotspots,
   listSlideHotspots,
   renameHotspotFolder,
+  rescoreFolderConfidence,
   updateHotspot,
 } from '../../../services/hotspotsApi';
 import type { HotspotBatch, HotspotBatchCreate, HotspotListQuery, HotspotUpdate } from '../../../types/hotspot';
@@ -35,6 +36,9 @@ export function useHotspots(query: HotspotListQuery) {
     // Keeps the current cards on screen while the same folder loads in another order or filter (not another folder).
     placeholderData: (previous, previousQuery) =>
       previousQuery?.queryKey[2].folderId === query.folderId ? previous : undefined,
+    // While a rescored folder's confidence comes in, so the uncertainty orders fill in without a reload.
+    refetchInterval: (current) =>
+      current.state.data?.some((hotspot) => hotspot.confidence_pending) ? SEGMENTATION_POLL_INTERVAL_MS : false,
   });
 }
 
@@ -129,6 +133,10 @@ export function useHotspotMutations() {
     mutationFn: (folderId: string) => deleteHotspotFolder(folderId),
     onSuccess: refresh,
   });
+  const { mutateAsync: rescoreFolder, isPending: isRescoringFolder } = useMutation({
+    mutationFn: (folderId: string) => rescoreFolderConfidence(folderId),
+    onSuccess: refresh,
+  });
   const { mutateAsync: createBatch, isPending: isCreatingBatch } = useMutation({
     mutationFn: (payload: HotspotBatchCreate) => createHotspotBatch(payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: hotspotBatchQueryKeys.all }),
@@ -149,6 +157,8 @@ export function useHotspotMutations() {
     isRenamingFolder,
     deleteFolder: removeFolder,
     isDeletingFolder,
+    rescoreFolder,
+    isRescoringFolder,
     createBatch,
     isCreatingBatch,
     updateHotspot: update,
