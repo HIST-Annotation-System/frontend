@@ -6,10 +6,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { usersApi } from '../../services/usersApi';
 import type { ProfileUpdate } from '../../types/user';
+import { PASSWORD_MIN_LENGTH, PASSWORD_TOO_SHORT } from '../../utils/passwords';
 import { ROLE_LABELS } from '../../utils/roles';
 import './ProfilePage.css';
-
-const PASSWORD_MIN_LENGTH = 8;
 
 type SectionName = 'personal' | 'password';
 
@@ -129,7 +128,7 @@ function PasswordForm(form: FormProps) {
   const id = useId();
   const submit = () => {
     if (password.length < PASSWORD_MIN_LENGTH) {
-      setInvalid(`Hasło musi mieć co najmniej ${PASSWORD_MIN_LENGTH} znaków.`);
+      setInvalid(PASSWORD_TOO_SHORT);
     } else if (password !== repeat) {
       setInvalid('Hasła nie są takie same.');
     } else {

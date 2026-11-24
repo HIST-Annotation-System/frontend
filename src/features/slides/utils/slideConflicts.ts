@@ -10,7 +10,9 @@ export const UPLOAD_ALREADY_FINISHED_MESSAGE = 'Wgrywanie tego slajdu już się 
 export const isSlideModified = (error: unknown): boolean =>
   error instanceof ApiError && error.code === 'slide_modified';
 
-export const isSlideGone = (error: unknown): boolean => error instanceof ApiError && error.status === 404;
+export const SLIDE_NOT_FOUND_CODE = 'slide_not_found';
+
+export const isSlideGone =(error: unknown): boolean => error instanceof ApiError && error.status === 404;
 
 /** A user-facing (Polish) explanation of a failed rename/delete/cancel, conflicts first. */
 export const describeSlideMutationError = (error: unknown, fallback: string): string => {

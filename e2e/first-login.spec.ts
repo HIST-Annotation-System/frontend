@@ -125,13 +125,12 @@ test.describe('account creation and setup through the API', () => {
     await user.dispose();
   });
 
-  // The 8-character rule exists only in FirstLoginPage.tsx; the API takes any string (schemas/user.py ProfileSetup).
-  test.fail('SCRUM-27: the API rejects a too short password', async () => {
+  test('SCRUM-27: the API rejects a too short password', async () => {
     const user = await Api.as(await newAccount());
     const response = await user.ctx.post('auth/setup-profile', {
       data: { new_password: 'a', first_name: 'Jan', last_name: 'Kowalski' },
     });
-    expect(response.status()).toBeGreaterThanOrEqual(400);
+    expect(response.status()).toBe(422);
     await user.dispose();
   });
 });

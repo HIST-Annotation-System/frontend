@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { env } from './env';
-import { Api, unique } from './helpers/api';
+import { Api, completeFirstLogin, unique } from './helpers/api';
 import { removeFolder, type SeededFolder } from './helpers/hotspots';
 import { dialogTitled } from './helpers/ui';
 
@@ -44,6 +44,9 @@ const hotspotsIn = (folderId: string) =>
   admin.get<{ id: string; name: string; image_type: string }[]>(`hotspots?folder_id=${folderId}`);
 
 test.describe('importing hotspot images', () => {
+  // The annotator has no upload permission; an organization's admin may always upload.
+  test.use({ storageState: 'e2e/auth/orgadmin.json' });
+
   test('SCRUM-77: PNG and JPEG files become hotspots named after the files', async ({ page }) => {
     const name = unique('img');
     await page.goto(`/hotspots?folder=${folder.id}`);
@@ -81,22 +84,38 @@ test.describe('importing hotspot images', () => {
     await expect(page.getByRole('status').filter({ hasText: /Wgrano 0 z 1/ })).toBeVisible();
     expect(await hotspotsIn(folder.id)).toEqual([]);
   });
+});
 
-  // `can_upload` is stored and editable, but nothing checks it: "Wgraj" is shown to everyone and the API accepts
-  // the upload.
-  test.fail('SCRUM-77: an annotator without the upload permission cannot import', async ({ page }) => {
+test.describe('the upload permission', () => {
+  test('SCRUM-77: an annotator without the upload permission cannot import', async ({ page }) => {
     await page.goto(`/hotspots?folder=${folder.id}`);
     await expect(page.getByRole('heading', { name: folder.name, level: 1 })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Wgraj' })).toHaveCount(0);
   });
 
-  test.fail('SCRUM-77: the API refuses an upload from an account without the upload permission', async () => {
+  test('SCRUM-77: the API refuses an upload from an account without the upload permission', async () => {
     const annotator = await Api.as(env.annotator);
     const response = await annotator.ctx.post(`hotspot-folders/${folder.id}/images`, {
       multipart: { file: { name: `${unique('api')}.png`, mimeType: 'image/png', buffer: PNG } },
     });
-    expect(response.status()).toBeGreaterThanOrEqual(400);
+    expect(response.status()).toBe(403);
+    expect(await hotspotsIn(folder.id)).toEqual([]);
     await annotator.dispose();
+  });
+
+  test('SCRUM-77: an annotator with the upload permission can import', async () => {
+    const credentials = { username: unique('uploader'), password: 'Start-pass-1' };
+    const account = await admin.createUser({ ...credentials, organizationId: await admin.e2eOrganizationId(), canUpload: true });
+    try {
+      await completeFirstLogin(credentials);
+      const uploader = await Api.as(credentials);
+      const name = unique('allowed');
+      await uploader.uploadHotspot(folder.id, { name: `${name}.png`, mimeType: 'image/png', buffer: PNG });
+      expect((await hotspotsIn(folder.id)).map((item) => item.name)).toEqual([name]);
+      await uploader.dispose();
+    } finally {
+      await admin.deleteUser(account.id);
+    }
   });
 });
 

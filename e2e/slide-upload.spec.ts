@@ -114,8 +114,11 @@ test.describe('uploading slides', () => {
     expect(await slidesNamed()).toHaveLength(1);
 
     await queue(page).getByRole('button', { name: 'Wgraj mimo to' }).click();
+    // Ingest runs two slides at a time for every worker of the suite, so it can take longer than the default 10 s.
     await expect
-      .poll(async () => (await slidesNamed()).map((slide) => `${slide.status}${slide.error_message ? `: ${slide.error_message}` : ''}`))
+      .poll(async () => (await slidesNamed()).map((slide) => `${slide.status}${slide.error_message ? `: ${slide.error_message}` : ''}`), {
+        timeout: 30_000,
+      })
       .toEqual(['ready', 'ready']);
   });
 

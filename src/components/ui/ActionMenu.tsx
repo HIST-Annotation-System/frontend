@@ -25,7 +25,6 @@ export default function ActionMenu({ items }: { items: ActionMenuItem[] }) {
         icon={<Ellipsis size={16} aria-hidden="true" />}
         aria-label="Więcej działań"
         title="Więcej działań"
-        aria-haspopup="true"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
       />

@@ -7,6 +7,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Modal from '../../components/ui/Modal';
 import { useSearchShortcut } from '../../hooks/useSearchShortcut';
 import { getErrorMessage } from '../../utils/errors';
+import { PASSWORD_MIN_LENGTH } from '../../utils/passwords';
 import { AdminEmpty, AdminSkeleton } from './AdminParts';
 import { useAuth } from '../../context/AuthContext';
 import { useOrganizations } from '../../features/organizations/hooks/useOrganizations';
@@ -337,9 +338,12 @@ export default function UsersPage() {
               type="password"
               value={editPassword}
               autoComplete="new-password"
+              minLength={PASSWORD_MIN_LENGTH}
               onChange={(e) => setEditPassword(e.target.value)}
             />
-            <span className="admin-hint">Zostaw puste, aby nie zmieniać hasła.</span>
+            <span className="admin-hint">
+              Zostaw puste, aby nie zmieniać hasła. Nowe hasło: co najmniej {PASSWORD_MIN_LENGTH} znaków.
+            </span>
           </label>
           <label className="admin-field">
             <span className="admin-field__label">Rola</span>

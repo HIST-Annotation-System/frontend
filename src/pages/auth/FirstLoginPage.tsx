@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { PASSWORD_MIN_LENGTH, PASSWORD_TOO_SHORT } from '../../utils/passwords';
 import BrandLogo from '../../components/layout/BrandLogo';
 import AuthAppearance from './AuthAppearance';
 import LoginBackground from './LoginBackground';
@@ -42,8 +43,8 @@ export default function FirstLoginPage() {
       return;
     }
 
-    if (password.length < 8) {
-      setLocalError("Hasło musi mieć co najmniej 8 znaków.");
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      setLocalError(PASSWORD_TOO_SHORT);
       return;
     }
 

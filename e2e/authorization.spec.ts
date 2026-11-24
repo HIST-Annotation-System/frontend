@@ -17,19 +17,11 @@ test.describe('anonymous visitor', () => {
 
   test('SCRUM-22: the API answers 401 without a session', async () => {
     const anonymous = await request.newContext({ baseURL: `${env.apiUrl}/` });
-    for (const path of ['users/me', 'users/', 'slides', 'hotspots', 'hotspot-folders', 'tags/', 'cell-types/', 'stats/']) {
+    const paths = ['users/me', 'users/', 'slides', 'hotspots', 'hotspot-folders', 'tags/', 'cell-types/', 'categories/', 'stats/'];
+    for (const path of paths) {
       const response = await anonymous.get(path);
       expect(response.status(), `GET ${path}`).toBe(401);
     }
-    await anonymous.dispose();
-  });
-});
-
-test.describe('anonymous API access to categories', () => {
-  // GET /categories/ has no authentication dependency (routers/categories.py), unlike every other list endpoint.
-  test.fail('SCRUM-22: GET categories/ answers 401 without a session', async () => {
-    const anonymous = await request.newContext({ baseURL: `${env.apiUrl}/` });
-    expect((await anonymous.get('categories/')).status()).toBe(401);
     await anonymous.dispose();
   });
 });

@@ -1,6 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect, request, test } from '@playwright/test';
 import { env } from './env';
 import { LoginPage } from './pages/LoginPage';
+
+const INVALID_CREDENTIALS = 'Nieprawidłowa nazwa użytkownika lub hasło.';
 
 test.describe('login', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
@@ -26,7 +28,7 @@ test.describe('login', () => {
     const login = new LoginPage(page);
     await login.goto();
     await login.signIn({ username: env.annotator.username, password: 'wrong-password' });
-    await expect(page.getByRole('alert')).toHaveText('Invalid credentials');
+    await expect(page.getByRole('alert')).toHaveText(INVALID_CREDENTIALS);
     await expect(page).toHaveURL('/login');
   });
 
@@ -34,7 +36,7 @@ test.describe('login', () => {
     const login = new LoginPage(page);
     await login.goto();
     await login.signIn({ username: 'no-such-user', password: 'whatever-123' });
-    await expect(page.getByRole('alert')).toHaveText('Invalid credentials');
+    await expect(page.getByRole('alert')).toHaveText(INVALID_CREDENTIALS);
   });
 
   test('SCRUM-22: empty fields are not submitted', async ({ page }) => {
@@ -67,13 +69,35 @@ test.describe('signed in', () => {
     await expect(page).toHaveURL('/');
     await expect(page.getByRole('navigation', { name: 'Główna nawigacja' })).toBeVisible();
   });
+});
+
+test.describe('signing out', () => {
+  // Its own session: signing out revokes the refresh token, which the saved annotator session shares with other tests.
+  test.use({ storageState: { cookies: [], origins: [] } });
 
   test('SCRUM-22: signing out returns to the login page', async ({ page }) => {
-    await page.goto('/');
+    const login = new LoginPage(page);
+    await login.goto();
+    await login.signIn(env.annotator);
+    await login.expectSignedIn();
     await page.getByRole('button', { name: /Menu profilu/ }).click();
     await page.getByRole('menuitem', { name: 'Wyloguj się' }).click();
     await expect(page).toHaveURL('/login');
     await page.goto('/');
     await expect(page).toHaveURL('/login');
+  });
+
+  test('SCRUM-22: after signing out, a copy of the refresh token no longer works', async () => {
+    const baseURL = `${env.apiUrl.replace(/\/$/, '')}/`;
+    const session = await request.newContext({ baseURL });
+    expect((await session.post('auth/login', { data: env.annotator })).ok()).toBeTruthy();
+    const refresh = (await session.storageState()).cookies.find((cookie) => cookie.name === 'refresh_token');
+    expect(refresh, 'refresh_token cookie').toBeDefined();
+    expect((await session.post('auth/logout')).ok()).toBeTruthy();
+
+    const copy = await request.newContext({ baseURL });
+    const response = await copy.post('auth/refresh', { headers: { Cookie: `refresh_token=${refresh!.value}` } });
+    expect(response.status()).toBe(401);
+    await Promise.all([session.dispose(), copy.dispose()]);
   });
 });

@@ -44,7 +44,6 @@ export default function HotspotTagFilter({ tagIds, onChange }: HotspotTagFilterP
         className="hotspot-tag-filter__toggle"
         active={tagIds.length > 0}
         aria-expanded={open}
-        aria-haspopup="true"
         onClick={() => setOpen(!open)}
       >
         Filtr tagów

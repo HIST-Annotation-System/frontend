@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AccountResponse, Role } from '../types/user';
 import { UploadCancelledError, getErrorMessage } from './errors';
 import { formatRelativeDate } from './format';
-import { ALL_ROLES, ORGANIZATION_ROLES, ROLE_LABELS, isManager, isSystemAdmin } from './roles';
+import { ALL_ROLES, ORGANIZATION_ROLES, ROLE_LABELS, canUpload, isManager, isSystemAdmin } from './roles';
 
 const user = (role: Role): AccountResponse => ({ id: 1, username: 'u', role, is_first_login: false });
 
@@ -19,6 +19,16 @@ describe('roles', () => {
   it('treats a missing user as nobody', () => {
     expect(isSystemAdmin(null)).toBe(false);
     expect(isManager(undefined)).toBe(false);
+    expect(canUpload(null)).toBe(false);
+  });
+
+  it('lets managers upload, and annotators only with the upload permission', () => {
+    const profile = (can_upload: boolean) => ({ id: 1, first_name: 'A', last_name: 'B', can_upload, categories: [] });
+    expect(canUpload(user('ADMIN'))).toBe(true);
+    expect(canUpload({ ...user('ORG_ADMIN'), profile: profile(false) })).toBe(true);
+    expect(canUpload(user('ANNOTATOR'))).toBe(false);
+    expect(canUpload({ ...user('ANNOTATOR'), profile: profile(false) })).toBe(false);
+    expect(canUpload({ ...user('ANNOTATOR'), profile: profile(true) })).toBe(true);
   });
 
   it('lets organization admins give only organization roles', () => {

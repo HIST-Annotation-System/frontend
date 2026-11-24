@@ -100,6 +100,8 @@ test.describe("the model's uncertainty", () => {
   test('SCRUM-79: an annotator cannot send a folder back to the model', async ({ page }) => {
     folder = await seedFolder(admin, [unique('rescore')], await admin.e2eOrganizationId());
     await page.goto(`/hotspots?folder=${folder.id}`);
+    // A folder's buttons only appear while the pointer is over its row.
+    await page.getByRole('button', { name: new RegExp(`^${folder.name}`) }).hover();
     await expect(page.getByRole('button', { name: `Zmień nazwę folderu ${folder.name}` })).toBeVisible();
     await expect(page.getByRole('button', { name: /Przelicz niepewność modelu/ })).toHaveCount(0);
     expect((await annotator.ctx.post(`hotspot-folders/${folder.id}/confidence-rescore`)).status()).toBe(403);
@@ -113,6 +115,7 @@ test.describe("the model's uncertainty", () => {
       // Segmented, but without the model's cells (the worker is not in the E2E stack), so nothing is sent.
       await markSegmentationDone(folder.hotspots[0].id);
       await page.goto(`/hotspots?folder=${folder.id}`);
+      await page.getByRole('button', { name: new RegExp(`^${folder.name}`) }).hover();
       await page.getByRole('button', { name: `Przelicz niepewność modelu w folderze ${folder.name}` }).click();
       const dialog = page.getByRole('dialog').filter({ hasText: 'Przelicz niepewność modelu' });
       await dialog.getByRole('button', { name: 'Przelicz' }).click();

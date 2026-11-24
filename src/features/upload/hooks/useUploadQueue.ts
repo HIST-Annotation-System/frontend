@@ -27,6 +27,7 @@ import {
 } from '../utils/resumableUploads';
 import { createRateMeter, estimateRemainingSeconds } from '../utils/transferRate';
 import type { Slide } from '../../../types/slide';
+import { SLIDE_NOT_FOUND_CODE } from '../../slides/utils/slideConflicts';
 import { isActive, isAlreadyQueued, nextToStart, uploadQueueReducer, type UploadItem } from '../utils/uploadQueue';
 
 const DEFAULT_CONCURRENCY = 4;
@@ -200,7 +201,8 @@ export function useUploadQueue() {
         // Anything else (rejected file, slide deleted meanwhile...) can't be continued: drop the leftovers.
         if (session) {
           forgetUpload(session.slideId);
-          if (!(error instanceof ApiError && error.status === 404)) {
+          // Only a deleted slide has nothing to cancel; a 404 for a missing upload or file still leaves the slide.
+          if (!(error instanceof ApiError && error.code === SLIDE_NOT_FOUND_CODE)) {
             await cancelUpload(session.slideId).catch(() => undefined);
           }
           refreshSlides();

@@ -14,3 +14,7 @@ export const isSystemAdmin = (user: AccountResponse | null | undefined): boolean
 
 export const isManager = (user: AccountResponse | null | undefined): boolean =>
   user?.role === 'ADMIN' || user?.role === 'ORG_ADMIN';
+
+/** May import hotspot images: administrators, and annotators given "Może wgrywać pliki". */
+export const canUpload = (user: AccountResponse | null | undefined): boolean =>
+  isManager(user) || !!user?.profile?.can_upload;

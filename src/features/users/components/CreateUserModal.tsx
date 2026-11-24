@@ -7,6 +7,7 @@ import { organizationQueryKeys } from '../../../services/organizationsApi';
 import { usersApi } from '../../../services/usersApi';
 import type { AccountCreate, Role } from '../../../types/user';
 import { getErrorMessage } from '../../../utils/errors';
+import { PASSWORD_MIN_LENGTH } from '../../../utils/passwords';
 import { ALL_ROLES, isSystemAdmin, ORGANIZATION_ROLES, ROLE_LABELS } from '../../../utils/roles';
 import { useOrganizations } from '../../organizations/hooks/useOrganizations';
 import '../../../pages/admin/UsersPage.css';
@@ -63,7 +64,13 @@ export default function CreateUserModal({ organizationId = null, role = 'ANNOTAT
         </label>
         <label className="admin-field">
           <span className="admin-field__label">Hasło tymczasowe</span>
-          <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input
+            type="text"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={PASSWORD_MIN_LENGTH}
+          />
         </label>
         <label className="admin-field">
           <span className="admin-field__label">Rola</span>

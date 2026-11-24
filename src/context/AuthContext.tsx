@@ -5,6 +5,9 @@ import { authApi } from '../services/authApi';
 import type { AccountResponse } from '../types/user';
 import type { LoginRequest, ProfileSetup } from '../types/auth';
 import { ApiError } from '../services/httpClient';
+import { PASSWORD_TOO_SHORT } from '../utils/passwords';
+
+const INVALID_CREDENTIALS = 'Nieprawidłowa nazwa użytkownika lub hasło.';
 
 interface AuthContextType {
   user: AccountResponse | null;
@@ -46,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await refetch();
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message);
+        setError(err.status === 401 ? INVALID_CREDENTIALS : err.message);
       }
       throw err;
     }
@@ -59,7 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await refetch();
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message);
+        // The page checks the length first; 422 is the API's own password rule.
+        setError(err.status === 422 ? PASSWORD_TOO_SHORT : err.message);
       }
       throw err;
     }

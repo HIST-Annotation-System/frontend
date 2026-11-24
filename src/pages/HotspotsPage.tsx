@@ -31,7 +31,9 @@ import {
 import { pageSlice } from '../features/hotspots/utils/pagination';
 import { sortOptionsFor } from '../features/hotspots/utils/hotspotSort';
 import type { HotspotFolder, HotspotListQuery } from '../types/hotspot';
+import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../utils/errors';
+import { canUpload } from '../utils/roles';
 import './HotspotsPage.css';
 
 const DETAILS_OPEN_KEY = 'hist.hotspotDetailsOpen';
@@ -63,6 +65,7 @@ function writeDetailsOpen(open: boolean) {
  */
 export default function HotspotsPage() {
   useDocumentTitle('Hotspoty');
+  const mayUpload = canUpload(useAuth().user);
   const [searchParams, setSearchParams] = useSearchParams();
   const { search } = useLocation();
   const foldersQuery = useHotspotFolders();
@@ -139,9 +142,10 @@ export default function HotspotsPage() {
               <div className="hotspots-page__no-folders">
                 <span className="hotspots-page__no-folders-title">Brak hotspotów</span>
                 <span>
-                  Hotspoty trzymane są w folderach. Utwórz folder w panelu po lewej i wgraj do niego obrazy albo
-                  otwórz slajd, kliknij „Hotspoty” na pasku przeglądarki i przeciągnij po obszarze, który ma zostać
-                  pocięty na hotspoty.
+                  Hotspoty trzymane są w folderach.{' '}
+                  {mayUpload ? 'Utwórz folder w panelu po lewej i wgraj do niego obrazy albo otwórz' : 'Otwórz'} slajd,
+                  kliknij „Hotspoty” na pasku przeglądarki i przeciągnij po obszarze, który ma zostać pocięty na
+                  hotspoty.
                 </span>
               </div>
             </div>
@@ -216,7 +220,8 @@ function HotspotCatalogList({
   // Assessing lists untagged hotspots, so the cards' tag lines only take room when some card on the page uses them.
   const tagLines = visible.some((hotspot) => hotspot.tags.length > 0);
   // Images dropped on the list go into the folder being browsed.
-  const { isDragging, dropHandlers } = useHotspotDrop(folder, true);
+  const mayUpload = canUpload(useAuth().user);
+  const { isDragging, dropHandlers } = useHotspotDrop(folder, mayUpload);
   const isEmpty = folder ? folder.hotspot_count === 0 : folders.every((item) => item.hotspot_count === 0);
   const total = folder ? folder.hotspot_count : folders.reduce((sum, item) => sum + item.hotspot_count, 0);
   // Shown out of the folder's total while a filter or the search holds some hotspots back.
@@ -245,7 +250,7 @@ function HotspotCatalogList({
               {modes}
             </div>
             <div className="hotspots-page__header-actions">
-              {folder && <HotspotUploader folderId={folder.id} folderName={folder.name} />}
+              {folder && mayUpload && <HotspotUploader folderId={folder.id} folderName={folder.name} />}
             </div>
           </div>
           {!isEmpty && (
@@ -306,10 +311,12 @@ function HotspotCatalogList({
                     ? 'Żaden hotspot nie spełnia wyszukiwania ani filtrów.'
                     : !folder
                       ? 'Żaden folder nie zawiera jeszcze hotspotów.'
-                      : 'Wgraj obrazy albo przeciągnij je tutaj. Hotspoty można też utworzyć ze slajdu przyciskiem „Hotspoty” w przeglądarce slajdów.'}
+                      : mayUpload
+                        ? 'Wgraj obrazy albo przeciągnij je tutaj. Hotspoty można też utworzyć ze slajdu przyciskiem „Hotspoty” w przeglądarce slajdów.'
+                        : 'Hotspoty można utworzyć ze slajdu przyciskiem „Hotspoty” w przeglądarce slajdów.'}
                 </span>
                 {!isEmpty && search && <Button onClick={() => setSearch('')}>Wyczyść wyszukiwanie</Button>}
-                {isEmpty && folder && <HotspotUploader folderId={folder.id} folderName={folder.name} />}
+                {isEmpty && folder && mayUpload && <HotspotUploader folderId={folder.id} folderName={folder.name} />}
               </div>
             ) : (
               <ul

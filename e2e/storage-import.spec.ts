@@ -68,13 +68,11 @@ test('SCRUM-52: a file in the bucket is imported as a slide, and importing it ag
   expect(await again.json()).toEqual({ slide_id: created.slide_id, created: false });
 });
 
-// A missing key answers 502 "Object storage is unavailable." instead of a 4xx that says the file is not there.
-test.fail('SCRUM-52: a key that is not in the bucket is refused as a bad request', async () => {
+test('SCRUM-52: a key that is not in the bucket is refused as not found', async () => {
   const response = await admin.ctx.post('upload/import-from-storage', {
     data: { key: `${prefix}/missing.tif`, organization_id: await admin.e2eOrganizationId() },
   });
-  expect(response.status()).toBeGreaterThanOrEqual(400);
-  expect(response.status()).toBeLessThan(500);
+  expect(response.status()).toBe(404);
 });
 
 test('SCRUM-27: only the system admin may browse or import', async () => {
