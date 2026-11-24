@@ -26,4 +26,8 @@ export const deleteSlide = async (slideId: string, version: string): Promise<voi
 /** Deep Zoom descriptor; OpenSeadragon derives the tile URLs from it. */
 export const getDziUrl = (slideId: string): string => apiUrl(`/slides/${slideId}/image.dzi`);
 
+/** The Deep Zoom descriptor itself. Answers 503 while the server is still copying the slide to its disk. */
+export const getSlideDzi = async (slideId: string, signal?: AbortSignal): Promise<string> =>
+  (await httpClient.get<string>(`/slides/${slideId}/image.dzi`, { signal, responseType: 'text' })).data;
+
 export const getThumbnailUrl = (slideId: string): string => apiUrl(`/slides/${slideId}/thumbnail`);

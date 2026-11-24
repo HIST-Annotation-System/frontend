@@ -19,6 +19,32 @@
   inset: 0;
 }
 
+/* Until the server can serve the slide's tiles: a message centred on the empty canvas. */
+.slide-viewer__state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.slide-viewer__state-message {
+  max-width: 360px;
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  box-shadow: 0 1px 6px rgb(0 0 0 / 35%);
+}
+
+.slide-viewer__state-message .spinner {
+  padding: var(--space-3);
+  text-align: left;
+}
+
+.slide-viewer__state-message .spinner__circle {
+  flex: none;
+}
+
 /* Status bar: under the whole viewer screen (its slot), or under the canvas until the slot exists. */
 .viewer-screen__status {
   display: flex;

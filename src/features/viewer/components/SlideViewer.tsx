@@ -1,9 +1,13 @@
 import { OpenSeadragonViewer } from '@annotorious/react';
 import { useMemo, type ReactNode } from 'react';
+import ErrorMessage from '../../../components/ui/ErrorMessage';
+import Spinner from '../../../components/ui/Spinner';
 import { getDziUrl } from '../../../services/slidesApi';
 import type { SlideDetail } from '../../../types/slide';
+import { getErrorMessage } from '../../../utils/errors';
 import { getNativeMagnification } from '../../../utils/magnification';
 import { useMiddleButtonPan } from '../hooks/useMiddleButtonPan';
+import { useSlideImage } from '../hooks/useSlideImage';
 import { useTissueFocus } from '../hooks/useTissueFocus';
 import { createViewerOptions } from '../viewerOptions';
 import ViewerStatusBar from './ViewerStatusBar';
@@ -26,12 +30,33 @@ export default function SlideViewer({ slide, children }: SlideViewerProps) {
   useTissueFocus(slide);
   useMiddleButtonPan();
   const nativeMagnification = getNativeMagnification(slide);
+  const image = useSlideImage(slide.id);
 
   return (
     <div className="slide-viewer">
       <div className="slide-viewer__frame">
-        <OpenSeadragonViewer className="slide-viewer__canvas" options={options} />
-        {children}
+        {image.isSuccess ? (
+          <>
+            <OpenSeadragonViewer className="slide-viewer__canvas" options={options} />
+            {children}
+          </>
+        ) : (
+          <div className="slide-viewer__state">
+            <div className="slide-viewer__state-message">
+              {image.isError ? (
+                <ErrorMessage message={getErrorMessage(image.error, 'Nie udało się otworzyć slajdu.')} />
+              ) : (
+                <Spinner
+                  label={
+                    image.preparing
+                      ? 'Serwer kopiuje slajd na swój dysk. Przy pierwszym otwarciu dużego slajdu może to potrwać kilka minut…'
+                      : 'Wczytywanie slajdu…'
+                  }
+                />
+              )}
+            </div>
+          </div>
+        )}
       </div>
       <ViewerStatusBarHost>
         <ViewerStatusBar slide={slide} nativeMagnification={nativeMagnification} />

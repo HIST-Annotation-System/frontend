@@ -57,8 +57,8 @@ export function useHotspotBatches() {
     queryFn: ({ signal }) => listHotspotBatches(signal),
     refetchInterval: (current) =>
       current.state.data?.some((batch) => batch.status === 'running') ? BATCH_POLL_INTERVAL_MS : false,
-    // Refetch-on-focus is off app-wide, so polling must go on in a background tab.
-    refetchIntervalInBackground: true,
+    // Hidden tabs don't poll; refetch-on-focus is off app-wide, so it is turned on here to catch up on return.
+    refetchOnWindowFocus: true,
   });
   useRefreshOnProgress(query.data);
   return query;
@@ -70,7 +70,7 @@ export function useHotspotBatch(batchId: string) {
     queryKey: hotspotBatchQueryKeys.detail(batchId),
     queryFn: ({ signal }) => getHotspotBatch(batchId, signal),
     refetchInterval: (current) => (current.state.data?.status === 'running' ? BATCH_POLL_INTERVAL_MS : false),
-    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
   });
   useRefreshOnProgress(query.data && [query.data]);
   return query;
