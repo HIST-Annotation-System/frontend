@@ -26,7 +26,7 @@ const bucket = {
   BUCKET_REGION: 'us-east-1',
 };
 
-// Everything else is set explicitly so the backend's own .env.local (the cloud database) is never used.
+// Everything else is set explicitly so the backend's own .env.local (your development stack) is never used.
 const backendEnv = {
   ...process.env,
   ENVIRONMENT: 'e2e',
