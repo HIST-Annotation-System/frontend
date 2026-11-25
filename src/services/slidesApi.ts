@@ -28,6 +28,8 @@ export const getDziUrl = (slideId: string): string => apiUrl(`/slides/${slideId}
 
 /** The Deep Zoom descriptor itself. Answers 503 while the server is still copying the slide to its disk. */
 export const getSlideDzi = async (slideId: string, signal?: AbortSignal): Promise<string> =>
-  (await httpClient.get<string>(`/slides/${slideId}/image.dzi`, { signal, responseType: 'text' })).data;
+  // Axios' default (JSON) response type, not 'text': the XML still arrives as a string, and an error's JSON body is
+  // parsed, so its `code` (e.g. slide_preparing) reaches ApiError.
+  (await httpClient.get<string>(`/slides/${slideId}/image.dzi`, { signal })).data;
 
 export const getThumbnailUrl = (slideId: string): string => apiUrl(`/slides/${slideId}/thumbnail`);

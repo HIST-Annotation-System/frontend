@@ -14,6 +14,12 @@ import ViewerStatusBar from './ViewerStatusBar';
 import ViewerStatusBarHost from './ViewerStatusBarHost';
 import './SlideViewer.css';
 
+const WAIT_LABELS = {
+  loading: 'Wczytywanie slajdu…',
+  copying: 'Serwer kopiuje slajd na swój dysk. Przy pierwszym otwarciu dużego slajdu może to potrwać kilka minut…',
+  server: 'Serwer chwilowo niedostępny – ponawiam…',
+};
+
 interface SlideViewerProps {
   slide: SlideDetail;
   /** Extra overlays rendered on top of the viewer canvas (e.g. the hotspot tools). */
@@ -46,13 +52,7 @@ export default function SlideViewer({ slide, children }: SlideViewerProps) {
               {image.isError ? (
                 <ErrorMessage message={getErrorMessage(image.error, 'Nie udało się otworzyć slajdu.')} />
               ) : (
-                <Spinner
-                  label={
-                    image.preparing
-                      ? 'Serwer kopiuje slajd na swój dysk. Przy pierwszym otwarciu dużego slajdu może to potrwać kilka minut…'
-                      : 'Wczytywanie slajdu…'
-                  }
-                />
+                <Spinner label={WAIT_LABELS[image.waiting ?? 'loading']} />
               )}
             </div>
           </div>

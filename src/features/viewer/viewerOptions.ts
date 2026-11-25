@@ -10,6 +10,10 @@ export const createViewerOptions = (
   crossOriginPolicy: 'use-credentials',
   // The Deep Zoom descriptor (.dzi) is fetched with XHR, which sends the cookie only when asked to.
   ajaxWithCredentials: true,
+  // A slide left idle for a while may be removed from the server's disk; its tiles answer 503 while it is copied back
+  // (or while the API restarts), so failed tiles are retried for two minutes instead of staying blank.
+  tileRetryMax: 24,
+  tileRetryDelay: 5000,
   // Navigation buttons are custom React controls, so OpenSeadragon's image buttons (prefixUrl) are not needed.
   showNavigationControl: false,
   showNavigator: true,
