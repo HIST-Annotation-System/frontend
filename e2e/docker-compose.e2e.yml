@@ -1,0 +1,21 @@
+# Throwaway Postgres and S3 (Adobe S3Mock) for the E2E suite only. Never point the suite at the shared RDS database
+# or at the real S3 bucket.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: e2e
+      POSTGRES_PASSWORD: e2e
+      POSTGRES_DB: e2e
+    ports:
+      - "55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  s3:
+    image: adobe/s3mock
+    environment:
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: e2e-bucket
+      COM_ADOBE_TESTING_S3MOCK_STORE_RETAIN_FILES_ON_EXIT: "false"
+    ports:
+      - "59000:9090"

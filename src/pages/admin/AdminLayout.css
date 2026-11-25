@@ -1,0 +1,725 @@
+.admin-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.admin-sidebar {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 216px;
+  padding: var(--space-4) var(--space-2);
+  overflow-y: auto;
+  border-right: var(--border-width) solid var(--c-border);
+  background: var(--c-pane);
+}
+
+.admin-sidebar-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.admin-sidebar-title span {
+  color: var(--c-text-2);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.admin-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-nav-label {
+  padding: 0 10px 4px;
+  color: var(--c-text-3);
+}
+
+/* Text-only items; the active one gets the accent-soft fill, no coloured pill. */
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 10px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  color: var(--c-text-2);
+  font-size: 14px;
+  font-weight: 400;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition:
+    background-color var(--motion-fast) var(--easing),
+    color var(--motion-fast) var(--easing);
+}
+
+.admin-nav-item:hover {
+  background: var(--c-hover-2);
+  color: var(--c-text);
+}
+
+.admin-nav-item.active,
+.admin-nav-item.active:hover {
+  background: var(--c-accent-soft);
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+.admin-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+  background: var(--c-surface);
+}
+
+/* ---- Shared admin primitives (used by every admin page) ---- */
+
+/* A title strip in the pane colour, then the content on the main surface: an add form, alerts, a table. */
+.admin-page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-page-header {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 48px;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--border-width) solid var(--c-border);
+  background: var(--c-pane);
+  box-sizing: border-box;
+}
+
+.admin-page-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.admin-page-count {
+  color: var(--c-text-3);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.admin-page-spacer {
+  flex: 1;
+}
+
+.admin-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 240px;
+  height: var(--control-md);
+  padding: 0 10px;
+  border: var(--border-width) solid var(--c-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--c-input);
+  color: var(--c-text-3);
+  box-sizing: border-box;
+}
+
+.admin-search:focus-within {
+  border-color: var(--c-focus-outline);
+  box-shadow: 0 0 0 3px var(--c-focus-ring);
+}
+
+.admin-search input[type='search'] {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.admin-search input[type='search']:focus {
+  box-shadow: none;
+}
+
+/* "Add" form above a table: labelled fields with the button on their baseline. */
+.admin-add {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.admin-field__label {
+  color: var(--c-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.admin-add .admin-input {
+  width: 280px;
+}
+
+.admin-add .admin-input--weight {
+  width: 80px;
+}
+
+.admin-add .btn {
+  height: var(--control-md);
+  padding: 0 var(--space-4);
+}
+
+.admin-input {
+  min-width: 0;
+  height: var(--control-md);
+  padding: 0 10px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.admin-input--weight {
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
+/* A value the page already knows will be rejected (e.g. a name that is taken). */
+.admin-input--invalid,
+.admin-input--invalid:focus {
+  border-color: var(--c-danger);
+}
+
+/* An error line between the add form and the table, in red (no framed box). */
+.admin-alert {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-3);
+  color: var(--c-danger-text);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.admin-alert > span {
+  flex: 1;
+}
+
+.admin-alert__dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.admin-alert__dismiss:hover {
+  background: var(--c-danger-soft);
+}
+
+/* ---- Table ---- */
+
+.admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.admin-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 32px;
+  padding: 0 var(--space-3);
+  border-bottom: var(--border-width) solid var(--c-border);
+  background: var(--c-table-head, var(--c-surface-2));
+  color: var(--c-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.admin-table td {
+  height: 40px;
+  padding: var(--space-1) var(--space-3);
+  border-bottom: var(--border-width) solid var(--c-border);
+  color: var(--c-text);
+  white-space: nowrap;
+}
+
+.admin-table th:first-child,
+.admin-table td:first-child {
+  padding-left: var(--space-4);
+}
+
+.admin-table th:last-child,
+.admin-table td:last-child {
+  padding-right: var(--space-4);
+}
+
+.admin-table tbody tr:hover {
+  background: var(--c-hover);
+}
+
+.admin-table .admin-table__num {
+  width: 1%;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-table td.admin-table__muted {
+  color: var(--c-text-2);
+}
+
+.admin-table__faint {
+  color: var(--c-text-3);
+}
+
+.admin-table .admin-table__actions {
+  width: 1%;
+  text-align: right;
+}
+
+.admin-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.admin-table tbody tr.admin-table__empty:hover {
+  background: none;
+}
+
+.admin-table tr.admin-table__empty td {
+  color: var(--c-text-3);
+  white-space: normal;
+}
+
+/* An error explained under its own row (e.g. a blocked delete). */
+.admin-table tbody tr.admin-table__error,
+.admin-table tbody tr.admin-table__error:hover {
+  background: none;
+}
+
+.admin-table tr.admin-table__error td {
+  height: auto;
+  padding-top: 0;
+  padding-bottom: 10px;
+  color: var(--c-danger-text);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: normal;
+}
+
+.admin-table tr:has(+ .admin-table__error) td {
+  border-bottom-color: transparent;
+}
+
+/* The existing row a name being typed clashes with. */
+.admin-table tbody tr.admin-table__row--duplicate,
+.admin-table tbody tr.admin-table__row--duplicate:hover {
+  background: var(--c-danger-soft);
+}
+
+/* Long values are cut with an ellipsis; the cell carries the full text in its title. */
+.admin-table td.admin-table__truncate {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Rename mode of a row: a real field in place of the name, "Zapisz" and "Anuluj" in the actions column. */
+.admin-table .admin-edit-input {
+  width: 100%;
+  max-width: 360px;
+  height: var(--control-sm);
+  margin-left: -9px;
+  padding: 0 var(--space-2);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.admin-table .admin-edit-input--num {
+  width: 80px;
+  margin-right: -9px;
+  margin-left: 0;
+  font-family: var(--font-mono);
+  text-align: right;
+  appearance: textfield;
+}
+
+/* No spinner: it would cover the digits in the narrow field. */
+.admin-edit-input--num::-webkit-inner-spin-button,
+.admin-edit-input--num::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+/* Room for "Zapisz" + "Anuluj" up front, so the columns don't shift when a row enters rename mode. */
+.admin-table--editable .admin-row-actions {
+  min-width: 128px;
+}
+
+.admin-row-actions .btn {
+  height: var(--control-sm);
+  padding: 0 10px;
+}
+
+/* 24px ghost icon buttons, as in the hotspot folder list. */
+.admin-icon-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--c-text-3);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--easing),
+    color var(--motion-fast) var(--easing);
+}
+
+.admin-icon-btn:hover:not(:disabled) {
+  background: var(--c-hover-2);
+  color: var(--c-text);
+}
+
+/* Delete controls are red everywhere, not only on hover. */
+.admin-icon-btn--danger {
+  color: var(--c-danger-text);
+}
+
+.admin-icon-btn--danger:hover:not(:disabled) {
+  background: var(--c-danger-soft);
+  color: var(--c-danger-text);
+}
+
+.admin-icon-btn:disabled {
+  color: var(--c-disabled-fg);
+  cursor: not-allowed;
+}
+
+.admin-loading {
+  padding: var(--space-6) var(--space-4);
+  color: var(--c-text-2);
+  font-size: 13px;
+}
+
+/* Keeps the pencil in the same column on rows that cannot be deleted. */
+.admin-icon-btn--placeholder {
+  visibility: hidden;
+}
+
+/* The "add" form in the title strip: a bare input and its button. */
+.admin-header-add {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-header-add .admin-input {
+  width: 240px;
+}
+
+.admin-header-add .admin-input--weight {
+  width: 72px;
+}
+
+.admin-header-add .btn {
+  height: var(--control-md);
+  padding: 0 var(--space-4);
+}
+
+/* ---- Description line, chips, empty and loading states, settings card ---- */
+
+.admin-page-desc {
+  max-width: 720px;
+  margin: 0;
+  padding: var(--space-4) var(--space-4) 0;
+  color: var(--c-text-2);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.admin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 8px;
+  border: var(--border-width) solid var(--c-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--c-text);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.admin-chip--quiet {
+  border-color: var(--c-border);
+  color: var(--c-text-2);
+}
+
+.admin-chip--warn {
+  border-color: transparent;
+  background: var(--c-danger-soft);
+  color: var(--c-danger-text);
+}
+
+.admin-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-text-2);
+}
+
+.admin-dot::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-success);
+  content: '';
+}
+
+.admin-dot--pending::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--c-text-3);
+}
+
+.admin-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 420px;
+  margin: var(--space-8) auto;
+  padding: 0 var(--space-4);
+  color: var(--c-text-3);
+  text-align: center;
+}
+
+.admin-empty__title {
+  color: var(--c-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-empty__text {
+  color: var(--c-text-2);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.admin-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.admin-skeleton__row {
+  display: block;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--c-surface-2);
+  animation: admin-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes admin-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-skeleton__row {
+    animation: none;
+  }
+}
+
+/* A settings block: header strip, then the form. */
+.admin-card {
+  max-width: 560px;
+  margin: var(--space-4);
+  border: var(--border-width) solid var(--c-border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  overflow: hidden;
+}
+
+.admin-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border-bottom: var(--border-width) solid var(--c-border);
+  background: var(--c-stripe);
+}
+
+.admin-card__header h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.admin-card__fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.admin-hint {
+  color: var(--c-text-3);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.admin-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--c-success-text);
+  font-size: 12px;
+}
+
+@media (max-width: 800px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    width: auto;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-right: 0;
+    border-bottom: var(--border-width) solid var(--c-border);
+  }
+
+  .admin-nav {
+    flex-direction: row;
+    gap: 2px;
+    overflow-x: auto;
+  }
+
+  .admin-nav-group {
+    flex-direction: row;
+  }
+
+  .admin-nav-label {
+    display: none;
+  }
+
+  .admin-nav-item {
+    flex: none;
+  }
+}
+
+/* ---- List pages: a centred column on the page background, the table framed as a card ---- */
+
+.admin-list {
+  flex: 1;
+  padding: var(--space-5) var(--space-4) var(--space-8);
+  background: var(--c-pane);
+}
+
+.admin-list__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.admin-list .admin-page-desc,
+.admin-list .admin-alert {
+  padding: 0;
+}
+
+.admin-list .admin-table,
+.admin-list .admin-empty,
+.admin-list .admin-skeleton {
+  border: var(--border-width) solid var(--c-border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+}
+
+.admin-list .admin-table {
+  overflow: hidden;
+}
+
+.admin-list .admin-table th {
+  position: static;
+  background: var(--c-stripe);
+}
+
+.admin-list .admin-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-list .admin-empty {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: var(--space-8) var(--space-4);
+  box-sizing: border-box;
+}

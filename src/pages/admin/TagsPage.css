@@ -1,0 +1,8 @@
+.tags-table td.tags-kind {
+  width: 120px;
+}
+
+.tags-table td.tags-name {
+  max-width: 0;
+  width: 100%;
+}

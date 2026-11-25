@@ -1,0 +1,27 @@
+.more-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.more-details__toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--c-label);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.more-details__toggle:hover {
+  color: var(--c-text);
+}
+
+.more-details__caret {
+  width: 10px;
+}

@@ -1,0 +1,34 @@
+import type { Offset, Rect } from './geometry';
+
+export type SlideStatus = 'uploading' | 'processing' | 'ready' | 'failed';
+
+export interface Slide {
+  id: string;
+  name: string;
+  organization_id: number;
+  original_filename: string;
+  status: SlideStatus;
+  error_message: string | null;
+  /** 0-100 while downloading during ingestion; null before/after (upload has its own progress). */
+  ingest_progress: number | null;
+  vendor: string | null;
+  width: number | null;
+  height: number | null;
+  level_count: number | null;
+  mpp_x: number | null;
+  objective_power: number | null;
+  file_size_bytes: number | null;
+  /** Deep Zoom image coordinates + offset = level-0 slide coordinates. */
+  image_offset: Offset;
+  /** Bounding box of the detected tissue, in level-0 pixels. */
+  tissue_bbox: Rect | null;
+  created_at: string;
+  /** Username of the admin who uploaded/imported the slide; null for older slides or a deleted account. */
+  uploaded_by: string | null;
+  /** Optimistic-concurrency token: sent back in `If-Match` on rename/delete (409 if someone changed it). */
+  version: string;
+}
+
+export interface SlideDetail extends Slide {
+  properties: Record<string, string>;
+}

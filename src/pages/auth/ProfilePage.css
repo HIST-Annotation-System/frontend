@@ -1,0 +1,247 @@
+/* Mój profil: a title strip like the catalogues, then the identity card and one card per topic. */
+.profile-page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--c-page);
+}
+
+.profile-page__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: 48px;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--border-width) solid var(--c-border);
+  background: var(--c-surface);
+}
+
+.profile-page__bar .page-title {
+  margin: 0;
+}
+
+.profile-page__scroll {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-6) var(--space-4) 64px;
+  overflow-y: auto;
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* Who you are, at a glance. */
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--c-border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+}
+
+.profile-avatar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border: var(--border-width) solid var(--c-border-strong);
+  border-radius: 50%;
+  background: var(--c-accent-soft);
+  color: var(--c-text);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.profile-identity__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.profile-identity__name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  overflow-wrap: anywhere;
+}
+
+.profile-identity__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 13px;
+}
+
+.profile-role {
+  padding: 1px 8px;
+  border: var(--border-width) solid var(--c-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--c-text);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* A topic: header strip with the title and its edit button, then the content. */
+.profile-section {
+  border: var(--border-width) solid var(--c-border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  overflow: hidden;
+}
+
+.profile-section__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-3) 0 var(--space-4);
+  border-bottom: var(--border-width) solid var(--c-border);
+  background: var(--c-stripe);
+}
+
+.profile-section__header h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.profile-section__saved {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  gap: 4px;
+  color: var(--c-success-text);
+  font-size: 12px;
+}
+
+.profile-section__body {
+  padding: var(--space-4);
+}
+
+.profile-kv {
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: var(--space-3) var(--space-4);
+  font-size: 14px;
+}
+
+.profile-kv dd {
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.profile-kv__mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.profile-muted,
+.profile-hint {
+  color: var(--c-text-3);
+}
+
+.profile-hint {
+  margin: var(--space-3) 0 0;
+  font-size: 12px;
+}
+
+/* Editing state: a real form, fields stacked, the error right under them. */
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 360px;
+}
+
+.profile-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-form__field label {
+  color: var(--c-text-2);
+  font-size: 13px;
+}
+
+.profile-form__field input {
+  width: 100%;
+  height: var(--field-height);
+}
+
+.profile-form__password {
+  position: relative;
+}
+
+.profile-form__password input {
+  padding-right: 40px;
+}
+
+.profile-form__eye {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text-3);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.profile-form__eye:hover {
+  background: var(--c-hover);
+  color: var(--c-text);
+}
+
+.profile-form__hint {
+  color: var(--c-text-3);
+  font-size: 12px;
+}
+
+.profile-form__error {
+  margin: 0;
+  color: var(--c-danger-text);
+  font-size: 13px;
+}
+
+.profile-form__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .profile-page__scroll {
+    padding: var(--space-4);
+  }
+
+  .profile-kv {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .profile-kv dd {
+    margin-bottom: var(--space-2);
+  }
+}

@@ -1,137 +1,64 @@
-import React, { useState } from 'react';
-import {
-  startMultipartUpload,
-  getPresignedUrls,
-  refreshPresignedUrls,
-  completeMultipartUpload,
-  uploadChunkToS3
-} from '../../../services/uploadApi';
-import type { UploadPart } from '../../../types/upload';
+import { CircleHelp } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import Button from '../../../components/ui/Button';
+import Modal from '../../../components/ui/Modal';
+import { ACCEPTED_UPLOAD_EXTENSIONS } from '../slideFileRules';
+import SlideFormatGuide from './SlideFormatGuide';
 import './WsiUploader.css';
 
-const CHUNK_SIZE = 50 * 1024 * 1024; // 50MB
+interface WsiUploaderProps {
+  onFiles: (files: Iterable<File>) => number;
+  organizationPicker?: ReactNode;
+  /** Filled with a function that opens the file picker, for other buttons on the page (the empty library's). */
+  pickerRef?: RefObject<(() => void) | null>;
+}
 
-const WsiUploader: React.FC = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<'idle' | 'uploading' | 'completed' | 'error'>('idle');
-  const [message, setMessage] = useState('');
+/** Header button for adding slides; the library page shows the queue and accepts dropped files itself. */
+export default function WsiUploader({ onFiles, organizationPicker, pickerRef }: WsiUploaderProps) {
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [queueNotice, setQueueNotice] = useState<string | null>(null);
+  useEffect(() => {
+    if (pickerRef) pickerRef.current = () => inputRef.current?.click();
+  }, [pickerRef]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
-      setStatus('idle');
-      setProgress(0);
-      setMessage('');
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!file) return;
-
-    setStatus('uploading');
-    setProgress(0);
-    setMessage('Starting upload session...');
-
-    const totalParts = Math.ceil(file.size / CHUNK_SIZE);
-    
-    try {
-      const startRes = await startMultipartUpload(file.name);
-      const { upload_id, key } = startRes;
-
-      setMessage('Generating presigned URLs...');
-      const urlsRes = await getPresignedUrls(upload_id, key, totalParts);
-      let urls = urlsRes.urls;
-
-      setMessage('Uploading data chunks directly to Storage...');
-      const parts: UploadPart[] = [];
-      let uploadedBytes = 0;
-
-      let pendingParts = Array.from({ length: totalParts }, (_, i) => i);
-      
-      let i = 0;
-      while (i < pendingParts.length) {
-        const partIndex = pendingParts[i];
-        const start = partIndex * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, file.size);
-        const chunk = file.slice(start, end);
-
-        try {
-          const etag = await uploadChunkToS3(urls[partIndex], chunk, (progressEvent) => {
-            if (progressEvent.total) {
-              const currentChunkProgress = progressEvent.loaded;
-              const totalUploaded = uploadedBytes + currentChunkProgress;
-              setProgress(Math.round((totalUploaded / file.size) * 100));
-            }
-          });
-
-          parts.push({
-            PartNumber: partIndex + 1,
-            ETag: etag
-          });
-
-          uploadedBytes += chunk.size;
-          setProgress(Math.round((uploadedBytes / file.size) * 100));
-          i++;
-        } catch (error: any) {
-          if (error?.response?.status === 403) {
-            setMessage('Refreshing access tokens...');
-            
-            const remainingParts = pendingParts.slice(i).map(idx => idx + 1);
-            const refreshRes = await refreshPresignedUrls(upload_id, key, remainingParts);
-            
-            for (const [pNumber, newUrl] of Object.entries(refreshRes.urls)) {
-              urls[Number(pNumber) - 1] = newUrl;
-            }
-            
-            setMessage('Resuming upload...');
-          } else {
-            throw error;
-          }
-        }
-      }
-
-      setMessage('Finalizing and merging WSI image on server...');
-      const completeRes = await completeMultipartUpload(upload_id, key, parts);
-      
-      setStatus('completed');
-      setMessage(completeRes.message);
-
-    } catch (error: any) {
-      console.error("Upload error:", error);
-      setStatus('error');
-      setMessage(error?.response?.data?.detail || error.message || 'An error occurred during upload.');
-    }
+  const enqueue = (files: Iterable<File>) => {
+    const skipped = onFiles(files);
+    setQueueNotice(skipped > 0 ? `Pominięto pliki już dodane do kolejki: ${skipped}.` : null);
   };
 
   return (
-    <div className="wsi-uploader-container">
-      <h2>WSI Image Upload (Multipart S3)</h2>
-      
-      <div className="uploader-controls">
-        <input 
-          type="file" 
-          onChange={handleFileChange} 
-          disabled={status === 'uploading'}
-          accept=".tiff,.svs,.ndpi,.mrxs"
+    <div className="wsi-uploader">
+      <div className="wsi-uploader__buttons">
+        {organizationPicker}
+        <Button
+          icon={<CircleHelp size={16} aria-hidden="true" />}
+          variant="ghost"
+          aria-label="Obsługiwane formaty"
+          title="Obsługiwane formaty"
+          onClick={() => setIsGuideOpen(true)}
         />
-        <button 
-          onClick={handleUpload} 
-          disabled={!file || status === 'uploading'}
-        >
-          {status === 'uploading' ? 'Uploading...' : 'Start Upload'}
-        </button>
+        <Button variant="primary" onClick={() => inputRef.current?.click()}>
+          Wgraj
+        </Button>
       </div>
+      {queueNotice && <p className="wsi-uploader__message" role="status">{queueNotice}</p>}
 
-      {status !== 'idle' && (
-        <div className="progress-section">
-          <progress value={progress} max="100" className="wsi-progress-bar" />
-          <span className="progress-text">{progress}%</span>
-          <p className="status-message">{message}</p>
-        </div>
-      )}
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        accept={ACCEPTED_UPLOAD_EXTENSIONS.join(',')}
+        hidden
+        onChange={(event) => {
+          enqueue(event.target.files ?? []);
+          // Allows picking the same file again (e.g. after removing it from the queue).
+          event.target.value = '';
+        }}
+      />
+      <Modal title="Obsługiwane formaty i sposób wgrywania" open={isGuideOpen} onClose={() => setIsGuideOpen(false)}>
+        <SlideFormatGuide />
+      </Modal>
     </div>
   );
-};
-
-export default WsiUploader;
+}

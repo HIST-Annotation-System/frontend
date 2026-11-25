@@ -1,0 +1,260 @@
+/* Catalog layout: folder sidebar | title and toolbar strips over a full-width scrolling list, the selection bar
+   under it | details panel. */
+.hotspots-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.hotspots-sidebar {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: 208px;
+  min-height: 0;
+  border-right: var(--border-width) solid var(--c-border);
+  background: var(--c-pane);
+}
+
+.hotspots-sidebar__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 var(--space-3) 0 var(--space-4);
+}
+
+.hotspots-sidebar__count {
+  color: var(--c-text-3);
+  font-size: 12px;
+}
+
+.hotspots-sidebar__state {
+  padding: var(--space-2) var(--space-4);
+}
+
+.hotspots-page {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--c-page);
+}
+
+/* Title, toolbar and list; the details panel is a full-height column on its right. */
+.hotspots-page__main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.hotspots-page__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.hotspots-page__top {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  background: var(--c-surface);
+}
+
+.hotspots-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 48px;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--border-width) solid var(--c-border);
+}
+
+.hotspots-page__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.hotspots-page__title {
+  min-width: 0;
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hotspots-page__total {
+  color: var(--c-text-3);
+  font-size: 12px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.hotspots-page__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) 10px;
+  min-height: 48px;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--border-width) solid var(--c-border);
+}
+
+.hotspots-page__spacer {
+  flex: 1;
+}
+
+/* Bottom area under the list (outside its scroll): the bulk bar on the left, the pager on the right. */
+.hotspots-page__footer {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 44px;
+  border-top: var(--border-width) solid var(--c-border);
+  background: var(--c-surface);
+}
+
+/* With a selection the whole area is tinted, not just the bar's part of it. */
+.hotspots-page__footer:has(.hotspot-bulk--active) {
+  background: var(--c-accent-soft);
+}
+
+/* The bar keeps its controls in a row; when the window is too narrow for both, the pager moves under it. */
+.hotspots-page__footer > .hotspot-bulk {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-top: none;
+  background: transparent;
+}
+
+.hotspots-page__footer > .hotspot-pager {
+  margin-left: auto;
+}
+
+.hotspots-page__footer-spacer {
+  flex: 1;
+}
+
+.hotspots-page__content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.hotspots-page__body {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+.hotspots-page__body > .hotspot-activity {
+  padding: var(--space-3) var(--space-4) 0;
+}
+
+.hotspots-page__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4);
+  list-style: none;
+}
+
+.hotspots-page__grid > li {
+  min-width: 0;
+}
+
+.hotspots-page__list--stale {
+  opacity: 0.6;
+  transition: opacity var(--motion-fast) var(--easing);
+}
+
+/* Empty list: a centred title and hint. */
+.hotspots-page__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 64px var(--space-6);
+  text-align: center;
+}
+
+.hotspots-page__empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.hotspots-page__empty-text {
+  max-width: 400px;
+  color: var(--c-text-2);
+  font-size: 13px;
+  line-height: 18px;
+  text-wrap: pretty;
+}
+
+/* No folders at all: centred hint in the main area. */
+.hotspots-page__no-folders {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  max-width: 420px;
+  margin: 0 auto;
+  color: var(--c-text-2);
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.hotspots-page__no-folders-title {
+  color: var(--c-text);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+/* Images dragged over the list: a dashed frame with where they will go. */
+.hotspots-page__drop {
+  position: absolute;
+  inset: var(--space-3);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--c-focus-outline);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--c-surface) 88%, transparent);
+  pointer-events: none;
+}
+
+.hotspots-page__drop p {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--c-text-2);
+}
+
+.hotspots-page__drop strong {
+  color: var(--c-text);
+  font-size: 14px;
+}

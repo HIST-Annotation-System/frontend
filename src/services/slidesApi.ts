@@ -1,0 +1,35 @@
+import type { Slide, SlideDetail } from '../types/slide';
+import { apiUrl, httpClient } from './httpClient';
+
+export const slideQueryKeys = {
+  all: ['slides'] as const,
+  list: () => [...slideQueryKeys.all, 'list'] as const,
+  detail: (slideId: string) => [...slideQueryKeys.all, 'detail', slideId] as const,
+};
+
+export const listSlides = async (signal?: AbortSignal): Promise<Slide[]> =>
+  (await httpClient.get<Slide[]>('/slides', { signal })).data;
+
+export const getSlide = async (slideId: string, signal?: AbortSignal): Promise<SlideDetail> =>
+  (await httpClient.get<SlideDetail>(`/slides/${slideId}`, { signal })).data;
+
+/** `version` is the slide's version the user saw: the backend answers 409 if someone changed it since. */
+const ifMatch = (version: string) => ({ 'If-Match': `"${version}"` });
+
+export const renameSlide = async (slideId: string, name: string, version: string): Promise<Slide> =>
+  (await httpClient.patch<Slide>(`/slides/${slideId}`, { name }, { headers: ifMatch(version) })).data;
+
+export const deleteSlide = async (slideId: string, version: string): Promise<void> => {
+  await httpClient.delete(`/slides/${slideId}`, { headers: ifMatch(version) });
+};
+
+/** Deep Zoom descriptor; OpenSeadragon derives the tile URLs from it. */
+export const getDziUrl = (slideId: string): string => apiUrl(`/slides/${slideId}/image.dzi`);
+
+/** The Deep Zoom descriptor itself. Answers 503 while the server is still copying the slide to its disk. */
+export const getSlideDzi = async (slideId: string, signal?: AbortSignal): Promise<string> =>
+  // Axios' default (JSON) response type, not 'text': the XML still arrives as a string, and an error's JSON body is
+  // parsed, so its `code` (e.g. slide_preparing) reaches ApiError.
+  (await httpClient.get<string>(`/slides/${slideId}/image.dzi`, { signal })).data;
+
+export const getThumbnailUrl = (slideId: string): string => apiUrl(`/slides/${slideId}/thumbnail`);

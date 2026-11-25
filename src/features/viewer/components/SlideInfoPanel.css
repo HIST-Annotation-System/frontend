@@ -1,0 +1,13 @@
+/* Slide info panel: shared .side-pane / SidebarSection / .kv styles (global.css); only the extras live here. */
+.slide-info__empty {
+  color: var(--c-text-2);
+}
+
+.slide-info__folder {
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+.slide-info__folder:hover {
+  text-decoration: underline;
+}

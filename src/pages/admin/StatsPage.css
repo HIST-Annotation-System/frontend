@@ -1,0 +1,151 @@
+.stats-updated {
+  color: var(--c-text-3);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-spin {
+  animation: stats-spin 0.9s linear infinite;
+}
+
+@keyframes stats-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.stats-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 1280px;
+  padding: var(--space-4) var(--space-4) var(--space-8);
+}
+
+/* ---- Summary tiles ---- */
+
+.stats-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+
+.stats-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+}
+
+.stats-tile--emphasis {
+  border-color: var(--viz-series-orange);
+  box-shadow: inset 3px 0 0 var(--viz-series-orange);
+}
+
+.stats-tile__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  color: var(--c-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-tile__value {
+  color: var(--c-text);
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: 34px;
+}
+
+.stats-tile__note {
+  overflow: hidden;
+  color: var(--c-text-3);
+  font-size: 12px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Cards ---- */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: var(--space-4);
+}
+
+.stats-grid--3 {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+
+.stats-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+}
+
+.stats-card__header {
+  padding: var(--space-3) var(--space-4) 0;
+}
+
+.stats-card__title {
+  margin: 0;
+  color: var(--c-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.stats-card__subtitle {
+  margin: 2px 0 0;
+  color: var(--c-text-3);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.stats-card__body {
+  flex: 1;
+  padding: var(--space-4);
+}
+
+.stats-card--flush .stats-card__body {
+  padding: var(--space-3) 0 0;
+  overflow-x: auto;
+}
+
+.stats-card--flush .admin-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Small multiples: one measure per chart, side by side on the same days. */
+.stats-multiples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: var(--space-6);
+}
+
+.stats-table__name {
+  font-weight: 500;
+}
+
+.stats-footnote {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--border);
+  color: var(--c-text-3);
+  font-size: 12px;
+  line-height: 16px;
+}

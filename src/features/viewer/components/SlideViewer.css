@@ -1,0 +1,196 @@
+.slide-viewer {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Full-bleed canvas; floating panels sit on top of it. */
+.slide-viewer__frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--c-viewer);
+}
+
+.slide-viewer__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* Until the server can serve the slide's tiles: a message centred on the empty canvas. */
+.slide-viewer__state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.slide-viewer__state-message {
+  max-width: 360px;
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  box-shadow: 0 1px 6px rgb(0 0 0 / 35%);
+}
+
+.slide-viewer__state-message .spinner {
+  padding: var(--space-3);
+  text-align: left;
+}
+
+.slide-viewer__state-message .spinner__circle {
+  flex: none;
+}
+
+/* Status bar: under the whole viewer screen (its slot), or under the canvas until the slot exists. */
+.viewer-screen__status {
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: 26px;
+  padding: 0 var(--space-2);
+  overflow: hidden;
+  border-top: var(--border);
+  background: var(--c-surface);
+}
+
+.viewer-status {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  color: var(--c-text-2);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.viewer-status__item {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* A 1 x 14 px line between groups. */
+.viewer-status__item + .viewer-status__item::before {
+  content: '';
+  align-self: center;
+  width: 1px;
+  height: 14px;
+  margin-right: 6px;
+  background: var(--c-border);
+}
+
+.viewer-status__label {
+  flex-shrink: 0;
+}
+
+.viewer-status__value {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--c-text);
+  text-overflow: ellipsis;
+}
+
+.viewer-status__value--strong {
+  min-width: 40px;
+}
+
+/* The active tool's description at the start of the bar: cut, never wrapped. */
+.viewer-status__slot {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.viewer-status__hint {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viewer-status__hint--error {
+  color: var(--c-danger-text);
+}
+
+.viewer-status__sep {
+  flex: none;
+  width: 1px;
+  height: 14px;
+  background: var(--c-border);
+}
+
+/* No hint: no room taken, and no separator after it. */
+.viewer-status__slot:empty,
+.viewer-status__slot:empty + .viewer-status__sep {
+  display: none;
+}
+
+/* Floating navigation panel (zoom, fit, full resolution); its frame is the shared .floating-panel (global.css). */
+.viewer-nav {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+}
+
+.viewer-nav > .btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-color: transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text-2);
+  box-shadow: none;
+}
+
+.viewer-nav > .btn:hover:not(:disabled) {
+  background: var(--c-hover);
+  color: var(--c-text);
+}
+
+.viewer-nav__actual-size {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Current zoom between "-" and "+". */
+.viewer-nav__zoom {
+  width: 44px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--c-text);
+  text-align: center;
+}
+
+/* OpenSeadragon navigator (minimap): colours only - OpenSeadragon sizes it with its own 2px borders.
+   Its inline styles need !important. */
+.slide-viewer__frame .navigator {
+  /* Keep the minimap off the canvas edges. */
+  margin: 0 var(--space-3) var(--space-3) 0 !important;
+  border-color: var(--c-border) !important;
+  background-color: var(--c-viewer) !important;
+  transition: margin-right var(--motion-fast) var(--easing);
+}
+
+/* The side pane floats over the image's right edge: the minimap moves out from under it. */
+.viewer-screen--panel-open .slide-viewer__frame .navigator {
+  margin-right: calc(var(--side-pane-width) + var(--space-3)) !important;
+}
+
+.slide-viewer__frame .navigator .displayregion {
+  border-color: var(--c-accent) !important;
+}

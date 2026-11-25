@@ -1,0 +1,106 @@
+/* Tag marks: priority as three pips, accuracy as a circled tick or cross, custom tags as outlined pills. */
+.tag-marks {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+}
+
+.tag-mark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  color: var(--tag-mark);
+  line-height: 18px;
+}
+
+.priority-pips {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.priority-pips__pip {
+  box-sizing: border-box;
+  border: 1.25px solid currentColor;
+  border-radius: 50%;
+}
+
+.priority-pips__pip--on {
+  background: currentColor;
+}
+
+.tag-mark__label {
+  color: var(--c-text);
+}
+
+.tag-mark--correct {
+  --tag-mark: var(--c-success-text);
+}
+
+.tag-mark--wrong,
+.tag-mark--priority-high {
+  --tag-mark: var(--c-danger-text);
+}
+
+.tag-mark--priority-medium {
+  --tag-mark: var(--c-text-2);
+}
+
+.tag-mark--priority-low {
+  --tag-mark: var(--c-text-3);
+}
+
+/* Custom tags: outlined in the text colour (white on the dark theme), no fill. */
+.tag-pill {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--c-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "+N" for the tags that do not fit. */
+.tag-pill--more {
+  flex: none;
+}
+
+/* A long name shortens with "…"; what follows it (weight, remove button) always stays visible. */
+.tag-pill__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tag-pill > :not(.tag-pill__name) {
+  flex: none;
+}
+
+/* The reannotation queue: the verdict reads first, larger and bold. */
+.tag-marks--strong {
+  gap: 6px 10px;
+}
+
+.tag-marks--strong .tag-mark__label {
+  font-weight: 600;
+}
+
+.tag-marks--strong .tag-pill {
+  height: 22px;
+  font-size: 12.5px;
+  line-height: 22px;
+}

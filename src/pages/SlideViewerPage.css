@@ -1,0 +1,236 @@
+/* Shared by the slide viewer, the hotspot viewer and (layout only) the hotspot catalog. */
+.viewer-page {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.viewer-page__main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--c-viewer);
+}
+
+/* Action errors while the side pane is hidden: at the top centre of the image, clear of the tool panel. */
+.viewer-page__error {
+  position: absolute;
+  top: var(--space-3);
+  left: 50%;
+  z-index: 90;
+  width: min(520px, calc(100% - 2 * 72px));
+  transform: translateX(-50%);
+}
+
+/* Action errors at the top of the side pane. */
+.viewer-panel__error {
+  flex: none;
+  padding: var(--space-2);
+  border-bottom: var(--border);
+}
+
+.viewer-panel__corrected {
+  color: var(--c-text-2);
+}
+
+/* A control focused under the pinned footer scrolls up into view instead of staying hidden behind it. */
+.side-pane:has(> .viewer-panel__footer) {
+  scroll-padding-bottom: 72px;
+}
+
+/* Stays at the bottom of the side pane, under the last section; the pane's content scrolls above it. */
+.viewer-panel__footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-top: var(--border);
+  background: var(--c-pane);
+}
+
+/* Viewer screens: the context bar above the workspace, the status bar (SlideViewer.css) under all of it. */
+.viewer-screen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.viewer-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  padding: 0 var(--space-3);
+  overflow: hidden;
+  border-bottom: var(--border);
+  background: var(--c-surface);
+  white-space: nowrap;
+}
+
+.viewer-header__meta {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--c-text-3);
+}
+
+/* Breadcrumb of the hotspot viewer: catalog / folder / hotspot. */
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.crumbs a {
+  color: var(--c-text-2);
+  text-decoration: none;
+}
+
+.crumbs a:hover {
+  color: var(--c-text);
+  text-decoration: underline;
+}
+
+.crumbs__sep {
+  color: var(--c-text-3);
+}
+
+.crumbs__here {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+
+/* Reannotation: the expert's verdict beside the mode, on a tinted strip; with many tags the last ones are cut off,
+   so the panel toggle stays on screen. */
+.viewer-header__verdict {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  background: var(--c-surface-2);
+  font-size: 11px;
+}
+
+.viewer-header__verdict .tag-marks {
+  flex-wrap: nowrap;
+}
+
+/* The side pane floats over the right edge of the image, so opening it never resizes or shifts the image. */
+.viewer-screen .viewer-page {
+  position: relative;
+}
+
+.viewer-screen .viewer-page > .side-pane {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 96;
+}
+
+/* The layers and cell types take the height they need; the dock below stays at the bottom of the pane. */
+.viewer-panel__annotations {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/*
+ * The rarely opened sections, stacked at the bottom of the pane: opening one grows the dock upwards, taking height
+ * from the list (the list scrolls, the dock never does).
+ */
+.viewer-panel__dock {
+  flex: none;
+  margin-top: auto;
+  border-top: var(--border);
+}
+
+/* Slide not available (loading error, still processing, failed). */
+.viewer-page__notice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  max-width: 520px;
+  padding: var(--space-6) var(--space-4);
+}
+
+.viewer-page__notice .error-message {
+  align-self: stretch;
+}
+
+.viewer-page__notice a {
+  color: var(--c-text);
+}
+
+.viewer-page__deleted-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 440px;
+  max-width: 100%;
+  padding: var(--space-6);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+
+.viewer-page__notice-title,
+.viewer-page__deleted-box h2 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+
+.viewer-page__notice-text,
+.viewer-page__deleted-box p {
+  color: var(--c-text-2);
+  text-wrap: pretty;
+}
+
+.viewer-page__deleted-box > .btn {
+  margin-top: var(--space-2);
+}
+
+/* Blocks the whole workspace once the slide was deleted elsewhere. */
+.viewer-page__deleted {
+  position: fixed;
+  inset: var(--header-height) 0 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  background: var(--c-scrim);
+}
+
+
+/* The queue arrows and position, compact to fit the slim viewer header. */
+.viewer-header .hotspot-queue__step {
+  height: 20px;
+}
+
+.viewer-header .hotspot-queue__position {
+  font-size: 11px;
+}

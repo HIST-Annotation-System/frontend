@@ -1,0 +1,31 @@
+/* The shared Modal is 520px wide; a plain question needs less. */
+.modal:has(> .modal__body > .confirm-dialog) {
+  width: min(400px, calc(100vw - 32px));
+}
+
+.confirm-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.confirm-dialog__question {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.confirm-dialog__error {
+  margin: 0;
+  color: var(--c-danger-text);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}

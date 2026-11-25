@@ -1,0 +1,183 @@
+import { useSelection } from '@annotorious/react';
+import { Check, Trash2, TriangleAlert } from 'lucide-react';
+import OpenSeadragon from 'openseadragon';
+import { useLayoutEffect, useRef, useState } from 'react';
+import Button from '../../../components/ui/Button';
+import type { AnnotationClass, AnnotationOwner } from '../../../types/annotation';
+import { useAnnotationActions } from '../hooks/useAnnotationActions';
+import { useAnnotations } from '../hooks/useAnnotations';
+import { useSlideAnnotator } from '../hooks/useSlideAnnotator';
+import { isLocked } from '../utils/annotationLayers';
+import { EXCLUDED_ANNOTATION_COLOR, FALLBACK_ANNOTATION_COLOR } from '../utils/annotationStyle';
+import './AnnotationTools.css';
+
+const GAP_PX = 10;
+const EDGE_PX = 12;
+
+interface SelectedAnnotationCardProps {
+  owner: AnnotationOwner;
+  classes: AnnotationClass[];
+  readOnly?: boolean;
+  /** In layers: shapes this user may not change (the model's, other people's) show read-only. */
+  editableBy?: string;
+  /** A cell type was chosen for the selected cell: new cells get it from now on. */
+  onTypeChosen?: (classId: string) => void;
+  onError: (message: string) => void;
+}
+export default function SelectedAnnotationCard({
+  owner,
+  classes,
+  readOnly: allReadOnly = false,
+  editableBy,
+  onTypeChosen,
+  onError,
+}: SelectedAnnotationCardProps) {
+  const { data: annotations } = useAnnotations(owner);
+  const { selected } = useSelection();
+  const anno = useSlideAnnotator();
+  const { changeClass, markExcluded, markCell, confirm, removeAnnotation } = useAnnotationActions(owner, onError);
+  const cardRef = useRef<HTMLDivElement>(null);
+  // An excluded area being turned into a cell: it stays an area until a cell type is picked.
+  const [choosingTypeFor, setChoosingTypeFor] = useState<string | null>(null);
+
+  const selectedId = selected[0]?.annotation.id;
+  const index = selectedId && annotations ? annotations.findIndex((annotation) => annotation.id === selectedId) : -1;
+  const visible = index >= 0;
+
+  useLayoutEffect(() => {
+    if (!anno || !selectedId || !visible) return undefined;
+    const { viewer } = anno;
+    const { store } = anno.state;
+
+    const follow = () => {
+      const card = cardRef.current;
+      const image = viewer.world.getItemCount() > 0 ? viewer.world.getItemAt(0) : null;
+      const bounds = store.getAnnotation(selectedId)?.target.selector.geometry.bounds;
+      if (!card || !image || !bounds) return;
+      const topLeft = image.imageToViewerElementCoordinates(new OpenSeadragon.Point(bounds.minX, bounds.minY));
+      const bottomRight = image.imageToViewerElementCoordinates(new OpenSeadragon.Point(bounds.maxX, bounds.maxY));
+      const { x: width, y: height } = viewer.viewport.getContainerSize();
+      const outOfView = bottomRight.x < 0 || bottomRight.y < 0 || topLeft.x > width || topLeft.y > height;
+      card.style.visibility = outOfView ? 'hidden' : 'visible';
+      if (outOfView) return;
+
+      const cardWidth = card.offsetWidth;
+      const cardHeight = card.offsetHeight;
+      const above = topLeft.y - GAP_PX - cardHeight;
+      const below = bottomRight.y + GAP_PX;
+      const top = above >= EDGE_PX ? above : below + cardHeight <= height - EDGE_PX ? below : EDGE_PX;
+      const centred = (topLeft.x + bottomRight.x) / 2 - cardWidth / 2;
+      const left = Math.min(Math.max(centred, EDGE_PX), Math.max(EDGE_PX, width - cardWidth - EDGE_PX));
+      card.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+    };
+
+    viewer.addHandler('update-viewport', follow);
+    viewer.addHandler('resize', follow);
+    store.observe(follow, { annotations: selectedId });
+    follow();
+    return () => {
+      viewer.removeHandler('update-viewport', follow);
+      viewer.removeHandler('resize', follow);
+      store.unobserve(follow);
+    };
+  }, [anno, selectedId, visible, annotations]);
+
+  if (!visible || !annotations) return null;
+
+  const annotation = annotations[index];
+  const readOnly = allReadOnly || isLocked(annotation, editableBy);
+  const excluded = annotation.kind === 'excluded';
+  const choosingType = excluded && choosingTypeFor === annotation.id;
+  const color = excluded
+    ? EXCLUDED_ANNOTATION_COLOR
+    : (classes.find((item) => item.id === annotation.class_id)?.color ?? FALLBACK_ANNOTATION_COLOR);
+  const showClass = !excluded || choosingType;
+  const author = annotation.source === 'model' ? 'Model' : (annotation.created_by_name ?? 'Nieznany');
+
+  return (
+    <div ref={cardRef} className="selected-annotation" aria-label="Zaznaczona anotacja">
+      <span
+        className={`annotation-item__swatch${excluded ? ' annotation-item__swatch--excluded' : ''}`}
+        style={{ background: color }}
+        aria-hidden="true"
+      />
+      <span className="selected-annotation__author" title={author}>
+        {author}
+      </span>
+      {!readOnly && (
+        <div className="selected-annotation__kind" role="group" aria-label="Rodzaj anotacji">
+          <button
+            type="button"
+            aria-pressed={!excluded || choosingType}
+            onClick={() => setChoosingTypeFor(excluded ? annotation.id : null)}
+          >
+            Komórka
+          </button>
+          <button
+            type="button"
+            aria-pressed={excluded && !choosingType}
+            onClick={() => {
+              setChoosingTypeFor(null);
+              if (!excluded) void markExcluded(annotation.id);
+            }}
+          >
+            Obszar wyłączony
+          </button>
+        </div>
+      )}
+      {readOnly && excluded && <span className="selected-annotation__label">Obszar wyłączony</span>}
+      {showClass && (
+        <select
+          className="selected-annotation__class"
+          aria-label="Typ komórki zaznaczonej anotacji"
+          value={annotation.class_id ?? ''}
+          disabled={readOnly}
+          onChange={(event) => {
+            if (!event.target.value) return;
+            onTypeChosen?.(event.target.value);
+            if (excluded) {
+              setChoosingTypeFor(null);
+              void markCell(annotation.id, event.target.value);
+            } else void changeClass(annotation.id, event.target.value);
+          }}
+        >
+          {excluded && (
+            <option value="" disabled>
+              Wybierz typ…
+            </option>
+          )}
+          {classes.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+      )}
+      {annotation.inside_excluded && (
+        <span className="selected-annotation__warning" title="Komórka leży w obszarze wyłączonym">
+          <TriangleAlert size={14} aria-hidden="true" />
+          <span className="selected-annotation__label">w obszarze wyłączonym</span>
+        </span>
+      )}
+      {!readOnly && annotation.untouched && (
+        <Button
+          variant="ghost"
+          icon={<Check size={14} />}
+          title="Zatwierdź: komórka modelu jest poprawna"
+          aria-label="Zatwierdź komórkę"
+          onClick={() => void confirm(annotation.id)}
+        />
+      )}
+      {!readOnly && (
+        <Button
+          variant="ghost"
+          className="btn--danger-icon"
+          icon={<Trash2 size={14} />}
+          title="Usuń obrys"
+          aria-label="Usuń anotację"
+          onClick={() => void removeAnnotation(annotation.id)}
+        />
+      )}
+    </div>
+  );
+}

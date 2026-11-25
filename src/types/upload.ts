@@ -1,14 +1,19 @@
-export interface StartUploadResponse {
-  upload_id: string;
-  key: string;
+export interface StartUploadRequest {
+  filename: string;
+  /** Lets the backend reject a second upload of the same file (409 `duplicate_slide`) before any byte is sent. */
+  file_size: number;
+  /** Set after the user confirmed they want another copy anyway. */
+  allow_duplicate: boolean;
+  organization_id?: number;
 }
 
-export interface PresignedUrlsResponse {
-  urls: string[];
+export interface StartUploadResponse {
+  slide_id: string;
+  upload_id: string;
 }
 
 export interface RefreshUrlsResponse {
-  urls: Record<number, string>;
+  urls: Record<string, string>;
 }
 
 export interface UploadPart {
@@ -16,7 +21,10 @@ export interface UploadPart {
   ETag: string;
 }
 
-export interface CompleteUploadResponse {
-  success: boolean;
-  message: string;
+export interface UploadedPart extends UploadPart {
+  Size: number;
+}
+
+export interface UploadedPartsResponse {
+  parts: UploadedPart[];
 }

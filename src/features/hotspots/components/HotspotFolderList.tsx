@@ -1,0 +1,316 @@
+import { Check, Folder, FolderPlus, Folders, Gauge, Pencil, Trash2, X } from 'lucide-react';
+import { Fragment, useState, type FormEvent } from 'react';
+import Button from '../../../components/ui/Button';
+import ErrorMessage from '../../../components/ui/ErrorMessage';
+import Modal from '../../../components/ui/Modal';
+import { useAuth } from '../../../context/AuthContext';
+import { isManager } from '../../../utils/roles';
+import OrganizationSelect from '../../organizations/components/OrganizationSelect';
+import { useOrganizations } from '../../organizations/hooks/useOrganizations';
+import type { HotspotFolder } from '../../../types/hotspot';
+import { getErrorMessage } from '../../../utils/errors';
+import { useHotspotMutations } from '../hooks/useHotspots';
+import { ALL_FOLDERS } from '../utils/hotspotReview';
+import './Hotspots.css';
+
+interface HotspotFolderListProps {
+  folders: HotspotFolder[];
+  /** A folder id, or `ALL_FOLDERS`. */
+  selectedId: string | null;
+  /** Gets a folder id, or `ALL_FOLDERS`. */
+  onSelect: (folderId: string) => void;
+}
+
+/**
+ * The catalog's folders: pick one (or all of them) to browse, add, rename or delete (with its hotspots). Managers can
+ * also send a folder back to the model for its uncertainty about the cells.
+ */
+export default function HotspotFolderList({ folders, selectedId, onSelect }: HotspotFolderListProps) {
+  const {
+    createFolder,
+    isCreatingFolder,
+    renameFolder,
+    isRenamingFolder,
+    deleteFolder,
+    isDeletingFolder,
+    rescoreFolder,
+    isRescoringFolder,
+  } = useHotspotMutations();
+  const { user } = useAuth();
+  const canRescore = isManager(user);
+  const [rescoring, setRescoring] = useState<HotspotFolder | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  // null: the "Nowy folder" button; a string: its name being typed.
+  const [newName, setNewName] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState<HotspotFolder | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // The system admin sees every organization's folders, grouped, and picks where a new one goes.
+  const { organizations, needsChoice } = useOrganizations();
+  const [chosenOrganizationId, setChosenOrganizationId] = useState<number | null>(null);
+  const newFolderOrganizationId = needsChoice
+    ? (organizations.find((organization) => organization.id === chosenOrganizationId) ?? organizations[0]).id
+    : undefined;
+  const organizationName = (id: number) => organizations.find((organization) => organization.id === id)?.name ?? '';
+  // The organization headings only help when folders of several organizations are listed.
+  const grouped = needsChoice && new Set(folders.map((folder) => folder.organization_id)).size > 1;
+  const listed = needsChoice
+    ? [...folders].sort((a, b) => organizationName(a.organization_id).localeCompare(organizationName(b.organization_id)))
+    : folders;
+
+  const add = async (event: FormEvent) => {
+    event.preventDefault();
+    const name = newName?.trim();
+    if (!name) return;
+    setError(null);
+    try {
+      const folder = await createFolder({ name, organizationId: newFolderOrganizationId });
+      setNewName(null);
+      onSelect(folder.id);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, 'Nie udało się utworzyć folderu.'));
+    }
+  };
+
+  const saveName = async () => {
+    if (!editing) return;
+    const name = editing.name.trim();
+    const current = folders.find((folder) => folder.id === editing.id);
+    if (!name || name === current?.name) {
+      setEditing(null);
+      return;
+    }
+    setError(null);
+    try {
+      await renameFolder({ folderId: editing.id, name });
+      setEditing(null);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, 'Nie udało się zmienić nazwy folderu.'));
+    }
+  };
+
+  const confirmRescore = async () => {
+    if (!rescoring) return;
+    setError(null);
+    try {
+      const { queued } = await rescoreFolder(rescoring.id);
+      setNotice(
+        queued === 0
+          ? `W folderze „${rescoring.name}” nie ma hotspotów przetworzonych przez model.`
+          : `Wysłano do modelu hotspoty z folderu „${rescoring.name}” (${queued}). Niepewność pojawi się w ciągu kilku minut.`,
+      );
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, 'Nie udało się zlecić przeliczenia niepewności.'));
+    } finally {
+      setRescoring(null);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setError(null);
+    try {
+      await deleteFolder(deleting.id);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, 'Nie udało się usunąć folderu.'));
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  return (
+    <div className="hotspot-folders">
+      <div className="hotspot-folders__scroll">
+        {folders.length === 0 ? (
+          <div className="hotspot-folders__empty">
+            <span className="hotspot-folders__empty-title">Brak folderów</span>
+            <span>Utwórz folder poniżej albo zaznacz hotspoty na slajdzie.</span>
+          </div>
+        ) : (
+          <ul className="hotspot-folders__list">
+            <li
+              className={`hotspot-folders__item hotspot-folders__item--all${selectedId === ALL_FOLDERS ? ' hotspot-folders__item--selected' : ''}`}
+            >
+              <button type="button" className="hotspot-folders__select" onClick={() => onSelect(ALL_FOLDERS)}>
+                <Folders size={14} aria-hidden="true" />
+                <span className="hotspot-folders__name" title="Wszystkie foldery">
+                  Wszystkie foldery
+                </span>
+                <span className="hotspot-folders__count">
+                  {folders.reduce((total, folder) => total + folder.hotspot_count, 0)}
+                </span>
+              </button>
+            </li>
+            {listed.map((folder, index) => {
+              const selected = folder.id === selectedId;
+              const startsGroup = grouped && listed[index - 1]?.organization_id !== folder.organization_id;
+              return (
+                <Fragment key={folder.id}>
+                  {startsGroup && (
+                    <li className="hotspot-folders__group label-caps">{organizationName(folder.organization_id)}</li>
+                  )}
+                  <li
+                    className={`hotspot-folders__item${selected ? ' hotspot-folders__item--selected' : ''}${editing?.id === folder.id ? ' hotspot-folders__item--editing' : ''}`}
+                  >
+                    {editing?.id === folder.id ? (
+                      <>
+                        <input
+                          className="hotspot-folders__name-input"
+                          value={editing.name}
+                          autoFocus
+                          maxLength={255}
+                          aria-label="Nazwa folderu"
+                          disabled={isRenamingFolder}
+                          onChange={(event) => setEditing({ id: folder.id, name: event.target.value })}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter') void saveName();
+                            if (event.key === 'Escape') setEditing(null);
+                          }}
+                        />
+                        <Button
+                          variant="primary"
+                          icon={<Check size={14} />}
+                          title="Zapisz"
+                          aria-label="Zapisz nazwę"
+                          disabled={isRenamingFolder}
+                          onClick={() => void saveName()}
+                        />
+                        <Button
+                          variant="ghost"
+                          icon={<X size={14} />}
+                          title="Anuluj"
+                          aria-label="Anuluj"
+                          onClick={() => setEditing(null)}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" className="hotspot-folders__select" onClick={() => onSelect(folder.id)}>
+                          <Folder size={14} aria-hidden="true" />
+                          <span className="hotspot-folders__name" title={folder.name}>
+                            {folder.name}
+                          </span>
+                          <span className="hotspot-folders__count">{folder.hotspot_count}</span>
+                        </button>
+                        {canRescore && (
+                          <Button
+                            variant="ghost"
+                            icon={<Gauge size={13} />}
+                            title="Przelicz niepewność modelu"
+                            aria-label={`Przelicz niepewność modelu w folderze ${folder.name}`}
+                            onClick={() => {
+                              setNotice(null);
+                              setRescoring(folder);
+                            }}
+                          />
+                        )}
+                        <Button
+                          variant="ghost"
+                          icon={<Pencil size={13} />}
+                          title="Zmień nazwę"
+                          aria-label={`Zmień nazwę folderu ${folder.name}`}
+                          onClick={() => setEditing({ id: folder.id, name: folder.name })}
+                        />
+                        <Button
+                          variant="ghost"
+                          className="btn--danger-icon"
+                          icon={<Trash2 size={13} />}
+                          title="Usuń folder"
+                          aria-label={`Usuń folder ${folder.name}`}
+                          onClick={() => setDeleting(folder)}
+                        />
+                      </>
+                    )}
+                  </li>
+                </Fragment>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <form className="hotspot-folders__new" onSubmit={(event) => void add(event)}>
+        {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
+        {notice && (
+          <p className="hotspot-folders__notice" role="status">
+            {notice}
+          </p>
+        )}
+        {newName === null ? (
+          <Button className="hotspot-folders__add" icon={<FolderPlus size={15} />} onClick={() => setNewName('')}>
+            Nowy folder
+          </Button>
+        ) : (
+          <div className="hotspot-folders__new-field">
+            {needsChoice && (
+              <OrganizationSelect
+                organizations={organizations}
+                value={newFolderOrganizationId ?? null}
+                onChange={setChosenOrganizationId}
+                disabled={isCreatingFolder}
+              />
+            )}
+            <input
+              value={newName}
+              autoFocus
+              placeholder="Nazwa folderu"
+              aria-label="Nazwa nowego folderu"
+              maxLength={255}
+              disabled={isCreatingFolder}
+              onChange={(event) => setNewName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') setNewName(null);
+              }}
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              icon={<Check size={14} />}
+              title="Utwórz folder"
+              aria-label="Utwórz folder"
+              disabled={isCreatingFolder || !newName.trim()}
+            />
+            <Button
+              variant="ghost"
+              icon={<X size={14} />}
+              title="Anuluj"
+              aria-label="Anuluj"
+              onClick={() => setNewName(null)}
+            />
+          </div>
+        )}
+      </form>
+
+      <Modal title="Przelicz niepewność modelu" open={rescoring !== null} onClose={() => setRescoring(null)}>
+        <p>
+          Hotspoty z folderu „{rescoring?.name}”, które model już przetworzył, trafią do niego ponownie, tylko po to, żeby
+          podał, jak bardzo jest niepewny swoich obrysów i typów komórek. Komórki i praca anotatorów się nie zmienią.
+          Model liczy około 15 s na obraz, a nowe hotspoty mają pierwszeństwo.
+        </p>
+        <div className="hotspot-form__actions">
+          <Button onClick={() => setRescoring(null)} disabled={isRescoringFolder}>
+            Wróć
+          </Button>
+          <Button variant="primary" onClick={() => void confirmRescore()} disabled={isRescoringFolder}>
+            {isRescoringFolder ? 'Wysyłanie…' : 'Przelicz'}
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal title="Usuń folder" open={deleting !== null} onClose={() => setDeleting(null)}>
+        <p>
+          Czy na pewno chcesz usunąć folder „{deleting?.name}”? Wszystkie jego hotspoty ({deleting?.hotspot_count ?? 0})
+          wraz z anotacjami zostaną trwale usunięte. Tej operacji nie można cofnąć.
+        </p>
+        <div className="hotspot-form__actions">
+          <Button onClick={() => setDeleting(null)} disabled={isDeletingFolder}>
+            Wróć
+          </Button>
+          <Button variant="danger" onClick={() => void confirmDelete()} disabled={isDeletingFolder}>
+            {isDeletingFolder ? 'Usuwanie…' : 'Usuń'}
+          </Button>
+        </div>
+      </Modal>
+    </div>
+  );
+}

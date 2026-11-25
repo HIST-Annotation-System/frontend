@@ -1,0 +1,341 @@
+.annotation-tools__divider {
+  height: 1px;
+  margin: var(--space-1) 2px;
+  background: var(--c-border);
+}
+
+.tool-mode-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.selected-annotation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: calc(100% - 24px);
+  padding: 4px 4px 4px var(--space-2);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
+  visibility: hidden;
+  pointer-events: auto;
+}
+
+.selected-annotation__author {
+  max-width: 120px;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected-annotation__class {
+  min-width: 0;
+  max-width: 220px;
+  height: 24px;
+  padding: 0 18px 0 6px;
+}
+
+.selected-annotation .btn--ghost.btn--icon-only {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  color: var(--c-text-3);
+}
+
+.selected-annotation .btn--ghost.btn--icon-only:hover:not(:disabled) {
+  background: transparent;
+  color: var(--c-danger-text);
+}
+
+/* Delete is red at rest too (this file loads after Button.css, so it has to say so here). */
+.selected-annotation .btn.btn--danger-icon {
+  color: var(--c-danger-text);
+}
+
+.selected-annotation__class:disabled {
+  opacity: 1;
+  color: var(--c-text);
+  cursor: default;
+}
+
+.annotation-panel {
+  flex: none;
+}
+
+.annotation-panel__show-all {
+  height: 20px;
+  padding: 0 6px;
+  border: none;
+  background: transparent;
+  color: var(--c-text-2);
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.annotation-panel__show-all:hover {
+  color: var(--c-text);
+  text-decoration: underline;
+}
+
+/* The cell types and the layers: a hotspot has a few of each; more scroll here. */
+.annotation-filter {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  max-height: 150px;
+  margin: 0;
+  padding: 4px 10px;
+  overflow-y: auto;
+  border: none;
+}
+
+.annotation-filter__option {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 21px;
+  color: var(--c-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.annotation-filter__option input {
+  flex: none;
+  margin: 0;
+}
+
+.annotation-filter__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.annotation-item__swatch {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25);
+}
+
+/* An excluded area's swatch is hatched like the area on the image. */
+.annotation-item__swatch--excluded {
+  background: repeating-linear-gradient(-45deg, #6b7280 0 1.5px, transparent 1.5px 4px) !important;
+  box-shadow: inset 0 0 0 1px #6b7280;
+}
+
+/* Hatching layer over the excluded areas (ExcludedAreaHatching): follows the image, never takes the mouse. */
+.excluded-hatching {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.excluded-hatching svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.selected-annotation__warning {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--c-warn-text);
+}
+
+.selected-annotation__kind {
+  display: inline-flex;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.selected-annotation__kind button {
+  height: 22px;
+  padding: 0 6px;
+  border: none;
+  background: transparent;
+  color: var(--c-text-2);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.selected-annotation__kind button+button {
+  border-left: var(--border);
+}
+
+.selected-annotation__kind button:hover {
+  background: var(--c-hover);
+}
+
+.selected-annotation__kind button[aria-pressed='true'] {
+  background: var(--c-accent-soft);
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+.selected-annotation__label {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Top centre of the image, clear of the toolbar and the zoom controls. Clicks pass through: annotating goes on. */
+.annotation-progress {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 65;
+  padding: 6px var(--space-3);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  color: var(--c-text-2);
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.annotation-progress .spinner {
+  padding: 0;
+}
+
+/* Layers above the cell-type filter: the model's cells, each author's cells, excluded areas; an eye shows or hides
+   one. Rows look like the filter's, as plain buttons. */
+.annotation-layers__option {
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+
+.annotation-layers__option:hover .annotation-filter__name {
+  text-decoration: underline;
+}
+
+.annotation-layers__option--hidden {
+  color: var(--c-text-3);
+}
+
+.annotation-layers__icon {
+  flex: none;
+  color: var(--c-text-2);
+}
+
+/* An arrow after the eye row rolls out the layer's opacity slider underneath it. */
+.annotation-layers__line {
+  display: flex;
+  align-items: center;
+}
+
+.annotation-layers__line .annotation-layers__option {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+.annotation-layers__expand {
+  flex: none;
+  width: 22px;
+  height: 21px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--c-text-3);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.annotation-layers__expand:hover {
+  color: var(--c-text);
+}
+
+.annotation-layers__opacity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 0 4px 19px;
+  color: var(--c-text-2);
+  font-size: 12px;
+}
+
+.annotation-layers__opacity input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--c-primary);
+}
+
+.annotation-layers__percent {
+  flex: none;
+  min-width: 32px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Layers at the top of the annotation panel, above its header, the type filter and the list. */
+.annotation-layers {
+  flex: none;
+  border-bottom: var(--border);
+}
+
+
+.annotation-filter__empty {
+  margin: 0;
+  padding: 4px 10px;
+  color: var(--c-text-3);
+}
+
+/* Which of the model's cells are drawn; sits in the model's row, between its name and its opacity caret. */
+.annotation-layers__filter {
+  display: inline-flex;
+  flex: none;
+  overflow: hidden;
+  margin-left: 4px;
+  border: var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.annotation-layers__filter button {
+  height: 19px;
+  padding: 0 5px;
+  border: none;
+  background: transparent;
+  color: var(--c-text-2);
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.annotation-layers__filter button+button {
+  border-left: var(--border);
+}
+
+.annotation-layers__filter button:hover {
+  background: var(--c-hover);
+}
+
+.annotation-layers__filter button[aria-pressed='true'] {
+  background: var(--c-accent-soft);
+  color: var(--c-text);
+  font-weight: 600;
+}
