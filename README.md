@@ -24,6 +24,14 @@ npm run dev                  # http://localhost:5173 (allowed by the backend's C
 | `npm run lint` | Oxlint |
 | `npm test` | Vitest unit tests |
 
+## Deployment
+
+Every push to `main` deploys (`.github/workflows/deploy.yml`, after the same checks as CI): the app is built with
+`VITE_API_URL=/api/v1` and copied to an S3 bucket behind CloudFront, which serves it and routes `/api/*` to the backend,
+so the page and the API share one origin. The AWS resources and the deploy role are Terraform in
+`../backend/infra/`; the workflow reads `AWS_ROLE_ARN`, `FRONTEND_BUCKET` and `DISTRIBUTION_ID` from the repository's
+variables.
+
 ## Features
 
 - **Slide library** (`/`) - upload slides (chunked upload straight to object storage) and browse them
