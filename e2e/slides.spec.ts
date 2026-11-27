@@ -28,8 +28,13 @@ test.afterAll(async () => {
   await admin.dispose();
 });
 
-async function seedSlide(name: string, status = 'ready', organizationId?: number) {
-  const id = await insertSlide(organizationId ?? (await admin.e2eOrganizationId()), name, status);
+/** `organizationId`: the E2E organization when left out, null for a global slide. */
+async function seedSlide(name: string, status = 'ready', organizationId?: number | null) {
+  const id = await insertSlide(
+    organizationId === undefined ? await admin.e2eOrganizationId() : organizationId,
+    name,
+    status,
+  );
   slideIds.push(id);
   return id;
 }
@@ -111,6 +116,14 @@ test.describe('as annotator', () => {
     await annotator.dispose();
   });
 
+  test('a global slide is listed for every organization', async ({ page }) => {
+    const name = unique('global');
+    await seedSlide(name, 'ready', null);
+    await page.goto('/');
+    await page.getByRole('searchbox', { name: 'Szukaj slajdu' }).fill(name);
+    await expect(slideItem(page, name)).toBeVisible();
+  });
+
   test('SCRUM-52: an annotator has no upload button', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /^Slajdy/ })).toBeVisible();
@@ -174,6 +187,26 @@ test.describe('as org admin', () => {
     expect(await slideNames()).toContain(name);
   });
 
+  test('an org admin cannot rename or delete a global slide', async ({ page }) => {
+    const name = unique('global-locked');
+    const id = await seedSlide(name, 'ready', null);
+    const panel = await select(page, name);
+    await expect(panel.getByRole('heading', { name })).toBeVisible();
+    await expect(panel).toContainText('Globalny');
+    await expect(panel.getByRole('button', { name: 'Więcej działań' })).toHaveCount(0);
+
+    const orgAdmin = await Api.as(env.orgAdmin);
+    expect((await orgAdmin.ctx.patch(`slides/${id}`, { data: { name: 'x' } })).status()).toBe(403);
+    expect((await orgAdmin.ctx.delete(`slides/${id}`)).status()).toBe(403);
+    await orgAdmin.dispose();
+  });
+
+  test('an org admin has no organization filter', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: /^Slajdy/ })).toBeVisible();
+    await expect(page.getByRole('combobox', { name: 'Organizacja' })).toHaveCount(0);
+  });
+
   test('SCRUM-52: an org admin has the upload button', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('button', { name: 'Wgraj', exact: true })).toBeVisible();
@@ -183,14 +216,34 @@ test.describe('as org admin', () => {
 test.describe('as system admin', () => {
   test.use({ storageState: 'e2e/auth/admin.json' });
 
-  test('SCRUM-71: the system admin chooses which organization\'s slides to see', async ({ page }) => {
+  test('SCRUM-71: the system admin filters the slides by organization', async ({ page }) => {
     const other = await admin.createOrganization(unique('other-org'));
     organizationIds.push(other.id);
-    const foreign = unique('foreign');
+    const prefix = unique('filter');
+    const own = `${prefix}-own`;
+    const foreign = `${prefix}-foreign`;
+    const shared = `${prefix}-global`;
+    await seedSlide(own);
     await seedSlide(foreign, 'ready', other.id);
+    await seedSlide(shared, 'ready', null);
     await page.goto('/');
-    await expect(slideLink(page, foreign)).toHaveCount(0);
-    await page.getByRole('combobox', { name: 'Organizacja' }).selectOption({ label: other.name });
-    await expect(slideLink(page, foreign)).toBeVisible();
+    await page.getByRole('searchbox', { name: 'Szukaj slajdu' }).fill(prefix);
+    const filter = page.getByRole('combobox', { name: 'Organizacja' });
+
+    // Every organization's slides by default.
+    for (const name of [own, foreign, shared]) await expect(slideItem(page, name)).toBeVisible();
+
+    await filter.selectOption({ label: other.name });
+    await expect(slideItem(page, foreign)).toBeVisible();
+    await expect(slideItem(page, own)).toHaveCount(0);
+    await expect(slideItem(page, shared)).toHaveCount(0);
+
+    await filter.selectOption({ label: 'Globalne' });
+    await expect(slideItem(page, shared)).toBeVisible();
+    await expect(slideItem(page, own)).toHaveCount(0);
+    await expect(slideItem(page, foreign)).toHaveCount(0);
+
+    await filter.selectOption({ label: 'Wszystkie organizacje' });
+    for (const name of [own, foreign, shared]) await expect(slideItem(page, name)).toBeVisible();
   });
 });

@@ -37,7 +37,9 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
     isRescoringFolder,
   } = useHotspotMutations();
   const { user } = useAuth();
-  const canRescore = isManager(user);
+  // Re-scoring loads the model, and deleting takes every hotspot in the folder with it: administrators only (the API
+  // agrees). Anyone may create and rename folders.
+  const canManage = isManager(user);
   const [rescoring, setRescoring] = useState<HotspotFolder | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   // null: the "Nowy folder" button; a string: its name being typed.
@@ -192,7 +194,7 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
                           </span>
                           <span className="hotspot-folders__count">{folder.hotspot_count}</span>
                         </button>
-                        {canRescore && (
+                        {canManage && (
                           <Button
                             variant="ghost"
                             icon={<Gauge size={13} />}
@@ -211,14 +213,16 @@ export default function HotspotFolderList({ folders, selectedId, onSelect }: Hot
                           aria-label={`Zmień nazwę folderu ${folder.name}`}
                           onClick={() => setEditing({ id: folder.id, name: folder.name })}
                         />
-                        <Button
-                          variant="ghost"
-                          className="btn--danger-icon"
-                          icon={<Trash2 size={13} />}
-                          title="Usuń folder"
-                          aria-label={`Usuń folder ${folder.name}`}
-                          onClick={() => setDeleting(folder)}
-                        />
+                        {canManage && (
+                          <Button
+                            variant="ghost"
+                            className="btn--danger-icon"
+                            icon={<Trash2 size={13} />}
+                            title="Usuń folder"
+                            aria-label={`Usuń folder ${folder.name}`}
+                            onClick={() => setDeleting(folder)}
+                          />
+                        )}
                       </>
                     )}
                   </li>

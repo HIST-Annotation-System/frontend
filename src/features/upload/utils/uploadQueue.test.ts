@@ -18,20 +18,22 @@ const resume = (slideId = 'slide-1'): ResumableUpload =>
 
 const run = (...actions: UploadQueueAction[]): UploadItem[] => actions.reduce(uploadQueueReducer, [] as UploadItem[]);
 
-const added = (id = 'a', extra: Partial<{ resume: ResumableUpload; organizationId: number }> = {}): UploadQueueAction => ({
+const added = (id = 'a', extra: Partial<{ resume: ResumableUpload; destination: number | 'global' }> = {}): UploadQueueAction => ({
   type: 'add',
   items: [{ id, file: file(`${id}.svs`), ...extra }],
 });
 
 describe('uploadQueueReducer', () => {
   it('adds new files as queued, keeping what is already there', () => {
-    const items = run(added('a'), added('b', { organizationId: 3 }));
+    const items = run(added('a'), added('b', { destination: 3 }), added('c', { destination: 'global' }));
     expect(items.map((item) => [item.id, item.status, item.message])).toEqual([
       ['a', 'queued', 'W kolejce'],
       ['b', 'queued', 'W kolejce'],
+      ['c', 'queued', 'W kolejce'],
     ]);
-    expect(items[0]).toMatchObject({ uploadedBytes: 0, slideId: null, resume: null, organizationId: null });
-    expect(items[1].organizationId).toBe(3);
+    expect(items[0]).toMatchObject({ uploadedBytes: 0, slideId: null, resume: null, destination: null });
+    expect(items[1].destination).toBe(3);
+    expect(items[2].destination).toBe('global');
   });
 
   it('adds a resumable file with its slide', () => {

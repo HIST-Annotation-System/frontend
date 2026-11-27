@@ -5,10 +5,12 @@ import ActionMenu from '../../../components/ui/ActionMenu';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import MoreDetails from '../../../components/ui/MoreDetails';
+import { useAuth } from '../../../context/AuthContext';
 import { getHotspotThumbnailUrl } from '../../../services/hotspotsApi';
 import type { Hotspot, HotspotFolder } from '../../../types/hotspot';
 import { getErrorMessage } from '../../../utils/errors';
 import { formatDateTime, formatDecimal, formatDimensions } from '../../../utils/format';
+import { isManager } from '../../../utils/roles';
 import { useHotspotMutations } from '../hooks/useHotspots';
 import { useTags } from '../hooks/useTags';
 import { formatLength } from '../utils/hotspotFormat';
@@ -41,6 +43,8 @@ interface HotspotDetailsProps {
 /** Everything known about one hotspot, beside the catalog list. */
 export default function HotspotDetails({ hotspot, folders, linkSearch }: HotspotDetailsProps) {
   const { updateHotspot, isUpdating, deleteHotspot, isDeleting } = useHotspotMutations();
+  // Renaming, moving and deleting hotspots is for administrators (the API agrees).
+  const canManage = isManager(useAuth().user);
   const [nameDraft, setNameDraft] = useState<string | null>(null);
   /** The folder picked in the move form; null while the form is closed. */
   const [moveTarget, setMoveTarget] = useState<string | null>(null);
@@ -181,27 +185,29 @@ export default function HotspotDetails({ hotspot, folders, linkSearch }: Hotspot
           <Link to={link} className="btn btn--primary">
             Otwórz
           </Link>
-          <ActionMenu
-            items={[
-              {
-                label: 'Zmień nazwę',
-                icon: <Pencil size={14} aria-hidden="true" />,
-                disabled: nameDraft !== null,
-                onSelect: () => setNameDraft(hotspot.name),
-              },
-              {
-                label: 'Przenieś do folderu…',
-                icon: <FolderInput size={14} aria-hidden="true" />,
-                onSelect: () => setMoveTarget(hotspot.folder_id),
-              },
-              {
-                label: 'Usuń hotspot',
-                icon: <Trash2 size={14} aria-hidden="true" />,
-                danger: true,
-                onSelect: () => setIsConfirmingDelete(true),
-              },
-            ]}
-          />
+          {canManage && (
+            <ActionMenu
+              items={[
+                {
+                  label: 'Zmień nazwę',
+                  icon: <Pencil size={14} aria-hidden="true" />,
+                  disabled: nameDraft !== null,
+                  onSelect: () => setNameDraft(hotspot.name),
+                },
+                {
+                  label: 'Przenieś do folderu…',
+                  icon: <FolderInput size={14} aria-hidden="true" />,
+                  onSelect: () => setMoveTarget(hotspot.folder_id),
+                },
+                {
+                  label: 'Usuń hotspot',
+                  icon: <Trash2 size={14} aria-hidden="true" />,
+                  danger: true,
+                  onSelect: () => setIsConfirmingDelete(true),
+                },
+              ]}
+            />
+          )}
         </div>
         {/* Moving is an explicit step: pick the folder, then confirm, so a stray select change moves nothing. */}
         {moveTarget !== null && (

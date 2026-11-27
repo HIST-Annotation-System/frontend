@@ -99,12 +99,13 @@ test.describe('statistics page', () => {
     await expect(item).toContainText('0%');
   });
 
-  test('SCRUM-157: the API returns the figures for system admins only', async () => {
+  test('SCRUM-157: the API returns the figures to system admins and to org admins for their organization', async () => {
     const stats = await admin.get<{ hotspots: Record<string, number>; folders: { name: string; untagged: number }[] }>('stats/');
     expect(stats.folders.find((item) => item.name === folder.name)).toMatchObject({ untagged: 2 });
     expect(Object.keys(stats.hotspots).sort()).toEqual(['reannotated', 'to_reannotate', 'untagged']);
     const orgAdmin = await Api.as(env.orgAdmin);
-    expect((await orgAdmin.ctx.get('stats/')).status()).toBe(403);
+    const own = await orgAdmin.get<{ folders: { name: string; untagged: number }[] }>('stats/');
+    expect(own.folders.find((item) => item.name === folder.name)).toMatchObject({ untagged: 2 });
     await orgAdmin.dispose();
   });
 });

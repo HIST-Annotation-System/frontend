@@ -9,7 +9,7 @@ const GROUPS = [
   {
     label: 'Analiza',
     sections: [
-      { to: '/admin/stats', label: 'Statystyki', systemOnly: true },
+      { to: '/admin/stats', label: 'Statystyki', systemOnly: false },
       { to: '/admin/agreement', label: 'Zgodność reannotacji', systemOnly: false },
       { to: '/admin/priority-weights', label: 'Wagi priorytetu', systemOnly: true },
     ],
@@ -25,7 +25,7 @@ const GROUPS = [
     label: 'Słowniki',
     sections: [
       { to: '/admin/cell-types', label: 'Typy komórek', systemOnly: true },
-      { to: '/admin/tags', label: 'Tagi hotspotów', systemOnly: true },
+      { to: '/admin/tags', label: 'Tagi hotspotów', systemOnly: false },
     ],
   },
 ];

@@ -1,3 +1,4 @@
+import type { UploadDestination } from '../../../types/upload';
 import type { ResumableUpload } from './resumableUploads';
 
 export type UploadItemStatus = 'queued' | 'uploading' | 'finalizing' | 'completed' | 'error';
@@ -17,13 +18,13 @@ export interface UploadItem {
   duplicate: boolean;
   /** The user confirmed uploading a file the library already has. */
   allowDuplicate: boolean;
-  organizationId: number | null;
+  destination: UploadDestination;
 }
 
 export type UploadQueueAction =
   | {
       type: 'add';
-      items: Array<Pick<UploadItem, 'id' | 'file'> & { resume?: ResumableUpload | null; organizationId?: number | null }>;
+      items: Array<Pick<UploadItem, 'id' | 'file'> & { resume?: ResumableUpload | null; destination?: UploadDestination }>;
     }
   | { type: 'start'; id: string }
   | { type: 'started'; id: string; resume: ResumableUpload }
@@ -52,7 +53,7 @@ export function uploadQueueReducer(items: UploadItem[], action: UploadQueueActio
       return [
         ...items,
         ...action.items.map(
-          ({ id, file, resume = null, organizationId = null }): UploadItem => ({
+          ({ id, file, resume = null, destination = null }): UploadItem => ({
             id,
             file,
             status: 'queued',
@@ -64,7 +65,7 @@ export function uploadQueueReducer(items: UploadItem[], action: UploadQueueActio
             resume,
             duplicate: false,
             allowDuplicate: false,
-            organizationId,
+            destination,
           }),
         ),
       ];

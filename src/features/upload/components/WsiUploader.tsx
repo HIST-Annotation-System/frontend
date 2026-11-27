@@ -11,10 +11,12 @@ interface WsiUploaderProps {
   organizationPicker?: ReactNode;
   /** Filled with a function that opens the file picker, for other buttons on the page (the empty library's). */
   pickerRef?: RefObject<(() => void) | null>;
+  /** Replaces opening the file picker straight away (the system admin first says where the slides go). */
+  onUploadClick?: () => void;
 }
 
 /** Header button for adding slides; the library page shows the queue and accepts dropped files itself. */
-export default function WsiUploader({ onFiles, organizationPicker, pickerRef }: WsiUploaderProps) {
+export default function WsiUploader({ onFiles, organizationPicker, pickerRef, onUploadClick }: WsiUploaderProps) {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [queueNotice, setQueueNotice] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export default function WsiUploader({ onFiles, organizationPicker, pickerRef }: 
           title="Obsługiwane formaty"
           onClick={() => setIsGuideOpen(true)}
         />
-        <Button variant="primary" onClick={() => inputRef.current?.click()}>
+        <Button variant="primary" onClick={() => (onUploadClick ? onUploadClick() : inputRef.current?.click())}>
           Wgraj
         </Button>
       </div>

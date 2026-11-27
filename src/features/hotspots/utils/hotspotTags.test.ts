@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { Tag } from '../../../types/tag';
 import { customWeightCap, maxCustomWeight, tagTone } from './hotspotTags';
 
-const tag = (id: number, dimension: Tag['dimension'], weight: number): Tag => ({ id, name: `t${id}`, dimension, weight });
+const tag = (id: number, dimension: Tag['dimension'], weight: number): Tag => ({
+  id,
+  name: `t${id}`,
+  dimension,
+  weight,
+  organization_id: null,
+});
 
 const CORE = [
   tag(1, 'importance', 100),
