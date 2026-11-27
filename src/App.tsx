@@ -107,14 +107,15 @@ function App() {
                       <Route index element={<Navigate to="users" replace />} />
                       <Route path="users" element={<UsersPage />} />
                       <Route path="agreement" element={<AgreementPage />} />
+                      {/* An organization's admin sees their organization's statistics and manages its own tags. */}
+                      <Route path="stats" element={<StatsPage />} />
+                      <Route path="tags" element={<TagsPage />} />
                       {/* Shared by every organization, so managed by the system admin only. */}
-                      <Route path="stats" element={<RequireAuth roles={SYSTEM_ADMIN}><StatsPage /></RequireAuth>} />
                       <Route
                         path="organizations"
                         element={<RequireAuth roles={SYSTEM_ADMIN}><OrganizationsPage /></RequireAuth>}
                       />
                       <Route path="cell-types" element={<RequireAuth roles={SYSTEM_ADMIN}><CellTypesPage /></RequireAuth>} />
-                      <Route path="tags" element={<RequireAuth roles={SYSTEM_ADMIN}><TagsPage /></RequireAuth>} />
                       <Route
                         path="priority-weights"
                         element={<RequireAuth roles={SYSTEM_ADMIN}><PriorityWeightsPage /></RequireAuth>}

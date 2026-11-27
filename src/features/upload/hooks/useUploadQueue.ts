@@ -11,7 +11,7 @@ import {
   startMultipartUpload,
   uploadChunkToStorage,
 } from '../../../services/uploadApi';
-import type { UploadedPart } from '../../../types/upload';
+import type { UploadDestination, UploadedPart } from '../../../types/upload';
 import { getErrorMessage, UploadCancelledError } from '../../../utils/errors';
 import { validateSlideFile } from '../slideFileRules';
 import { choosePartSize } from '../utils/chunking';
@@ -134,7 +134,7 @@ export function useUploadQueue() {
         } else {
           let started;
           try {
-            started = await startMultipartUpload(file, item.allowDuplicate, item.organizationId ?? undefined);
+            started = await startMultipartUpload(file, item.allowDuplicate, item.destination);
           } catch (error) {
             if (!(error instanceof ApiError && error.code === DUPLICATE_SLIDE_CODE)) throw error;
             const existing = queryClient
@@ -259,7 +259,7 @@ export function useUploadQueue() {
 
   /** Adds files to the queue; returns how many were skipped because they are already waiting or being sent. */
   const enqueue = useCallback(
-    (files: Iterable<File>, organizationId?: number | null): number => {
+    (files: Iterable<File>, destination: UploadDestination = null): number => {
       const picked = [...files];
       const fresh = picked.filter(
         (file, index) =>
@@ -268,7 +268,7 @@ export function useUploadQueue() {
             (other) => other.name === file.name && other.size === file.size && other.lastModified === file.lastModified,
           ) === index,
       );
-      if (fresh.length > 0) dispatch({ type: 'add', items: fresh.map((file) => ({ id: newItemId(), file, organizationId })) });
+      if (fresh.length > 0) dispatch({ type: 'add', items: fresh.map((file) => ({ id: newItemId(), file, destination })) });
       return picked.length - fresh.length;
     },
     [items],

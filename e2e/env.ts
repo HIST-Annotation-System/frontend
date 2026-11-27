@@ -26,5 +26,5 @@ for (const url of [env.baseUrl, env.apiUrl]) {
   }
 }
 if (new URL(env.apiUrl).port === '8000') {
-  throw new Error('Port 8000 is the dev API, which uses the shared cloud database. Use the E2E API on 8001.');
+  throw new Error('Port 8000 is your development API. Use the E2E API on 8001.');
 }

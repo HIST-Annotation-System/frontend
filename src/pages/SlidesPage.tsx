@@ -2,12 +2,12 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useSearchShortcut } from '../hooks/useSearchShortcut';
 import { LayoutGrid, List, Microscope, SearchX, Upload } from 'lucide-react';
 import { useRef, useState, type DragEvent } from 'react';
+import { flushSync } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import { useAuth } from '../context/AuthContext';
 import { useUpload } from '../context/UploadProvider';
-import OrganizationSelect from '../features/organizations/components/OrganizationSelect';
 import { useOrganizations } from '../features/organizations/hooks/useOrganizations';
 import PaneHandle from '../features/viewer/components/PaneHandle';
 import SlideGrid from '../features/slides/components/SlideGrid';
@@ -16,11 +16,13 @@ import SlideTable from '../features/slides/components/SlideTable';
 import { useSlides } from '../features/slides/hooks/useSlides';
 import { sortSlides, type SlideSort } from '../features/slides/utils/slideSort';
 import InterruptedUploads from '../features/upload/components/InterruptedUploads';
+import UploadDestinationDialog from '../features/upload/components/UploadDestinationDialog';
 import UploadQueueList from '../features/upload/components/UploadQueueList';
 import WsiUploader from '../features/upload/components/WsiUploader';
 import type { Slide } from '../types/slide';
+import type { UploadDestination } from '../types/upload';
 import { getErrorMessage } from '../utils/errors';
-import { isManager } from '../utils/roles';
+import { canUpload, isSystemAdmin } from '../utils/roles';
 import './SlidesPage.css';
 
 const hasFiles = (event: DragEvent) => event.dataTransfer.types.includes('Files');
@@ -44,6 +46,12 @@ const STATUS_FILTERS: { value: StatusFilter; label: string; matches: (status: Sl
   { value: 'pending', label: 'W toku', matches: (status) => status === 'uploading' || status === 'processing' },
   { value: 'failed', label: 'Błędy', matches: (status) => status === 'failed' },
 ];
+
+/** The system admin's organization filter: every slide, the global ones, or one organization's. */
+type OrganizationFilter = 'all' | 'global' | number;
+
+const matchesOrganization = (slide: Slide, filter: OrganizationFilter): boolean =>
+  filter === 'all' || (filter === 'global' ? slide.organization_id === null : slide.organization_id === filter);
 
 const PANEL_KEY = 'hist.slideLibraryPanel';
 
@@ -78,19 +86,23 @@ function readSort(): SlideSort {
 const sortValue = (sort: SlideSort) =>
   !sort || (sort.key === 'created_at' && sort.descending) ? '' : `${sort.key}-${sort.descending ? 'desc' : 'asc'}`;
 
-/** The slide library: tiles (or a table) of slides with the selected one in the preview panel; admins add slides here. */
+/** The slide library: tiles (or a table) of slides with the selected one in the preview panel; admins and annotators allowed to upload add slides here. */
 export default function SlidesPage() {
   useDocumentTitle('Slajdy');
   const { user } = useAuth();
-  // Adding slides is an administrator task (the upload API enforces it too).
-  const isAdmin = isManager(user);
+  // Administrators and annotators given "Może wgrywać pliki" add slides (the upload API enforces it too).
+  const mayUpload = canUpload(user);
   const { enqueue: addToQueue, items: uploads } = useUpload();
-  const { organizations, needsChoice } = useOrganizations();
-  const [chosenOrganizationId, setChosenOrganizationId] = useState<number | null>(null);
-  const uploadOrganizationId = needsChoice
-    ? (organizations.find((organization) => organization.id === chosenOrganizationId) ?? organizations[0]).id
-    : null;
-  const enqueue = (files: Iterable<File>) => addToQueue(files, uploadOrganizationId);
+  // The system admin filters the library by organization and says where each upload goes (an organization, or
+  // global); everyone else sees their organization's slides and the global ones, and uploads into their own.
+  const system = isSystemAdmin(user);
+  const { organizations } = useOrganizations();
+  const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilter>('all');
+  const [destination, setDestination] = useState<UploadDestination>(null);
+  const [isChoosingDestination, setIsChoosingDestination] = useState(false);
+  // Files dropped on the page while the system admin still has to say where they go.
+  const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
+  const enqueue = (files: Iterable<File>) => addToQueue(files, destination);
   const { data, isPending, error } = useSlides();
   const [params, setParams] = useSearchParams();
   const query = params.get('q') ?? '';
@@ -114,12 +126,40 @@ export default function SlidesPage() {
 
   const needle = query.trim().toLowerCase();
   const matching = (data ?? []).filter(
-    (slide) => !needle || slide.name.toLowerCase().includes(needle) || slide.original_filename.toLowerCase().includes(needle),
+    (slide) =>
+      matchesOrganization(slide, organizationFilter) &&
+      (!needle || slide.name.toLowerCase().includes(needle) || slide.original_filename.toLowerCase().includes(needle)),
   );
   const countOf = (filter: (typeof STATUS_FILTERS)[number]) => matching.filter((slide) => filter.matches(slide.status)).length;
   const activeFilter = STATUS_FILTERS.find((filter) => filter.value === statusFilter) ?? STATUS_FILTERS[0];
   const slides = sortSlides(matching.filter((slide) => activeFilter.matches(slide.status)), sort);
-  const filtered = needle !== '' || statusFilter !== 'all';
+  const filtered = needle !== '' || statusFilter !== 'all' || organizationFilter !== 'all';
+
+  /** Opens the file picker; the system admin first chooses where the slides go. */
+  const startUpload = () => {
+    if (system) setIsChoosingDestination(true);
+    else pickFiles.current?.();
+  };
+  const confirmDestination = (chosen: Exclude<UploadDestination, null>) => {
+    if (droppedFiles.length > 0) {
+      addToQueue(droppedFiles, chosen);
+      setDroppedFiles([]);
+      setDestination(chosen);
+      setIsChoosingDestination(false);
+      return;
+    }
+    // The modal dialog makes the rest of the page inert, so it has to be gone before the file input is clicked; and
+    // this is still inside the click, so the browser lets the picker open. `enqueue` then reads the new destination.
+    flushSync(() => {
+      setDestination(chosen);
+      setIsChoosingDestination(false);
+    });
+    pickFiles.current?.();
+  };
+  const closeDestination = () => {
+    setIsChoosingDestination(false);
+    setDroppedFiles([]);
+  };
 
   const setSort = (next: SlideSort) => {
     setSortState(next);
@@ -148,7 +188,7 @@ export default function SlidesPage() {
   };
   const selected = slides.find((slide) => slide.id === selectedId) ?? slides[0];
 
-  const dropHandlers = isAdmin
+  const dropHandlers = mayUpload
     ? {
         onDragOver: (event: DragEvent) => {
           if (!hasFiles(event)) return;
@@ -162,7 +202,12 @@ export default function SlidesPage() {
         onDrop: (event: DragEvent) => {
           event.preventDefault();
           setIsDragging(false);
-          enqueue(event.dataTransfer.files);
+          if (system) {
+            setDroppedFiles([...event.dataTransfer.files]);
+            setIsChoosingDestination(true);
+          } else {
+            enqueue(event.dataTransfer.files);
+          }
         },
       }
     : {};
@@ -247,20 +292,27 @@ export default function SlidesPage() {
               ))}
             </select>
           )}
-          {isAdmin && (
-            <WsiUploader
-              onFiles={enqueue}
-              pickerRef={pickFiles}
-              organizationPicker={
-                needsChoice && (
-                  <OrganizationSelect
-                    organizations={organizations}
-                    value={uploadOrganizationId}
-                    onChange={setChosenOrganizationId}
-                  />
-                )
-              }
-            />
+          {system && organizations.length > 0 && (
+            <select
+              className={`slides-page__sort${organizationFilter !== 'all' ? ' slides-page__sort--active' : ''}`}
+              aria-label="Organizacja"
+              value={organizationFilter}
+              onChange={(event) => {
+                const { value } = event.target;
+                setOrganizationFilter(value === 'all' || value === 'global' ? value : Number(value));
+              }}
+            >
+              <option value="all">Wszystkie organizacje</option>
+              <option value="global">Globalne</option>
+              {organizations.map((organization) => (
+                <option key={organization.id} value={organization.id}>
+                  {organization.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {mayUpload && (
+            <WsiUploader onFiles={enqueue} pickerRef={pickFiles} onUploadClick={system ? startUpload : undefined} />
           )}
         </header>
         {/* A failed background refresh keeps the last list on screen; only a failed first load replaces it. */}
@@ -290,26 +342,27 @@ export default function SlidesPage() {
               </p>
               <p>
                 {filtered
-                  ? 'Zmień wyszukiwanie albo stan slajdów.'
-                  : isAdmin
+                  ? 'Zmień wyszukiwanie, stan albo organizację slajdów.'
+                  : mayUpload
                     ? 'Wgraj pierwsze pliki albo upuść je na tę stronę.'
-                    : 'Slajdy dodają administratorzy.'}
+                    : 'Slajdy dodają administratorzy i osoby z prawem wgrywania.'}
               </p>
               {filtered ? (
                 <Button
                   onClick={() => {
                     setQuery('');
                     setStatusFilter('all');
+                    setOrganizationFilter('all');
                   }}
                 >
                   Wyczyść filtry
                 </Button>
               ) : (
-                isAdmin && (
+                mayUpload && (
                   <Button
                     variant="primary"
                     icon={<Upload size={16} aria-hidden="true" />}
-                    onClick={() => pickFiles.current?.()}
+                    onClick={startUpload}
                   >
                     Wgraj slajd
                   </Button>
@@ -327,7 +380,7 @@ export default function SlidesPage() {
               onSelect={setSelectedId}
             />
           )}
-          {isAdmin && (
+          {mayUpload && (
             <div className="slides-page__uploads">
               <InterruptedUploads />
               {uploads.length > 0 && <UploadQueueList />}
@@ -348,6 +401,21 @@ export default function SlidesPage() {
             <span>Formaty wieloplikowe jako archiwum .zip</span>
           </p>
         </div>
+      )}
+      {/* Mounted only while open, so it starts from the current filter (or the last choice) every time. */}
+      {isChoosingDestination && (
+        <UploadDestinationDialog
+          open
+          organizations={organizations}
+          initial={
+            organizationFilter !== 'all'
+              ? organizationFilter
+              : (destination ?? organizations[0]?.id ?? 'global')
+          }
+          fileCount={droppedFiles.length}
+          onConfirm={confirmDestination}
+          onClose={closeDestination}
+        />
       )}
     </div>
   );

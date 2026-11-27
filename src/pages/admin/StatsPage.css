@@ -149,3 +149,10 @@
   font-size: 12px;
   line-height: 16px;
 }
+
+.stats-org-filter {
+  height: var(--control-md);
+  max-width: 200px;
+  padding: 0 var(--space-2);
+  font-size: 13px;
+}

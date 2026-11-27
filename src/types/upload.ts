@@ -5,7 +5,15 @@ export interface StartUploadRequest {
   /** Set after the user confirmed they want another copy anyway. */
   allow_duplicate: boolean;
   organization_id?: number;
+  /** System admin only: the slide belongs to no organization and every organization sees it. */
+  is_global?: boolean;
 }
+
+/**
+ * Where an uploaded slide goes: an organization (the system admin's choice), every organization (`'global'`, system
+ * admin only), or null for the uploader's own organization.
+ */
+export type UploadDestination = number | 'global' | null;
 
 export interface StartUploadResponse {
   slide_id: string;

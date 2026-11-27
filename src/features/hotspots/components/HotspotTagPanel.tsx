@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Button from '../../../components/ui/Button';
 import ErrorMessage from '../../../components/ui/ErrorMessage';
 import type { Hotspot } from '../../../types/hotspot';
+import { useHotspotFolders } from '../hooks/useHotspots';
 import { useHotspotTagMutations, useTagMutations, useTags } from '../hooks/useTags';
 import type { HotspotMode } from '../utils/hotspotReview';
 import {
@@ -35,7 +36,14 @@ export default function HotspotTagPanel({ hotspot, mode, onReannotate }: Hotspot
   const [error, setError] = useState<string | null>(null);
   const ownIds = new Set(hotspot.tags.map((tag) => tag.id));
   const ownCustom = hotspot.tags.filter((tag) => tag.dimension === null);
-  const otherCustom = customTags(tags).filter((tag) => !ownIds.has(tag.id));
+  const { data: folders = [] } = useHotspotFolders();
+  const organizationId = folders.find((folder) => folder.id === hotspot.folder_id)?.organization_id;
+  // The system admin sees every organization's tags; only global ones and the hotspot's organization's fit it.
+  const otherCustom = customTags(tags).filter(
+    (tag) =>
+      !ownIds.has(tag.id) &&
+      (tag.organization_id === null || organizationId === undefined || tag.organization_id === organizationId),
+  );
   const weightMax = maxCustomWeight(tags);
   const isTagged = TAG_DIMENSIONS.every(({ value }) => hotspot.tags.some((tag) => tag.dimension === value));
 

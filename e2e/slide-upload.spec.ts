@@ -12,6 +12,7 @@ type Slide = {
   error_message: string | null;
   width: number | null;
   mpp_x: number | null;
+  organization_id: number | null;
 };
 
 let admin: Api;
@@ -189,5 +190,54 @@ test.describe('uploads that do not finish', () => {
     await queue(page).getByRole('button', { name: 'Wznów' }).click();
     await expect(page.getByRole('link', { name: prefix, exact: true })).toBeVisible();
     expect((await slidesNamed()).map((slide) => slide.status)).toEqual(['ready']);
+  });
+});
+
+test.describe("the system admin's upload destination", () => {
+  test.use({ storageState: 'e2e/auth/admin.json' });
+
+  /** Opens the destination dialog, picks the destination, and hands the file to the picker that opens. */
+  async function uploadAs(page: Page, name: string, choose: (dialog: ReturnType<Page['getByRole']>) => Promise<void>) {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Wgraj', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Wgraj slajdy' });
+    await expect(dialog).toBeVisible();
+    await choose(dialog);
+    const chooser = page.waitForEvent('filechooser');
+    await dialog.getByRole('button', { name: 'Wybierz pliki…' }).click();
+    await (await chooser).setFiles({ name, mimeType: 'image/tiff', buffer: makeTiledTiff() });
+  }
+
+  test('uploads a global slide that every organization sees', async ({ page }) => {
+    await uploadAs(page, `${prefix}.tif`, async (dialog) => {
+      await dialog.getByRole('radio', { name: /Globalnie/ }).check();
+    });
+    await expect.poll(async () => (await slidesNamed()).map((slide) => slide.status)).toEqual(['ready']);
+    const [slide] = await slidesNamed();
+    expect(slide.organization_id).toBeNull();
+
+    const orgAdmin = await Api.as(env.orgAdmin);
+    const seen = await orgAdmin.get<Slide[]>('slides');
+    expect(seen.map((item) => item.id)).toContain(slide.id);
+    await orgAdmin.dispose();
+  });
+
+  test('uploads a slide into the chosen organization', async ({ page }) => {
+    const organizationId = await admin.e2eOrganizationId();
+    await uploadAs(page, `${prefix}.tif`, async (dialog) => {
+      await dialog.getByRole('radio', { name: /Jedna organizacja/ }).check();
+      await dialog.getByRole('combobox', { name: 'Organizacja' }).selectOption(String(organizationId));
+    });
+    await expect.poll(async () => (await slidesNamed()).map((slide) => slide.status)).toEqual(['ready']);
+    expect((await slidesNamed())[0].organization_id).toBe(organizationId);
+  });
+
+  test('only the system admin may start a global upload', async () => {
+    const orgAdmin = await Api.as(env.orgAdmin);
+    const response = await orgAdmin.ctx.post('upload/start', {
+      data: { filename: `${prefix}.tif`, file_size: 10, is_global: true },
+    });
+    expect(response.status()).toBe(403);
+    await orgAdmin.dispose();
   });
 });

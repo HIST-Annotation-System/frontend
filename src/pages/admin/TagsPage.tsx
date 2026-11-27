@@ -2,8 +2,10 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { useState, type FormEvent, type KeyboardEvent } from 'react';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { useAuth } from '../../context/AuthContext';
 import { TagPill, VerdictMark } from '../../features/hotspots/components/TagMarks';
 import { useTagMutations, useTags } from '../../features/hotspots/hooks/useTags';
+import { useOrganizations } from '../../features/organizations/hooks/useOrganizations';
 import {
   CUSTOM_TAG_DEFAULT_WEIGHT,
   customWeightCap,
@@ -14,12 +16,24 @@ import {
 } from '../../features/hotspots/utils/hotspotTags';
 import type { Tag } from '../../types/tag';
 import { getErrorMessage } from '../../utils/errors';
+import { canChangeTag, isSystemAdmin } from '../../utils/roles';
 import AdminAlert from './AdminAlert';
 import { AdminSkeleton } from './AdminParts';
 import './TagsPage.css';
 
-/** The shared hotspot tags: names, weights (a hotspot's score is the sum), and removal of custom tags. */
+/**
+ * Hotspot tags: names, weights (a hotspot's score is the sum), and removal of custom tags. The system admin manages
+ * the global tags (and sees every organization's); an organization's admin manages their organization's own.
+ */
 export default function TagsPage() {
+  const { user } = useAuth();
+  const system = isSystemAdmin(user);
+  const { organizations } = useOrganizations();
+  const scopeLabel = (tag: Tag): string => {
+    if (tag.organization_id === null) return 'Globalny';
+    if (!system) return 'Organizacja';
+    return organizations.find((organization) => organization.id === tag.organization_id)?.name ?? 'Organizacja';
+  };
   const { data: tags = [], isLoading } = useTags();
   const { createTag, isCreating } = useTagMutations();
   const [newName, setNewName] = useState('');
@@ -88,7 +102,10 @@ export default function TagsPage() {
         <div className="admin-list__col">
           <p className="admin-page-desc">
             Wynik hotspotu to suma wag jego tagów. Oceny (priorytet, poprawność) mają stałe nazwy; własne tagi tworzą
-            eksperci i można je tu usunąć.
+            eksperci i można je tu usunąć.{' '}
+            {system
+              ? 'Tagi dodane przez administratora systemu są globalne - widzą je wszystkie organizacje.'
+              : 'Tagi globalne zmienia tylko administrator systemu; tu zarządzasz tagami swojej organizacji.'}
           </p>
 
           {apiError && <AdminAlert message={apiError} onDismiss={() => setApiError(null)} />}
@@ -101,6 +118,7 @@ export default function TagsPage() {
                 <tr>
                   <th>Rodzaj</th>
                   <th>Nazwa</th>
+                  <th>Zasięg</th>
                   <th className="admin-table__num">Waga</th>
                   <th className="admin-table__actions" aria-label="Akcje" />
                 </tr>
@@ -112,6 +130,8 @@ export default function TagsPage() {
                       key={tag.id}
                       tag={tag}
                       kind={index === 0 ? group.label : ''}
+                      scope={scopeLabel(tag)}
+                      canChange={canChangeTag(user, tag)}
                       isEditing={editingId === tag.id}
                       onStartEdit={() => {
                         setApiError(null);
@@ -124,7 +144,7 @@ export default function TagsPage() {
                 )}
                 {tags.length === 0 && (
                   <tr className="admin-table__empty">
-                    <td colSpan={4}>Brak tagów.</td>
+                    <td colSpan={5}>Brak tagów.</td>
                   </tr>
                 )}
               </tbody>
@@ -140,6 +160,10 @@ interface TagRowProps {
   tag: Tag;
   /** The group label, shown only on the first row of its group. */
   kind: string;
+  /** Global, or whose organization's. */
+  scope: string;
+  /** The user may rename, re-weight or delete it. */
+  canChange: boolean;
   isEditing: boolean;
   onStartEdit: () => void;
   onEndEdit: () => void;
@@ -150,7 +174,7 @@ interface TagRowProps {
  * One tag. The pencil edits a custom tag's name and weight together; a core rating keeps its name, so its pencil
  * edits only the weight, and it cannot be deleted.
  */
-function TagRow({ tag, kind, isEditing, onStartEdit, onEndEdit, onError }: TagRowProps) {
+function TagRow({ tag, kind, scope, canChange, isEditing, onStartEdit, onEndEdit, onError }: TagRowProps) {
   const { updateTag, isUpdating, deleteTag, isDeleting } = useTagMutations();
   const { data: allTags = [] } = useTags();
   const [name, setName] = useState(tag.name);
@@ -220,6 +244,7 @@ function TagRow({ tag, kind, isEditing, onStartEdit, onEndEdit, onError }: TagRo
             />
           )}
         </td>
+        <td className="admin-table__muted">{scope}</td>
         <td className="admin-table__num">
           <input
             type="number"
@@ -252,31 +277,41 @@ function TagRow({ tag, kind, isEditing, onStartEdit, onEndEdit, onError }: TagRo
       <td className="admin-table__truncate tags-name" title={tag.name}>
         {dimension ? <VerdictMark tag={tag} allTags={allTags} labelled /> : <TagPill tag={tag} />}
       </td>
+      <td className="admin-table__muted">{scope}</td>
       <td className="admin-table__num">{tag.weight}</td>
       <td className="admin-table__actions">
         <span className="admin-row-actions">
-          <button
-            type="button"
-            className="admin-icon-btn"
-            title={dimension ? 'Zmień wagę' : 'Zmień nazwę'}
-            aria-label={`${dimension ? 'Zmień wagę' : 'Zmień nazwę'}: ${tag.name}`}
-            onClick={startEdit}
-          >
-            <Pencil size={13} />
-          </button>
-          {dimension ? (
-            <span className="admin-icon-btn admin-icon-btn--placeholder" aria-hidden="true" />
+          {canChange ? (
+            <>
+              <button
+                type="button"
+                className="admin-icon-btn"
+                title={dimension ? 'Zmień wagę' : 'Zmień nazwę'}
+                aria-label={`${dimension ? 'Zmień wagę' : 'Zmień nazwę'}: ${tag.name}`}
+                onClick={startEdit}
+              >
+                <Pencil size={13} />
+              </button>
+              {dimension ? (
+                <span className="admin-icon-btn admin-icon-btn--placeholder" aria-hidden="true" />
+              ) : (
+                <button
+                  type="button"
+                  className="admin-icon-btn admin-icon-btn--danger"
+                  title="Usuń tag"
+                  aria-label={`Usuń tag ${tag.name}`}
+                  disabled={isDeleting}
+                  onClick={() => setIsConfirmingDelete(true)}
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </>
           ) : (
-            <button
-              type="button"
-              className="admin-icon-btn admin-icon-btn--danger"
-              title="Usuń tag"
-              aria-label={`Usuń tag ${tag.name}`}
-              disabled={isDeleting}
-              onClick={() => setIsConfirmingDelete(true)}
-            >
-              <Trash2 size={13} />
-            </button>
+            <>
+              <span className="admin-icon-btn admin-icon-btn--placeholder" aria-hidden="true" />
+              <span className="admin-icon-btn admin-icon-btn--placeholder" aria-hidden="true" />
+            </>
           )}
         </span>
         <ConfirmDialog
