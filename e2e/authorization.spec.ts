@@ -2,8 +2,11 @@ import { expect, request, test } from '@playwright/test';
 import { env } from './env';
 import { Api, unique } from './helpers/api';
 
-const ADMIN_ONLY_PAGES = ['stats', 'organizations', 'cell-types', 'tags', 'priority-weights'];
-const MANAGER_PAGES = ['users', 'agreement'];
+const ADMIN_ONLY_PAGES = ['organizations', 'cell-types', 'priority-weights'];
+// Stats and tags: an org admin sees their organization's.
+const MANAGER_PAGES = ['users', 'agreement', 'stats', 'tags'];
+// The role check comes before the lookup, so an annotator gets 403 even for an id that doesn't exist.
+const NO_SUCH_ID = '00000000-0000-0000-0000-000000000000';
 
 test.describe('anonymous visitor', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
@@ -47,6 +50,8 @@ test.describe('annotator', () => {
       ['get', 'storage/browse'],
       ['post', 'cell-types/'],
       ['patch', 'priority-weights/'],
+      ['delete', `hotspot-folders/${NO_SUCH_ID}`],
+      ['delete', `hotspots/${NO_SUCH_ID}`],
     ] as const;
     for (const [method, path] of forbidden) {
       const response = await annotator.ctx[method](path, method === 'get' ? undefined : { data: {} });
@@ -77,12 +82,12 @@ test.describe('org admin', () => {
   test('SCRUM-27: the admin menu lists only the pages of an org admin', async ({ page }) => {
     await page.goto('/admin');
     const menu = page.getByRole('navigation', { name: 'Administracja' });
-    await expect(menu.getByRole('link')).toHaveText(['Zgodność reannotacji', 'Użytkownicy']);
+    await expect(menu.getByRole('link')).toHaveText(['Statystyki', 'Zgodność reannotacji', 'Użytkownicy', 'Tagi hotspotów']);
   });
 
   test('SCRUM-27: the API refuses system-admin endpoints with 403', async () => {
     const orgAdmin = await Api.as(env.orgAdmin);
-    for (const path of ['organizations/', 'stats/', 'storage/browse']) {
+    for (const path of ['organizations/', 'storage/browse']) {
       expect((await orgAdmin.ctx.get(path)).status(), `GET ${path}`).toBe(403);
     }
     for (const [path, data] of [
@@ -123,6 +128,10 @@ test.describe('organization isolation', () => {
 
       const folders = await orgAdmin.get<{ id: string }[]>('hotspot-folders');
       expect(folders.map((item) => item.id)).not.toContain(folder.id);
+
+      const stats = await orgAdmin.get<{ folders: { id: string }[] }>('stats/');
+      expect(stats.folders.map((item) => item.id)).not.toContain(folder.id);
+      expect((await orgAdmin.ctx.get(`stats/?organization_id=${other.id}`)).status()).toBe(404);
 
       expect((await orgAdmin.ctx.put(`users/${outsider.id}`, { data: { first_name: 'Hijacked' } })).status()).toBe(404);
       expect((await orgAdmin.ctx.delete(`users/${outsider.id}`)).status()).toBe(404);

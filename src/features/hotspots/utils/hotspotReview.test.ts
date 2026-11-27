@@ -62,7 +62,7 @@ describe('hotspot catalog params', () => {
   });
 
   it('derives the review status from the verdict tags', () => {
-    const tag = (dimension: 'importance' | 'accuracy' | null) => ({ id: 1, name: 'x', dimension, weight: 1 });
+    const tag = (dimension: 'importance' | 'accuracy' | null) => ({ id: 1, name: 'x', dimension, weight: 1, organization_id: null });
     expect(hotspotStatus({ tags: [tag('importance'), tag(null)], reannotated_at: null })).toBe('untagged');
     expect(hotspotStatus({ tags: [tag('importance'), tag('accuracy')], reannotated_at: null })).toBe('to_reannotate');
     expect(hotspotStatus({ tags: [], reannotated_at: '2026-10-20T12:00:00Z' })).toBe('reannotated');

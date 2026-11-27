@@ -187,9 +187,12 @@ test.describe('tags', () => {
     await page.getByRole('textbox', { name: 'Nazwa nowego tagu' }).fill(name);
     await page.getByRole('spinbutton', { name: 'Waga nowego tagu' }).fill('3');
     await page.getByRole('button', { name: 'Dodaj', exact: true }).click();
-    await expect(row(page, name).getByRole('cell').nth(2)).toHaveText('3');
-    const tags = await admin.get<{ name: string; weight: number; dimension: string | null }[]>('tags/');
-    expect(tags.find((tag) => tag.name === name)).toMatchObject({ weight: 3, dimension: null });
+    await expect(row(page, name).getByRole('cell').nth(3)).toHaveText('3');
+    await expect(row(page, name).getByRole('cell').nth(2)).toHaveText('Globalny');
+    const tags = await admin.get<{ name: string; weight: number; dimension: string | null; organization_id: number | null }[]>(
+      'tags/',
+    );
+    expect(tags.find((tag) => tag.name === name)).toMatchObject({ weight: 3, dimension: null, organization_id: null });
   });
 
   test('SCRUM-211: renames a custom tag', async ({ page }) => {

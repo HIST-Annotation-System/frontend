@@ -6,6 +6,8 @@ import { apiUrl } from '../../../services/httpClient';
 import type { HotspotBatch } from '../../../types/hotspot';
 import type { SlideDetail } from '../../../types/slide';
 import { getErrorMessage } from '../../../utils/errors';
+import OrganizationSelect from '../../organizations/components/OrganizationSelect';
+import { useOrganizations } from '../../organizations/hooks/useOrganizations';
 import { useHotspotFolders, useHotspotMutations } from '../hooks/useHotspots';
 import { formatSquareSize } from '../utils/hotspotFormat';
 import { HOTSPOT_BOX_SIZE, type Box } from '../utils/hotspotBoxes';
@@ -26,8 +28,19 @@ interface CreateHotspotBatchModalProps {
 /** Where the chosen boxes go and how they are named; confirming starts cutting them out in the background. */
 export default function CreateHotspotBatchModal({ slide, boxes, onClose, onCreated }: CreateHotspotBatchModalProps) {
   const { data: allFolders = [], isPending: isLoadingFolders } = useHotspotFolders();
-  // Hotspots stay in the slide's organization (the system admin sees the folders of every organization).
-  const folders = allFolders.filter((folder) => folder.organization_id === slide.organization_id);
+  const { organizations, needsChoice } = useOrganizations();
+  // Hotspots stay in the slide's organization (the system admin sees the folders of every organization); a global
+  // slide's go to any folder the user sees.
+  const isGlobal = slide.organization_id === null;
+  const folders = isGlobal ? allFolders : allFolders.filter((folder) => folder.organization_id === slide.organization_id);
+  const organizationName = (id: number) => organizations.find((organization) => organization.id === id)?.name ?? '';
+  // A new folder for a global slide: the system admin picks its organization, everyone else gets their own.
+  const [chosenOrganizationId, setChosenOrganizationId] = useState<number | null>(null);
+  const newFolderOrganizationId = isGlobal
+    ? needsChoice
+      ? (chosenOrganizationId ?? organizations[0].id)
+      : undefined
+    : (slide.organization_id ?? undefined);
   const { createFolder, createBatch, isCreatingFolder, isCreatingBatch } = useHotspotMutations();
   // One id per dialog: a retry after a lost response finds the batch it already started.
   const [batchId] = useState(() => crypto.randomUUID());
@@ -49,7 +62,7 @@ export default function CreateHotspotBatchModal({ slide, boxes, onClose, onCreat
     try {
       let targetFolderId = folderId;
       if (targetFolderId === NEW_FOLDER || targetFolderId === null) {
-        targetFolderId = (await createFolder({ name: newFolderName.trim(), organizationId: slide.organization_id })).id;
+        targetFolderId = (await createFolder({ name: newFolderName.trim(), organizationId: newFolderOrganizationId })).id;
         // A retry after a failed request must not create the folder a second time.
         setChosenFolderId(targetFolderId);
       }
@@ -99,6 +112,7 @@ export default function CreateHotspotBatchModal({ slide, boxes, onClose, onCreat
                 {folders.map((folder) => (
                   <option key={folder.id} value={folder.id}>
                     {folder.name} ({folder.hotspot_count})
+                    {isGlobal && needsChoice ? ` · ${organizationName(folder.organization_id)}` : ''}
                   </option>
                 ))}
                 <option value={NEW_FOLDER}>+ Nowy folder…</option>
@@ -114,6 +128,16 @@ export default function CreateHotspotBatchModal({ slide, boxes, onClose, onCreat
                   onChange={(event) => setNewFolderName(event.target.value)}
                 />
               </label>
+            )}
+            {folderId === NEW_FOLDER && isGlobal && needsChoice && (
+              <div className="hotspot-form__field">
+                <span className="label-caps">Organizacja nowego folderu</span>
+                <OrganizationSelect
+                  organizations={organizations}
+                  value={newFolderOrganizationId ?? null}
+                  onChange={setChosenOrganizationId}
+                />
+              </div>
             )}
             <dl className="hotspot-form__meta mono-data">
               <dt>Hotspoty</dt>

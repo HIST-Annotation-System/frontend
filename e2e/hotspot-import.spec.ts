@@ -143,6 +143,21 @@ test.describe('folders', () => {
     await expect(page.getByRole('button', { name: new RegExp(`^${folder.name}`) })).toHaveCount(0);
   });
 
+  test('an annotator cannot delete a folder', async ({ page }) => {
+    await page.goto('/hotspots');
+    await revealFolderActions(page, folder.name);
+    await expect(page.getByRole('button', { name: `Zmień nazwę folderu ${folder.name}` })).toBeVisible();
+    await expect(page.getByRole('button', { name: `Usuń folder ${folder.name}` })).toHaveCount(0);
+    const annotatorApi = await Api.as(env.annotator);
+    expect((await annotatorApi.ctx.delete(`hotspot-folders/${folder.id}`)).status()).toBe(403);
+    await annotatorApi.dispose();
+  });
+});
+
+// Deleting a folder takes its hotspots with it, so it is for administrators.
+test.describe('deleting folders', () => {
+  test.use({ storageState: 'e2e/auth/orgadmin.json' });
+
   test('SCRUM-77: deleting a folder removes it with its hotspots after confirmation', async ({ page }) => {
     await admin.uploadHotspot(folder.id, { name: `${unique('doomed')}.png`, mimeType: 'image/png', buffer: PNG });
     await page.goto('/hotspots');

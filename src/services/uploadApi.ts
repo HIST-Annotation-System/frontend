@@ -2,6 +2,7 @@ import type {
   RefreshUrlsResponse,
   StartUploadRequest,
   StartUploadResponse,
+  UploadDestination,
   UploadedPartsResponse,
   UploadPart,
 } from '../types/upload';
@@ -11,13 +12,14 @@ import { ApiError, httpClient } from './httpClient';
 export const startMultipartUpload = async (
   file: File,
   allowDuplicate = false,
-  organizationId?: number,
+  destination: UploadDestination = null,
 ): Promise<StartUploadResponse> => {
   const request: StartUploadRequest = {
     filename: file.name,
     file_size: file.size,
     allow_duplicate: allowDuplicate,
-    organization_id: organizationId,
+    organization_id: typeof destination === 'number' ? destination : undefined,
+    is_global: destination === 'global' || undefined,
   };
   return (await httpClient.post<StartUploadResponse>('/upload/start', request)).data;
 };

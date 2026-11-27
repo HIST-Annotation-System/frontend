@@ -174,7 +174,23 @@ test.describe('bulk actions', () => {
   });
 });
 
+test.describe('details panel actions for annotators', () => {
+  test('an annotator cannot rename, move or delete a hotspot', async ({ page }) => {
+    await page.goto(`/hotspots?folder=${folder.id}`);
+    await page.getByRole('checkbox', { name: `Zaznacz hotspot ${names.plain}` }).check();
+    const panel = page.getByRole('complementary', { name: `Szczegóły hotspotu ${names.plain}` });
+    await expect(panel).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Więcej działań' })).toHaveCount(0);
+    const hotspotId = folder.hotspots[0].id;
+    expect((await annotator.ctx.patch(`hotspots/${hotspotId}`, { data: { name: unique('x') } })).status()).toBe(403);
+    expect((await annotator.ctx.delete(`hotspots/${hotspotId}`)).status()).toBe(403);
+  });
+});
+
+// Renaming, moving and deleting hotspots is for administrators.
 test.describe('details panel actions', () => {
+  test.use({ storageState: 'e2e/auth/orgadmin.json' });
+
   const openMenu = async (page: Page, name: string, item: string) => {
     await page.getByRole('checkbox', { name: `Zaznacz hotspot ${name}` }).check();
     const panel = page.getByRole('complementary', { name: `Szczegóły hotspotu ${name}` });

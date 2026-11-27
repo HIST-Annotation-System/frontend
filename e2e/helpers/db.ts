@@ -15,7 +15,8 @@ async function withDb<T>(run: (db: Client) => Promise<T>): Promise<T> {
   }
 }
 
-export const insertSlide = (organizationId: number, name: string, status = 'ready'): Promise<string> =>
+/** `organizationId` null makes a global slide, seen by every organization. */
+export const insertSlide = (organizationId: number | null, name: string, status = 'ready'): Promise<string> =>
   withDb(async (db) => {
     const id = randomUUID();
     await db.query(

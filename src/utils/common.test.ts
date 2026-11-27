@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AccountResponse, Role } from '../types/user';
 import { UploadCancelledError, getErrorMessage } from './errors';
 import { formatRelativeDate } from './format';
-import { ALL_ROLES, ORGANIZATION_ROLES, ROLE_LABELS, canUpload, isManager, isSystemAdmin } from './roles';
+import { ALL_ROLES, ORGANIZATION_ROLES, ROLE_LABELS, canChangeTag, canUpload, isManager, isSystemAdmin } from './roles';
 
 const user = (role: Role): AccountResponse => ({ id: 1, username: 'u', role, is_first_login: false });
 
@@ -29,6 +29,19 @@ describe('roles', () => {
     expect(canUpload(user('ANNOTATOR'))).toBe(false);
     expect(canUpload({ ...user('ANNOTATOR'), profile: profile(false) })).toBe(false);
     expect(canUpload({ ...user('ANNOTATOR'), profile: profile(true) })).toBe(true);
+  });
+
+  it('lets the system admin change any tag, and organization admins only their organization tags', () => {
+    const orgAdmin = (id: number): AccountResponse => ({ ...user('ORG_ADMIN'), organization: { id, name: 'O' } });
+    const global = { organization_id: null };
+    const ofOrg = (id: number) => ({ organization_id: id });
+    expect(canChangeTag(user('ADMIN'), global)).toBe(true);
+    expect(canChangeTag(user('ADMIN'), ofOrg(7))).toBe(true);
+    expect(canChangeTag(orgAdmin(7), ofOrg(7))).toBe(true);
+    expect(canChangeTag(orgAdmin(7), ofOrg(8))).toBe(false);
+    expect(canChangeTag(orgAdmin(7), global)).toBe(false);
+    expect(canChangeTag({ ...user('ANNOTATOR'), organization: { id: 7, name: 'O' } }, ofOrg(7))).toBe(false);
+    expect(canChangeTag(null, global)).toBe(false);
   });
 
   it('lets organization admins give only organization roles', () => {

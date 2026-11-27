@@ -1,6 +1,8 @@
 import { RefreshCw } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import Button from '../../components/ui/Button';
+import { useAuth } from '../../context/AuthContext';
+import { useOrganizations } from '../../features/organizations/hooks/useOrganizations';
 import { BarList, DailyColumns, DonutChart, type Segment, type SeriesColor } from '../../features/stats/components/Charts';
 import { useStats } from '../../features/stats/hooks/useStats';
 import { HOTSPOT_STATUS_OPTIONS } from '../../features/hotspots/utils/hotspotReview';
@@ -11,7 +13,7 @@ import type { TagDimension } from '../../types/tag';
 import { getErrorMessage } from '../../utils/errors';
 import { formatBytes, formatDateTime, formatDecimal } from '../../utils/format';
 import './StatsPage.css';
-import { ROLE_LABELS } from '../../utils/roles';
+import { isSystemAdmin, ROLE_LABELS } from '../../utils/roles';
 
 /** One colour per review stage, the same in every chart on the page. */
 const STATUS_COLORS: Record<HotspotStatus, SeriesColor> = {
@@ -45,15 +47,37 @@ const formatDuration = (hours: number): string => {
 const formatTime = (isoDate: string): string =>
   new Date(isoDate).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-/** Admin observability: where hotspots are in the review, who is annotating what, and how fast it goes. */
+/**
+ * Admin observability: where hotspots are in the review, who is annotating what, and how fast it goes. An
+ * organization's admin sees their organization; the system admin every one, or one picked in the filter.
+ */
 export default function StatsPage() {
-  const { data: stats, isLoading, isFetching, error, refetch } = useStats();
+  const { user } = useAuth();
+  const system = isSystemAdmin(user);
+  const { organizations } = useOrganizations();
+  const [organizationId, setOrganizationId] = useState<number | null>(null);
+  const { data: stats, isLoading, isFetching, error, refetch } = useStats(system ? organizationId : null);
 
   return (
     <div className="admin-page stats-page viz-root">
       <div className="admin-page-header">
         <h1 className="admin-page-title">Statystyki</h1>
         <span className="admin-page-spacer" />
+        {system && organizations.length > 1 && (
+          <select
+            className="stats-org-filter"
+            aria-label="Organizacja"
+            value={organizationId ?? ''}
+            onChange={(event) => setOrganizationId(event.target.value === '' ? null : Number(event.target.value))}
+          >
+            <option value="">Wszystkie organizacje</option>
+            {organizations.map((organization) => (
+              <option key={organization.id} value={organization.id}>
+                {organization.name}
+              </option>
+            ))}
+          </select>
+        )}
         {stats && <span className="stats-updated">Zaktualizowano {formatTime(stats.generated_at)}</span>}
         <Button
           variant="ghost"
